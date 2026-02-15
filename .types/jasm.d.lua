@@ -1,0 +1,12 @@
+
+---@class CAF.Context
+---@field character IsoPlayer
+---@field item InventoryItem
+---@field src ItemContainer
+---@field dest ItemContainer
+---@field dropSquare IsoGridSquare?
+---@field result InventoryItem
+---@field flags table
+---@field flags.rejected boolean
+---@field flags.reason string
+---@field flags.adminOverride boolean

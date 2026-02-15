@@ -1,0 +1,10 @@
+{
+    "scripts": {
+        "clean": "pzstudio clean",
+        "build": "pzstudio clean && pzstudio build",
+        "watch": "pzstudio clean && pzstudio build && pzstudio watch",
+        "update": "pzstudio update",
+        "experimental:setup:vanilla": "mkdir .tmp & mklink /J \"%CD%\\.tmp\\vanilla\" \"%ProgramFiles(x86)%\\Steam\\steamapps\\common\\ProjectZomboid\\media\\lua\"",
+        "experimental:setup:nonsteam:jasm": "mklink /J \"C:\\ZomboidClient1\\mods\\just_another_shop_mod\" \"%CD%\\just_another_shop_mod\""
+    }
+}

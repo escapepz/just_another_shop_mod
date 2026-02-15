@@ -1,0 +1,20 @@
+{
+    "$schema": "https://raw.githubusercontent.com/escapepz/project-zomboid-studio/refs/heads/b42.13.1/pzstudio.schema.json",
+    "title": "Just Another Shop Mod",
+    "authors": ["escapepz", "eScape"],
+    "workshop": {
+        "visibility": "unlisted",
+        "tags": [
+            "Build 42"
+        ],
+        "excludes": []
+    },
+    "mods": {
+        "just_another_shop_mod": {
+            "name": "Just Another Shop Mod",
+            "description": "A lightweight shop system based on the Container Authority Framework.",
+            "require": ["\\container_authority_framework","\\pz_lua_commons","\\zul"],
+            "versionMin": "42.13.1"
+        }
+    }
+}

@@ -1,0 +1,10 @@
+VERSION = 1,
+
+option JASM.AdminBypass
+{
+    page = JASM,
+    translation = JASM_AdminBypass,
+    tooltip = JASM_AdminBypass_tooltip,
+    type = boolean,
+    default = true,
+}

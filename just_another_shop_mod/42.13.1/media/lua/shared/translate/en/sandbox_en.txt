@@ -1,0 +1,6 @@
+Sandbox_EN = {
+    Sandbox_JASM = "Just Another Shop Mod",
+    
+    Sandbox_JASM_AdminBypass = "Admin Bypass",
+    Sandbox_JASM_AdminBypass_tooltip = "If enabled, server admins can take items from any shop container freely.",
+}
