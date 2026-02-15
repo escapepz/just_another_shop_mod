@@ -16,6 +16,8 @@ function ShopManager:initialize()
 	self.shops = {} -- Optional local cache of shop square IDs
 end
 
+-- self.shops[id] = true is not persistent, need to use modData
+
 ---Registers a container as a shop
 ---@param container ItemContainer
 ---@param ownerID string SteamID of the owner or "SYSTEM" for NPC shops

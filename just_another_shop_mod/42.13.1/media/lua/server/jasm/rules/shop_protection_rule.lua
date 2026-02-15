@@ -15,8 +15,10 @@ local RuleShopProtection = function(ctx)
 	local item = ctx.item
 
 	-- 1. Check if the source is a Shop
-	local modData = srcContainer:getParent():getModData()
-	if modData.isShop then
+	local parent = srcContainer:getParent()
+
+	local modData = parent and parent:getModData() or nil
+	if modData and modData.isShop then
 		local ownerID = modData.shopOwnerID
 		local playerUsername = player:getUsername()
 

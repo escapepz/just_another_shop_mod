@@ -12,7 +12,7 @@ local ServerCommand = require("jasm/shop_server_commands")
 
 local logger = ZUL.new("ShopSystem")
 
-local function init()
+local function Init()
 	logger:info("Just Another Shop Mod initializing...")
 
 	-- Register the Shop Rule with CAF
@@ -33,4 +33,4 @@ local function init()
 	return _G.JASM_ShopManager
 end
 
-return init
+return Init

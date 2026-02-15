@@ -1,14 +1,21 @@
 local pz_utils = require("pz_utils_shared")
 local KUtilities = pz_utils.konijima.Utilities
 
-local function onShopAction(worldobjects, playerObj, action, shopType)
+-- guard again non crate objects
+local allowedCrates = { ["Base.Wood_Crate"] = true, ["Base.Metal_Crate"] = true }
+
+---@param worldObjects IsoObject[]
+local function onShopAction(worldObjects, playerObj, action, shopType)
 	local containerObj = nil
-	for _, obj in ipairs(worldobjects) do
+	for _, obj in ipairs(worldObjects) do
+		---@diagnostic disable-next-line: unnecessary-if
 		if obj:getContainer() then
 			containerObj = obj
 			break
 		end
 	end
+
+	print(playerObj)
 
 	if not containerObj then
 		return
@@ -27,15 +34,21 @@ local function onShopAction(worldobjects, playerObj, action, shopType)
 	KUtilities.SendClientCommand("JASM_ShopManager", "ManageShop", args)
 end
 
-local function doShopContextMenu(player, context, worldobjects, test)
+---@param playerIndex integer
+---@param context ISContextMenu
+---@param worldObjects IsoObject[]
+---@param test boolean
+local function DoShopContextMenu(playerIndex, context, worldObjects, test)
 	if test then
 		return
 	end
-	local playerObj = getSpecificPlayer(player)
+	local playerObj = getSpecificPlayer(playerIndex)
 	local isAdmin = KUtilities.IsPlayerAdmin(playerObj)
 
+	---@type IsoObject|nil
 	local containerObj = nil
-	for _, obj in ipairs(worldobjects) do
+	for _, obj in ipairs(worldObjects) do
+		---@diagnostic disable-next-line: unnecessary-if
 		if obj:getContainer() then
 			containerObj = obj
 			break
@@ -45,21 +58,102 @@ local function doShopContextMenu(player, context, worldobjects, test)
 		return
 	end
 
+	local modData = containerObj:getModData()
+	local isShop = modData.isShop
+	local shopType = modData.shopType
+	local objName = containerObj:getObjectName()
+
+	local entityDisplayName = containerObj:getEntityDisplayName() or "Unknown"
+
+	local entityFullTypeDebug = containerObj:getEntityFullTypeDebug()
+	if not entityFullTypeDebug then
+		return
+	end
+
+	-- print(containerObj:getObjectName()) -- Thumpable
+	-- print(containerObj:getName()) -- Wood_Crate_Lvl1
+	-- print(containerObj:getObjectIndex())
+	-- print(containerObj:getX())
+	-- print(containerObj:getY())
+	-- print(containerObj:getZ())
+	-- print(containerObj:getEntityDisplayName())
+	-- print(containerObj:getEntityFullTypeDebug())
+
+	-- guard again non thumpable objects
+	if objName ~= "Thumpable" then
+		return
+	end
+
+	-- 1. Try to capture everything before "_Lvl"
+	-- 2. If "_Lvl" isn't found, the match returns nil
+	-- 3. The "or fullType" kicks in and uses the original string
+	local baseName = string.match(entityFullTypeDebug, "(.-)_Lvl%d+") or entityFullTypeDebug
+
+	---@diagnostic disable-next-line: unnecessary-if
+	if not allowedCrates[baseName] then
+		return
+	end
+
+	-- Main JASM Menu
+	local jOption = context:addOption("JASM Shop", worldObjects, nil)
+	local jMenu = ISContextMenu:getNew(context)
+	context:addSubMenu(jOption, jMenu)
+
 	-- Player Shop Submenu
-	local pOption = context:addOption("Player Shop", worldobjects, nil)
-	local pMenu = ISContextMenu:getNew(context)
-	context:addSubMenu(pOption, pMenu)
-	pMenu:addOption("Register Shop", worldobjects, onShopAction, playerObj, "REGISTER", "PLAYER")
-	pMenu:addOption("UnRegister Shop", worldobjects, onShopAction, playerObj, "UNREGISTER", "PLAYER")
+	if not isShop or shopType == "PLAYER" then
+		local pOption = jMenu:addOption("Player Shop", worldObjects, nil)
+		local pMenu = ISContextMenu:getNew(jMenu)
+		jMenu:addSubMenu(pOption, pMenu)
+
+		if not isShop then
+			pMenu:addOption(
+				"Register Shop [" .. entityDisplayName .. "]",
+				worldObjects,
+				onShopAction,
+				playerObj,
+				"REGISTER",
+				"PLAYER"
+			)
+		else
+			pMenu:addOption(
+				"UnRegister Shop [" .. entityDisplayName .. "]",
+				worldObjects,
+				onShopAction,
+				playerObj,
+				"UNREGISTER",
+				"PLAYER"
+			)
+		end
+	end
 
 	-- NPC Shop Submenu (Admin Only)
 	if isAdmin then
-		local nOption = context:addOption("NPC Shop", worldobjects, nil)
-		local nMenu = ISContextMenu:getNew(context)
-		context:addSubMenu(nOption, nMenu)
-		nMenu:addOption("Register Shop", worldobjects, onShopAction, playerObj, "REGISTER", "SYSTEM")
-		nMenu:addOption("UnRegister Shop", worldobjects, onShopAction, playerObj, "UNREGISTER", "SYSTEM")
+		if not isShop or shopType == "SYSTEM" then
+			local nOption = jMenu:addOption("NPC Shop", worldObjects, nil)
+			local nMenu = ISContextMenu:getNew(jMenu)
+			jMenu:addSubMenu(nOption, nMenu)
+
+			if not isShop then
+				nMenu:addOption(
+					"Register Shop  [" .. entityDisplayName .. "]",
+					worldObjects,
+					onShopAction,
+					playerObj,
+					"REGISTER",
+					"SYSTEM"
+				)
+			else
+				nMenu:addOption(
+					"UnRegister Shop [" .. entityDisplayName .. "]",
+					worldObjects,
+					onShopAction,
+					playerObj,
+					"UNREGISTER",
+					"SYSTEM"
+				)
+			end
+		end
 	end
 end
 
-return doShopContextMenu
+return DoShopContextMenu
