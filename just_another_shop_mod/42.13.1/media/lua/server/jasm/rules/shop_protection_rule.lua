@@ -9,7 +9,7 @@ local KUtilities = pz_utils.konijima.Utilities
 local SSandboxVars = SandboxVarsModule.Create("JASM", { AdminBypass = false })
 
 ---@param ctx CAF.Context
-local ruleShopProtection = function(ctx)
+local RuleShopProtection = function(ctx)
 	local srcContainer = ctx.src
 	local player = ctx.character
 	local item = ctx.item
@@ -18,10 +18,10 @@ local ruleShopProtection = function(ctx)
 	local modData = srcContainer:getParent():getModData()
 	if modData.isShop then
 		local ownerID = modData.shopOwnerID
-		local playerSteamID = player:getSteamID()
+		local playerUsername = player:getUsername()
 
 		-- Rule: Owners can take anything
-		if playerSteamID == ownerID then
+		if playerUsername == ownerID then
 			logger:debug("Owner access granted", {
 				player = player:getUsername(),
 				shop = modData.shopName,
@@ -51,4 +51,4 @@ local ruleShopProtection = function(ctx)
 	end
 end
 
-return ruleShopProtection
+return RuleShopProtection
