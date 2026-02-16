@@ -1,10 +1,15 @@
 local pz_utils = require("pz_utils_shared")
 local KUtilities = pz_utils.konijima.Utilities
 
+local JASM_ShopView = require("jasm/entity_ui/shop_view")
+
 -- guard again non crate objects
 local allowedCrates = { ["Base.Wood_Crate"] = true, ["Base.Metal_Crate"] = true }
 
 ---@param worldObjects IsoObject[]
+---@param playerObj IsoPlayer
+---@param action string
+---@param shopType string
 local function onShopAction(worldObjects, playerObj, action, shopType)
 	local containerObj = nil
 	for _, obj in ipairs(worldObjects) do
@@ -32,6 +37,14 @@ local function onShopAction(worldObjects, playerObj, action, shopType)
 
 	-- Sends command to server
 	KUtilities.SendClientCommand("JASM_ShopManager", "ManageShop", args)
+end
+
+---@param worldObjects IsoObject[]
+---@param playerObj IsoPlayer
+---@param containerObj IsoObject
+local function onOpenShopUI(worldObjects, playerObj, containerObj)
+	local shopUI = JASM_ShopView:new(100, 100, 600, 400, playerObj, containerObj)
+	shopUI:show()
 end
 
 ---@param playerIndex integer
@@ -98,6 +111,11 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
 	local jOption = context:addOption("JASM Shop", worldObjects, nil)
 	local jMenu = ISContextMenu:getNew(context)
 	context:addSubMenu(jOption, jMenu)
+
+	---@diagnostic disable-next-line: unnecessary-if
+	if isShop then
+		jMenu:addOption("Open Shop UI", worldObjects, onOpenShopUI, playerObj, containerObj)
+	end
 
 	-- Player Shop Submenu
 	if not isShop or shopType == "PLAYER" then

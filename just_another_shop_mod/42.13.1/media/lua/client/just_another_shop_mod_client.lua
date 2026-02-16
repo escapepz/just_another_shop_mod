@@ -1,3 +1,4 @@
+---@type fun(): any
 local client = require("jasm/client")
 local initClient = function()
 	if isClient() or not isMultiplayer() then
