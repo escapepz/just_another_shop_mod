@@ -15,7 +15,7 @@ local function onShopAction(worldObjects, playerObj, action, shopType)
 		end
 	end
 
-	print(playerObj)
+	-- print(playerObj)
 
 	if not containerObj then
 		return

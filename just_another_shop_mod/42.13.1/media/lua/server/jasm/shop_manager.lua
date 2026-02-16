@@ -37,6 +37,19 @@ function ShopManager:registerShop(container, ownerID, shopName)
 	end
 end
 
+---Sets the price for an item type in a shop
+---@param container ItemContainer
+---@param itemType string Full type of the item to sell
+---@param priceType string Full type of the currency item
+---@param amount integer Amount of currency required
+function ShopManager:setPrice(container, itemType, priceType, amount)
+	local parent = container:getParent()
+	local modData = parent:getModData()
+	modData.shopPrices = modData.shopPrices or {}
+	modData.shopPrices[itemType] = { type = priceType, count = amount }
+	parent:transmitModData()
+end
+
 ---Unregisters a container as a shop
 ---@param container ItemContainer
 function ShopManager:unregisterShop(container)

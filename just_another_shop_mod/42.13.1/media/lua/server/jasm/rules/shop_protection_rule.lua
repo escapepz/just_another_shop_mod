@@ -41,6 +41,11 @@ local RuleShopProtection = function(ctx)
 			return -- No rejection
 		end
 
+		-- Rule: Allow if trade is authorized
+		if ctx.flags.tradeAuthorized then
+			return
+		end
+
 		-- Rule: Customers are blocked
 		ctx.flags.rejected = true
 		ctx.flags.reason = "This item must be purchased."

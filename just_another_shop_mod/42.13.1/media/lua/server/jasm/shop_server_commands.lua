@@ -69,6 +69,13 @@ local function OnClientCommand(module, command, player, args)
 		end
 
 		logger:info("Shop Unregistered", { x = args.x, y = args.y })
+	elseif args.action == "SET_PRICE" then
+		_G.JASM_ShopManager:setPrice(containerObj:getContainer(), args.itemType, args.priceType, args.count)
+		logger:info("Price Set", {
+			shop = modData.shopName,
+			item = args.itemType,
+			price = args.count .. "x " .. args.priceType,
+		})
 	end
 
 	-- Persist and Sync to all clients
