@@ -3,6 +3,7 @@
     "workspace": {
         "library": [".libraries", ".types"],
         "ignoreDir": [
+            ".design",
             ".git",
             ".vscode",
             ".serena",

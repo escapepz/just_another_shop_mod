@@ -1,7 +1,8 @@
 local pz_utils = require("pz_utils_shared")
 local KUtilities = pz_utils.konijima.Utilities
 
-local JASM_ShopView = require("jasm/entity_ui/shop_view")
+-- local JASM_ShopView = require("jasm/entity_ui/shop_view")
+local JASM_ShopView_Owner = require("jasm/entity_ui/shop_view_owner")
 
 -- guard again non crate objects
 local allowedCrates = { ["Base.Wood_Crate"] = true, ["Base.Metal_Crate"] = true }
@@ -43,8 +44,12 @@ end
 ---@param playerObj IsoPlayer
 ---@param containerObj IsoObject
 local function onOpenShopUI(worldObjects, playerObj, containerObj)
-	local shopUI = JASM_ShopView:new(100, 100, 600, 400, playerObj, containerObj)
-	shopUI:show()
+	-- local shopUI = JASM_ShopView:new(100, 100, 600, 400, playerObj, containerObj)
+	-- shopUI:show()
+		-- Example usage:
+	local shopView = JASM_ShopView_Owner:new(0, 0, 800, 600, playerObj, containerObj)
+	shopView:initialise()
+	shopView:createChildren()
 end
 
 ---@param playerIndex integer
