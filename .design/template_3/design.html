@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Template 3: Unit-Based Barter System - Advanced Design</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+            color: #e0e0e0;
+            padding: 30px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1700px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            border-bottom: 3px solid #f39c12;
+            padding-bottom: 20px;
+        }
+
+        header h1 {
+            color: #f39c12;
+            font-size: 2.8em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        header p {
+            color: #bdc3c7;
+            font-size: 1.15em;
+        }
+
+        .philosophy {
+            background-color: rgba(52, 152, 219, 0.1);
+            border-left: 4px solid #3498db;
+            padding: 25px;
+            margin-bottom: 50px;
+            border-radius: 8px;
+            font-size: 1.05em;
+            line-height: 1.8;
+        }
+
+        .philosophy h3 {
+            color: #3498db;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .philosophy strong {
+            color: #2ecc71;
+        }
+
+        .view-section {
+            margin-bottom: 60px;
+        }
+
+        .view-title {
+            font-size: 2em;
+            font-weight: bold;
+            color: #f39c12;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f39c12;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .view-badge {
+            display: inline-block;
+            background-color: #e74c3c;
+            color: white;
+            padding: 6px 18px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            font-weight: bold;
+        }
+
+        .view-badge.advanced {
+            background-color: #9b59b6;
+        }
+
+        .view-description {
+            color: #bdc3c7;
+            margin-bottom: 25px;
+            font-size: 1.05em;
+        }
+
+        /* ============= OWNER VIEW ============= */
+        .owner-container {
+            display: grid;
+            grid-template-columns: 35% 65%;
+            gap: 20px;
+            min-height: 800px;
+            border: 2px solid #444;
+            padding: 15px;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+        }
+
+        .inventory-panel {
+            background-color: #1a1a1a;
+            border: 1px dashed #666;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-y: auto;
+        }
+
+        .panel-header {
+            color: #f39c12;
+            font-size: 0.95em;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #444;
+        }
+
+        .inventory-item {
+            padding: 10px;
+            background-color: #333;
+            margin-bottom: 6px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .inventory-item:hover {
+            background-color: #444;
+            border-color: #f39c12;
+        }
+
+        .inventory-item.selected {
+            background-color: #f39c12;
+            color: #1a1a1a;
+            border-color: #f39c12;
+        }
+
+        .item-count {
+            color: #95a5a6;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+
+        .inventory-item.selected .item-count {
+            color: #1a1a1a;
+        }
+
+        .trade-form {
+            background-color: #1a1a1a;
+            border: 1px dashed #666;
+            padding: 15px;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .form-header {
+            color: #95a5a6;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #444;
+        }
+
+        .form-header.selected {
+            color: #f39c12;
+        }
+
+        .form-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #444;
+        }
+
+        .section-label {
+            font-size: 0.9em;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-label.offer {
+            color: #3498db;
+            border-bottom-color: #3498db;
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+
+        .section-label.request {
+            color: #e74c3c;
+            border-bottom-color: #e74c3c;
+            background-color: rgba(231, 76, 60, 0.1);
+        }
+
+        .section-label-icon {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+
+        .form-row.single {
+            grid-template-columns: 1fr;
+        }
+
+        .form-label {
+            color: #95a5a6;
+            font-size: 0.8em;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .form-input {
+            background-color: #2a2a2a;
+            border: 1px solid #555;
+            padding: 8px 10px;
+            color: #e0e0e0;
+            border-radius: 4px;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #3498db;
+            background-color: #333;
+            box-shadow: 0 0 8px rgba(52, 152, 219, 0.3);
+        }
+
+        .form-input.valid {
+            border-color: #27ae60;
+        }
+
+        .form-input.error {
+            border-color: #e74c3c;
+            background-color: rgba(231, 76, 60, 0.1);
+        }
+
+        .form-input-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .form-input-group .form-input {
+            flex: 1;
+        }
+
+        .form-input-addon {
+            color: #95a5a6;
+            font-size: 0.9em;
+            padding: 8px 12px;
+            background-color: #2a2a2a;
+            border: 1px solid #555;
+            border-radius: 4px;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .validation-feedback {
+            font-size: 0.8em;
+            margin-top: 4px;
+            color: #95a5a6;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .validation-feedback.success {
+            color: #27ae60;
+        }
+
+        .validation-feedback.error {
+            color: #e74c3c;
+        }
+
+        .item-icon-preview {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 6px;
+            padding: 8px;
+            background-color: rgba(39, 174, 96, 0.1);
+            border-radius: 4px;
+            border: 1px solid #27ae60;
+        }
+
+        .item-icon {
+            width: 24px;
+            height: 24px;
+            background-color: #555;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+        }
+
+        /* Trade Summary Card */
+        .trade-summary {
+            background: linear-gradient(135deg, rgba(52, 152, 219, 0.15) 0%, rgba(231, 76, 60, 0.15) 100%);
+            border: 1px solid #444;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .trade-summary-label {
+            color: #95a5a6;
+            font-size: 0.75em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .trade-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: rgba(0,0,0,0.3);
+            padding: 12px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .trade-side {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .trade-icon {
+            width: 36px;
+            height: 36px;
+            background-color: #555;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+        }
+
+        .trade-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .trade-item-name {
+            color: #f1c40f;
+            font-size: 0.95em;
+        }
+
+        .trade-item-qty {
+            color: #95a5a6;
+            font-size: 0.8em;
+        }
+
+        .trade-arrow {
+            color: #f39c12;
+            font-size: 1.5em;
+            margin: 0 15px;
+            flex: 0 0 auto;
+        }
+
+        /* Buttons */
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: 1px solid;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            transition: all 0.2s;
+            flex: 1;
+        }
+
+        .btn-success {
+            background-color: #27ae60;
+            color: white;
+            border-color: #229954;
+        }
+
+        .btn-success:hover {
+            background-color: #229954;
+            box-shadow: 0 0 10px rgba(39, 174, 96, 0.5);
+        }
+
+        .btn-success:disabled {
+            background-color: #7f8c8d;
+            border-color: #95a5a6;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+            border-color: #7f8c8d;
+        }
+
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+
+        /* Active Trades */
+        .trades-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .trades-header {
+            color: #95a5a6;
+            font-size: 0.8em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #444;
+        }
+
+        .trades-list {
+            flex: 1;
+            overflow-y: auto;
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 10px;
+        }
+
+        .trade-item {
+            padding: 10px;
+            background-color: #333;
+            margin-bottom: 8px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9em;
+            color: #ddd;
+            transition: all 0.2s;
+        }
+
+        .trade-item:hover {
+            background-color: #444;
+            border-color: #f39c12;
+        }
+
+        .trade-item-display {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .trade-item-icon {
+            width: 28px;
+            height: 28px;
+            background-color: #555;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85em;
+        }
+
+        .trade-item-arrow {
+            color: #f39c12;
+            font-weight: bold;
+        }
+
+        .trade-delete {
+            background-color: transparent;
+            color: #e74c3c;
+            border: 1px solid #e74c3c;
+            padding: 4px 12px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .trade-delete:hover {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #7f8c8d;
+            padding: 20px 10px;
+            font-size: 0.9em;
+        }
+
+        .footer-buttons {
+            display: flex;
+            gap: 10px;
+            padding-top: 15px;
+            border-top: 1px solid #444;
+        }
+
+        /* ============= CUSTOMER VIEW ============= */
+        .customer-container {
+            display: grid;
+            grid-template-columns: 60% 40%;
+            gap: 20px;
+            min-height: 550px;
+            border: 2px solid #444;
+            padding: 15px;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+        }
+
+        .product-grid {
+            background-color: #1a1a1a;
+            border: 1px dashed #666;
+            padding: 12px;
+            border-radius: 6px;
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, 80px);
+            gap: 10px;
+            align-content: start;
+        }
+
+        .product-tile {
+            aspect-ratio: 1;
+            background-color: #333;
+            border: 2px solid #555;
+            border-radius: 6px;
+            padding: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .product-tile:hover {
+            border-color: #f39c12;
+            background-color: #444;
+        }
+
+        .product-tile.selected {
+            border-color: #f39c12;
+            background-color: rgba(243, 156, 18, 0.2);
+            box-shadow: 0 0 10px rgba(243, 156, 18, 0.3);
+        }
+
+        .product-tile-icon {
+            width: 48px;
+            height: 48px;
+            background-color: #555;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+        }
+
+        .product-tile-name {
+            font-size: 0.75em;
+            color: #ddd;
+            font-weight: bold;
+        }
+
+        .details-panel {
+            background-color: #1a1a1a;
+            border: 1px dashed #666;
+            padding: 15px;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            color: #ddd;
+            overflow-y: auto;
+        }
+
+        .details-empty {
+            text-align: center;
+            color: #7f8c8d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+        }
+
+        .details-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #444;
+        }
+
+        .details-icon {
+            width: 48px;
+            height: 48px;
+            background-color: #555;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+        }
+
+        .details-title-group {
+            flex: 1;
+        }
+
+        .details-title {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #f1c40f;
+            margin-bottom: 4px;
+        }
+
+        .details-inventory {
+            font-size: 0.85em;
+            color: #95a5a6;
+        }
+
+        .details-description {
+            color: #bdc3c7;
+            font-size: 0.85em;
+            margin-bottom: 15px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #444;
+            line-height: 1.5;
+        }
+
+        .trades-selector {
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 15px;
+        }
+
+        .trades-selector-label {
+            color: #95a5a6;
+            font-size: 0.8em;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .trade-option {
+            padding: 10px;
+            background-color: #333;
+            border-radius: 3px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid transparent;
+        }
+
+        .trade-option:hover {
+            background-color: #444;
+            border-color: #f39c12;
+        }
+
+        .trade-option.selected {
+            background-color: rgba(243, 156, 18, 0.2);
+            border-color: #f39c12;
+        }
+
+        .trade-option-radio {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #95a5a6;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .trade-option.selected .trade-option-radio {
+            border-color: #f39c12;
+            background-color: #f39c12;
+        }
+
+        .trade-option-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+        }
+
+        .affordability-check {
+            background-color: rgba(52, 152, 219, 0.1);
+            border: 1px solid #3498db;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 15px;
+            font-size: 0.85em;
+            color: #bdc3c7;
+        }
+
+        .affordability-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .affordability-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .affordability-status {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .affordability-status.insufficient {
+            color: #e74c3c;
+        }
+
+        .accept-button {
+            width: 100%;
+            padding: 12px;
+            background-color: #27ae60;
+            color: white;
+            border: 1px solid #229954;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.95em;
+            text-transform: uppercase;
+            transition: all 0.2s;
+        }
+
+        .accept-button:hover {
+            background-color: #229954;
+            box-shadow: 0 0 10px rgba(39, 174, 96, 0.5);
+        }
+
+        .accept-button:disabled {
+            background-color: #7f8c8d;
+            border-color: #95a5a6;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        /* ============= INFO SECTIONS ============= */
+        .info-section {
+            background-color: rgba(52, 152, 219, 0.1);
+            border-left: 4px solid #3498db;
+            padding: 20px;
+            margin-top: 30px;
+            border-radius: 6px;
+        }
+
+        .info-section h3 {
+            color: #3498db;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .info-section ul {
+            margin-left: 20px;
+            color: #bdc3c7;
+        }
+
+        .info-section li {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        .info-section code {
+            background-color: rgba(0,0,0,0.5);
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #2ecc71;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .comparison-table th {
+            background-color: rgba(0,0,0,0.5);
+            color: #f39c12;
+            padding: 12px;
+            text-align: left;
+            border-bottom: 2px solid #444;
+            font-weight: bold;
+        }
+
+        .comparison-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #444;
+            color: #bdc3c7;
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table .benefit {
+            color: #2ecc71;
+            font-weight: bold;
+        }
+
+        @media (max-width: 1200px) {
+            .owner-container,
+            .customer-container {
+                grid-template-columns: 1fr;
+                min-height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>Template 3: Unit-Based Barter System</h1>
+            <p>Bidirectional Trading with Configurable Offers and Requests</p>
+        </header>
+
+        <!-- Philosophy -->
+        <div class="philosophy">
+            <h3>Core Concept: Bidirectional Transactions</h3>
+            <p>
+                Template 3 introduces a fundamental shift from one-way pricing to <strong>true bartering</strong>. 
+                Instead of "customers pay fixed price for items," the shop now operates on <strong>transaction pairs</strong>: 
+                "Give X units of my item in exchange for Y units of their item."
+            </p>
+            <p style="margin-top: 15px;">
+                <strong>Example:</strong> Owner has 12 water bottles and can offer:
+                <br>• 1 bottle for 100 nails
+                <br>• 2 bottles for 1 baseball bat
+                <br>• 3 bottles for 50 ammo
+                <br><strong>Each bundle size is configurable independently.</strong>
+            </p>
+        </div>
+
+        <!-- OWNER VIEW -->
+        <div class="view-section">
+            <div class="view-title">
+                <span class="view-badge advanced">Advanced</span>
+                Owner View: Bundle Transaction Manager
+            </div>
+            <p class="view-description">
+                35/65 column split focuses on transaction building. Owner selects an inventory item, then defines 
+                multiple "Give X, Get Y" trade pairs. The interface validates stock limits in real-time.
+            </p>
+
+            <div class="owner-container">
+                <!-- Left: Inventory (35%) -->
+                <div class="inventory-panel">
+                    <div class="panel-header">Inventory (35% - Narrow)</div>
+                    <div class="inventory-item selected">
+                        <span>Water Bottle</span>
+                        <span class="item-count">×12</span>
+                    </div>
+                    <div class="inventory-item">
+                        <span>Food Ration</span>
+                        <span class="item-count">×25</span>
+                    </div>
+                    <div class="inventory-item">
+                        <span>Medicine Kit</span>
+                        <span class="item-count">×5</span>
+                    </div>
+                    <div class="inventory-item">
+                        <span>Bandage Pack</span>
+                        <span class="item-count">×18</span>
+                    </div>
+                    <div class="inventory-item">
+                        <span>Rope</span>
+                        <span class="item-count">×3</span>
+                    </div>
+                    <div class="inventory-item">
+                        <span>Baseball Bat</span>
+                        <span class="item-count">×2</span>
+                    </div>
+                </div>
+
+                <!-- Right: Trade Form (65%) -->
+                <div class="trade-form">
+                    <div class="form-header selected">Water Bottle - Stock: 12</div>
+
+                    <!-- OFFER Section -->
+                    <div class="form-section">
+                        <div class="section-label offer">
+                            <span class="section-label-icon" style="background-color: #3498db;"></span>
+                            Offer (What You Give)
+                        </div>
+                        <div class="form-row">
+                            <div>
+                                <label class="form-label">Quantity</label>
+                                <input type="number" class="form-input" value="1" min="1" max="12">
+                            </div>
+                            <div>
+                                <label class="form-label">Item</label>
+                                <div style="padding: 8px; background-color: #2a2a2a; border-radius: 4px; color: #ddd;">
+                                    Water Bottle
+                                </div>
+                            </div>
+                        </div>
+                        <div class="validation-feedback success">
+                            <span>✓</span> You have 12 available
+                        </div>
+                    </div>
+
+                    <!-- REQUEST Section -->
+                    <div class="form-section">
+                        <div class="section-label request">
+                            <span class="section-label-icon" style="background-color: #e74c3c;"></span>
+                            Request (What You Want)
+                        </div>
+                        <div class="form-row">
+                            <div>
+                                <label class="form-label">Quantity</label>
+                                <input type="number" class="form-input" value="100" min="1" max="999">
+                            </div>
+                            <div>
+                                <label class="form-label">Item Type</label>
+                                <input type="text" class="form-input valid" value="Base.Nails" placeholder="e.g. Base.Hammer">
+                            </div>
+                        </div>
+                        <div class="validation-feedback success">
+                            <span>✓</span> Valid item found
+                        </div>
+                        <div class="item-icon-preview">
+                            <div class="item-icon">📦</div>
+                            <span>Nails</span>
+                        </div>
+                    </div>
+
+                    <!-- Summary Card -->
+                    <div class="trade-summary">
+                        <label class="trade-summary-label">Trade Summary</label>
+                        <div class="trade-card">
+                            <div class="trade-side">
+                                <div class="trade-icon">💧</div>
+                                <div class="trade-info">
+                                    <div class="trade-item-name">1×</div>
+                                    <div class="trade-item-qty">Water Bottle</div>
+                                </div>
+                            </div>
+                            <div class="trade-arrow">→</div>
+                            <div class="trade-side">
+                                <div class="trade-icon">📦</div>
+                                <div class="trade-info">
+                                    <div class="trade-item-name">100×</div>
+                                    <div class="trade-item-qty">Nails</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn btn-success">Add Trade</button>
+                    </div>
+
+                    <!-- Active Trades -->
+                    <div class="trades-section">
+                        <div class="trades-header">Active Trades for Water Bottle</div>
+                        <div class="trades-list">
+                            <div class="trade-item">
+                                <div class="trade-item-display">
+                                    <div class="trade-item-icon">💧</div>
+                                    <span>1×</span>
+                                    <div class="trade-item-arrow">→</div>
+                                    <div class="trade-item-icon">📦</div>
+                                    <span>100×</span>
+                                </div>
+                                <button class="trade-delete">×</button>
+                            </div>
+                            <div class="trade-item">
+                                <div class="trade-item-display">
+                                    <div class="trade-item-icon">💧</div>
+                                    <span>2×</span>
+                                    <div class="trade-item-arrow">→</div>
+                                    <div class="trade-item-icon">🔨</div>
+                                    <span>1×</span>
+                                </div>
+                                <button class="trade-delete">×</button>
+                            </div>
+                            <div class="trade-item">
+                                <div class="trade-item-display">
+                                    <div class="trade-item-icon">💧</div>
+                                    <span>3×</span>
+                                    <div class="trade-item-arrow">→</div>
+                                    <div class="trade-item-icon">💥</div>
+                                    <span>50×</span>
+                                </div>
+                                <button class="trade-delete">×</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="footer-buttons">
+                        <button class="btn btn-success">Save All</button>
+                        <button class="btn btn-secondary">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-section">
+                <h3>Owner View Features</h3>
+                <ul>
+                    <li><strong>Bidirectional Trading:</strong> Configure both OFFER (what shop gives) and REQUEST (what shop wants) independently</li>
+                    <li><strong>Dynamic Stock Validation:</strong> "You have 12 available" updates in real-time based on selected quantity</li>
+                    <li><strong>35/65 Column Split:</strong> Narrower left inventory panel, wider form for detailed transaction building</li>
+                    <li><strong>Visual Trade Summary:</strong> Arrow-based card shows both sides of transaction before confirming</li>
+                    <li><strong>Multiple Bundles:</strong> Owner can offer same item in different quantities (1×, 2×, 3×) with different prices</li>
+                    <li><strong>Real-Time Validation:</strong> Add button disabled if REQUEST item invalid or OFFER exceeds stock</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- CUSTOMER VIEW -->
+        <div class="view-section">
+            <div class="view-title">
+                <span class="view-badge advanced">Advanced</span>
+                Customer View: Advanced Trade Discovery
+            </div>
+            <p class="view-description">
+                Customers see all available trade options for a selected item and can choose which bundle they want. 
+                The interface shows affordability in real-time and displays how many times the trade can be completed.
+            </p>
+
+            <div class="customer-container">
+                <!-- Left: Product Grid (60%) -->
+                <div class="product-grid">
+                    <div class="product-tile selected">
+                        <div class="product-tile-icon">💧</div>
+                        <div class="product-tile-name">Water</div>
+                    </div>
+                    <div class="product-tile">
+                        <div class="product-tile-icon">🍖</div>
+                        <div class="product-tile-name">Food</div>
+                    </div>
+                    <div class="product-tile">
+                        <div class="product-tile-icon">⚕️</div>
+                        <div class="product-tile-name">Medicine</div>
+                    </div>
+                    <div class="product-tile">
+                        <div class="product-tile-icon">🔨</div>
+                        <div class="product-tile-name">Tools</div>
+                    </div>
+                    <div class="product-tile">
+                        <div class="product-tile-icon">🪵</div>
+                        <div class="product-tile-name">Wood</div>
+                    </div>
+                    <div class="product-tile">
+                        <div class="product-tile-icon">🧱</div>
+                        <div class="product-tile-name">Bricks</div>
+                    </div>
+                </div>
+
+                <!-- Right: Details Panel (40%) -->
+                <div class="details-panel">
+                    <div class="details-header">
+                        <div class="details-icon">💧</div>
+                        <div class="details-title-group">
+                            <div class="details-title">Water Bottle</div>
+                            <div class="details-inventory">Shop Stock: 12 units</div>
+                        </div>
+                    </div>
+
+                    <div class="details-description">
+                        Essential for survival. Restores hydration and improves overall health.
+                    </div>
+
+                    <!-- Trade Selection -->
+                    <div class="trades-selector">
+                        <label class="trades-selector-label">Available Trades</label>
+                        
+                        <div class="trade-option selected">
+                            <div class="trade-option-radio"></div>
+                            <div class="trade-option-content">
+                                <span>1×</span>
+                                <span style="color: #f39c12;">→</span>
+                                <span style="color: #f1c40f;">100× Nails</span>
+                            </div>
+                        </div>
+
+                        <div class="trade-option">
+                            <div class="trade-option-radio"></div>
+                            <div class="trade-option-content">
+                                <span>2×</span>
+                                <span style="color: #f39c12;">→</span>
+                                <span style="color: #f1c40f;">1× Baseball Bat</span>
+                            </div>
+                        </div>
+
+                        <div class="trade-option">
+                            <div class="trade-option-radio"></div>
+                            <div class="trade-option-content">
+                                <span>3×</span>
+                                <span style="color: #f39c12;">→</span>
+                                <span style="color: #f1c40f;">50× Ammo</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Affordability -->
+                    <div class="affordability-check">
+                        <div class="affordability-item">
+                            <span>You need:</span>
+                            <span>100× Nails</span>
+                        </div>
+                        <div class="affordability-item">
+                            <span>You have:</span>
+                            <span class="affordability-status">87× Nails ✓</span>
+                        </div>
+                        <div class="affordability-item">
+                            <span>Available:</span>
+                            <span>12 trades max</span>
+                        </div>
+                    </div>
+
+                    <button class="accept-button">Accept Trade: Give 1× Bottle</button>
+                </div>
+            </div>
+
+            <div class="info-section">
+                <h3>Customer View Features</h3>
+                <ul>
+                    <li><strong>Trade Selection Interface:</strong> Radio buttons or clickable cards show all available bundles for selected item</li>
+                    <li><strong>Visual Arrow Representation:</strong> `1× → 100×` format instantly shows what's being traded</li>
+                    <li><strong>Affordability Checking:</strong> Shows what player needs, has, and whether the trade is possible</li>
+                    <li><strong>Stock Availability:</strong> Displays "Available: 12 trades max" based on shop inventory and offer quantity</li>
+                    <li><strong>Contextual Button Text:</strong> "Accept Trade: Give 1× Bottle, Get 100× Nails" clarifies the transaction</li>
+                    <li><strong>Real-Time Updates:</strong> As customer changes selections, affordability and availability recalculate</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- IMPROVEMENTS -->
+        <div class="view-section">
+            <div class="view-title">
+                Template 3 vs. Template 2 Comparison
+            </div>
+
+            <table class="comparison-table">
+                <tr>
+                    <th>Aspect</th>
+                    <th>Template 2</th>
+                    <th>Template 3</th>
+                    <th>Improvement</th>
+                </tr>
+                <tr>
+                    <td><strong>Trading Model</strong></td>
+                    <td>Fixed offer (1 item), variable request</td>
+                    <td>Both offer and request configurable</td>
+                    <td class="benefit">True bidirectional barter</td>
+                </tr>
+                <tr>
+                    <td><strong>Bundle Support</strong></td>
+                    <td>Only 1 unit per trade</td>
+                    <td>Multiple bundle sizes (1×, 2×, 3×)</td>
+                    <td class="benefit">Flexible pricing options</td>
+                </tr>
+                <tr>
+                    <td><strong>Column Layout</strong></td>
+                    <td>50/50 split</td>
+                    <td>35/65 split (narrower form)</td>
+                    <td class="benefit">Less overwhelming UI</td>
+                </tr>
+                <tr>
+                    <td><strong>Data Structure</strong></td>
+                    <td>{exchangeFor, count}</td>
+                    <td>{offer, request, maxRepeats}</td>
+                    <td class="benefit">Tracks inventory limits dynamically</td>
+                </tr>
+                <tr>
+                    <td><strong>Visual Clarity</strong></td>
+                    <td>Text-based listings</td>
+                    <td>Arrow icons + summary cards</td>
+                    <td class="benefit">Instant understanding</td>
+                </tr>
+                <tr>
+                    <td><strong>Customer Choice</strong></td>
+                    <td>Single action per item</td>
+                    <td>Choose from multiple bundle options</td>
+                    <td class="benefit">Better user agency</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- KEY PRINCIPLES -->
+        <div class="view-section">
+            <div class="view-title" style="color: #2ecc71;">
+                Design Principles (Advanced)
+            </div>
+
+            <div class="info-section" style="border-left-color: #f39c12; background-color: rgba(243, 156, 18, 0.1);">
+                <h3 style="color: #f39c12;">Unique to Template 3</h3>
+                <ul>
+                    <li><strong>Bidirectional Validation:</strong> Both OFFER and REQUEST must be valid. OFFER can't exceed inventory</li>
+                    <li><strong>Dynamic maxRepeats:</strong> Calculated as `floor(inventoryQty / offerQty)` for each trade</li>
+                    <li><strong>Transaction Pair Concept:</strong> Every trade is a complete unit (offer + request), not separate fields</li>
+                    <li><strong>Arrow Visual Language:</strong> Use `→` to represent flow of transaction (offer → request)</li>
+                    <li><strong>Column Ratio Strategy:</strong> 35/65 prioritizes form over inventory since transactions are the focus</li>
+                    <li><strong>Bundle Scaling:</strong> If owner has 12 items, offer 1× = 12 trades, offer 2× = 6 trades, offer 3× = 4 trades</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <div class="view-section" style="text-align: center; color: #7f8c8d; margin-top: 60px; padding-top: 30px; border-top: 2px solid #444;">
+            <p>Template 3 represents a mature, feature-complete barter system. The architecture supports complex trading scenarios while maintaining clean, intuitive UX.</p>
+            <p style="margin-top: 15px; font-size: 0.9em;">See <code>design.md</code> for complete implementation guide, state management, event flows, and future enhancements.</p>
+        </div>
+    </div>
+</body>
+</html>
