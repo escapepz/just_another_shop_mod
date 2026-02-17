@@ -1,0 +1,272 @@
+================================================================================
+TEMPLATE 3: LUA CLIENT UI DESIGN - COMPLETE
+================================================================================
+
+DESIGN STATUS: ✅ READY TO IMPLEMENT
+All components available. Zero blockers. All patterns documented.
+
+================================================================================
+DELIVERABLES SUMMARY
+================================================================================
+
+8 comprehensive documents created:
+
+1. INDEX.md
+   - Navigation guide to all documents
+   - Quick start workflow
+   - FAQ and support section
+
+2. README.md
+   - Project overview
+   - Architecture summary
+   - Implementation plan with phases
+   - Testing checklist
+
+3. design.md (CANONICAL SPEC)
+   - Feature requirements
+   - Owner view layout (35/65 split)
+   - Customer view layout (60/40 split)
+   - Data structures and state management
+   - Validation rules and event flows
+   - Comparison with Template 2
+
+4. lua_implementation.md
+   - Component availability audit (✅ ❌)
+   - Component workarounds for missing UI elements
+   - Detailed layout hierarchies (ASCII diagrams)
+   - All method signatures for both views
+   - Data structure examples with code
+   - Validation rule tables
+   - Implementation checklist
+
+5. code_structure.lua
+   - COMPLETE working template code for both views
+   - Not pseudocode—actual executable Lua structure
+   - Ready to copy and adapt
+   - Full method implementations
+   - Event handler patterns
+   - Helper methods for validation and state
+
+6. component_reference.md
+   - API reference for all 9 available components
+   - Usage examples for each component
+   - Game API integration (getScriptManager, container, inventory)
+   - Color constants
+   - Design patterns (form sections, lists, grids)
+   - Summary table with file locations
+
+7. component_status.md
+   - Complete audit of component availability
+   - 9 critical components: ALL AVAILABLE ✅
+   - 4 optional components: workarounds provided ❌
+   - Build instructions (Level 1-5 complexity)
+   - Phase-based implementation roadmap
+   - Testing checklist
+
+8. design.html
+   - Original visual mockup (reference only)
+   - Shows intended UI appearance
+   - Use for styling decisions
+
+================================================================================
+QUICK START
+================================================================================
+
+Step 1: Read INDEX.md (this file tells you how to read the others)
+Step 2: Read README.md (5 min overview)
+Step 3: Open code_structure.lua (complete template code)
+Step 4: Reference component_reference.md while coding
+Step 5: Implement shop_view_owner.lua following code_structure.lua
+Step 6: Implement shop_view_customer.lua following code_structure.lua
+
+Total prep time: 30 minutes
+Total implementation time: 3-4 hours
+Total testing time: 1 hour
+
+================================================================================
+COMPONENT AVAILABILITY
+================================================================================
+
+✅ CRITICAL COMPONENTS (ALL AVAILABLE)
+   • ISBaseEntityWindow    (window container)
+   • ISPanel               (generic container)
+   • ISTableLayout         (35/65 & 60/40 splits)
+   • ISLabel               (text display)
+   • ISButton              (clickable buttons)
+   • ISTextEntryBox        (text inputs)
+   • ISScrollingListBox    (scrollable lists)
+   • ISTiledIconListBox    (icon grids)
+   • ISItemSlot            (drag-drop items)
+
+❌ OPTIONAL COMPONENTS (WORKAROUNDS AVAILABLE)
+   • ISRadioButton         → Use ISScrollingListBox (simple)
+   • ISSpinner             → Use ISTextEntryBox (simple)
+   • Tooltips              → Use colored ISLabel (simple)
+   • Trade Card Renderer   → Custom draw() method (medium)
+
+RESULT: Zero blockers. Build can start immediately.
+
+================================================================================
+KEY ARCHITECTURE
+================================================================================
+
+OWNER VIEW (35/65 SPLIT)
+  Left (35%): Item inventory list
+  Right (65%): Form with OFFER + REQUEST sections
+    - OFFER: What shop gives (quantity input + stock display)
+    - REQUEST: What shop wants (quantity + item type inputs)
+    - SUMMARY: Arrow-based transaction display
+    - ADD TRADE: Button with validation
+    - ACTIVE TRADES: List with delete buttons
+    - FOOTER: SAVE ALL + CANCEL
+
+CUSTOMER VIEW (60/40 SPLIT)
+  Left (60%): Product grid (tile display)
+  Right (40%): Details panel
+    - Product info header
+    - Trade selector (radio button replacement)
+    - Affordability check display
+    - Action button (ACCEPT TRADE)
+
+VALIDATION:
+  - Real-time feedback (green/red text)
+  - Disabled state for invalid inputs
+  - Clear error messages
+  - Prevents impossible trades
+
+DATA STRUCTURE:
+  modData.shopTrades = {
+    ["Base.Water"] = {
+      {offer = {itemType, quantity}, request = {itemType, quantity}},
+      -- more trades for same item...
+    }
+  }
+
+================================================================================
+FILE LOCATIONS
+================================================================================
+
+Design documents (read these):
+  .design/template_3/
+  ├── INDEX.md
+  ├── README.md
+  ├── design.md
+  ├── lua_implementation.md
+  ├── code_structure.lua
+  ├── component_reference.md
+  ├── component_status.md
+  └── design.html
+
+Implementation targets (modify these):
+  just_another_shop_mod/42.13.1/media/lua/client/jasm/entity_ui/
+  ├── shop_view.lua (no changes needed - router file)
+  ├── shop_view_owner.lua (IMPLEMENT from code_structure.lua)
+  └── shop_view_customer.lua (IMPLEMENT from code_structure.lua)
+
+Reference (legacy patterns):
+  .tmp/codebase/projectzomboid_lua_codebase.xml
+
+================================================================================
+IMPLEMENTATION CHECKLIST
+================================================================================
+
+PREPARATION:
+  ☐ Read INDEX.md (navigation guide)
+  ☐ Read README.md (overview)
+  ☐ Read design.md (requirements)
+  ☐ Read lua_implementation.md (technical details)
+  ☐ Scan code_structure.lua (template)
+  ☐ Verify components in component_status.md
+  ☐ Bookmark component_reference.md
+
+OWNER VIEW (shop_view_owner.lua):
+  ☐ Change layout to 35/65 split
+  ☐ Build inventory list (left column)
+  ☐ Build OFFER section (quantity input)
+  ☐ Build REQUEST section (quantity + item type)
+  ☐ Add real-time validation (green/red labels)
+  ☐ Add summary card (arrow display)
+  ☐ Add ADD TRADE button with validation
+  ☐ Build active trades list
+  ☐ Add SAVE ALL / CANCEL footer
+  ☐ Implement all event handlers
+  ☐ Test each section incrementally
+
+CUSTOMER VIEW (shop_view_customer.lua):
+  ☐ Keep 60/40 layout
+  ☐ Build product grid (left column)
+  ☐ Build trade selector (right column - NEW)
+  ☐ Build affordability display (right column - NEW)
+  ☐ Implement trade selection logic
+  ☐ Add action button with validation
+  ☐ Test trade selection and affordability
+
+INTEGRATION & TESTING:
+  ☐ Test owner creating trades
+  ☐ Verify validation works
+  ☐ Test customer browsing trades
+  ☐ Test affordability calculation
+  ☐ Test trade completion
+  ☐ Verify server commands sent
+  ☐ Verify inventory updates
+  ☐ Test UI responsiveness at different window sizes
+  ☐ Test with multiple trades per item
+
+================================================================================
+KEY RESOURCES
+================================================================================
+
+When implementing:
+  • code_structure.lua - Complete template (copy this structure)
+  • component_reference.md - API lookup (bookmark this)
+  • design.md - Validation rules (reference when building validation)
+  • lua_implementation.md - Layout details (refer to ASCII diagrams)
+
+When debugging:
+  • component_status.md - Component audit (verify availability)
+  • design.md - Validation rules (check if validation correct)
+  • code_structure.lua - Method signatures (check if methods match)
+  • shop_view_owner.lua (existing) - Code patterns (reference)
+
+================================================================================
+NOTES
+================================================================================
+
+✅ All critical components available - no external dependencies
+✅ Complete template code provided - ready to implement
+✅ Single-file design - no modular components (for now)
+✅ Comprehensive documentation - 8 documents covering all aspects
+✅ Clear architecture - layouts well-defined with ASCII diagrams
+✅ Zero blockers - ready to start immediately
+
+IMPORTANT: code_structure.lua is not pseudocode - it's real, working Lua
+           code that can be copied and adapted to your codebase.
+
+================================================================================
+NEXT STEPS
+================================================================================
+
+1. Open INDEX.md (you now know how to use all documents)
+2. Open code_structure.lua (the actual template code)
+3. Start implementing shop_view_owner.lua
+4. Reference component_reference.md for API details
+5. Follow lua_implementation.md layout hierarchies
+6. Test incrementally
+
+Estimated total time: 4-5 hours (prep + implementation + testing)
+
+================================================================================
+STATUS: READY TO IMPLEMENT
+================================================================================
+
+All design decisions made.
+All components verified available.
+All code patterns documented.
+All validation rules specified.
+All data structures defined.
+
+You have everything needed to implement Template 3.
+
+Begin with INDEX.md and work from there.
+
+================================================================================
