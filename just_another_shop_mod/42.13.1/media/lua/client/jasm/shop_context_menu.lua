@@ -44,12 +44,19 @@ end
 ---@param playerObj IsoPlayer
 ---@param containerObj IsoObject
 local function onOpenShopUI(worldObjects, playerObj, containerObj)
+	print("[JASM_DEBUG] onOpenShopUI called")
+	print("[JASM_DEBUG] playerObj:", playerObj)
+	print("[JASM_DEBUG] containerObj:", containerObj)
+	
 	-- local shopUI = JASM_ShopView:new(100, 100, 600, 400, playerObj, containerObj)
 	-- shopUI:show()
 		-- Example usage:
+	---@type JASM_ShopView_Owner
 	local shopView = JASM_ShopView_Owner:new(0, 0, 800, 600, playerObj, containerObj)
-	shopView:initialise()
-	shopView:createChildren()
+	print("[JASM_DEBUG] shopView created:", shopView)
+	
+	shopView:show()
+	print("[JASM_DEBUG] shopView shown")
 end
 
 ---@param playerIndex integer

@@ -2,6 +2,6 @@ id=just_another_shop_mod
 name=Just Another Shop Mod
 poster=poster.png
 icon=icon.png
-require=\container_authority_framework,\pz_lua_commons,\zul
+require=\zul,\pz_lua_commons,\container_authority_framework
 description=A lightweight shop system based on the Container Authority Framework.
 version=1.0.0

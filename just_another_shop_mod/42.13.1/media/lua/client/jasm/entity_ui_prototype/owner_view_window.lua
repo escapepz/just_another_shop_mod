@@ -1,0 +1,791 @@
+require("Entity/ISUI/Windows/ISEntityWindow")
+require("Entity/ISUI/Controls/ISTableLayout")
+require("ISUI/ISLabel")
+require("ISUI/ISButton")
+require("ISUI/ISPanel")
+require("ISUI/ISScrollingListBox")
+
+local ShopDataManager = require("jasm_test/models/shop_data_manager")
+local SearchFilterPanel = require("jasm_test/components/shop_search_filter_panel")
+local ProductListPanel = require("jasm_test/components/product_list_panel")
+local CustomerOptionItem = require("jasm_test/components/shop_customer_option_item")
+local ShopTradeOfferPanel = require("jasm_test/components/shop_trade_offer_panel")
+local ShopSectionHeader = require("jasm_test/components/shop_section_header")
+local ShopRequirementPanel = require("jasm_test/components/shop_requirement_panel")
+local ShopFooterPanel = require("jasm_test/components/shop_footer_panel")
+
+-- ============================================================
+-- COLOR PALETTE (matches design5.html / customer_view_window)
+-- ============================================================
+-- #0f0f0f  → { r=0.06, g=0.06, b=0.06 }  Main bg / right panel
+-- #1a1a1a  → { r=0.10, g=0.10, b=0.10 }  Left panel / row bg
+-- #2a2416  → { r=0.16, g=0.14, b=0.09 }  Selected item bg
+-- #f39c12  → { r=0.95, g=0.61, b=0.07 }  Orange accent
+-- #333     → { r=0.20, g=0.20, b=0.20 }  Border / divider
+-- #ff4444  → { r=1.00, g=0.27, b=0.27 }  Error text
+-- #ccc     → { r=0.80, g=0.80, b=0.80 }  Secondary text
+-- #888     → { r=0.53, g=0.53, b=0.53 }  Muted text
+
+-- ============================================================
+-- CONSTANTS
+-- ============================================================
+local LEFT_PANEL_WIDTH = 280 -- px (design5: aside width: 280px)
+local MAX_PATHS = 5 -- design5_rule §3: max 5 confirmed paths
+
+-- ============================================================
+-- TYPE ANNOTATIONS
+-- ============================================================
+
+---@class OwnerRequirementPath
+---@field dbg    string   Full type (e.g. "Base.Gold")
+---@field qty    number
+---@field name   string
+
+---@class OwnerViewWindow : ISEntityWindow
+---@field player            IsoPlayer
+---@field titleBar          boolean
+---@field xuiSkin           XuiSkin
+---@field masterLayout      ISTableLayout
+---@field leftStackLayout   ISTableLayout
+---@field mainContentLayout ISTableLayout
+---@field dataManager       ShopDataManager
+---@field inventory         CustomerViewInventory
+---@field selectedItem      CustomerViewInventoryItem|nil
+---@field hasUnsavedChanges boolean
+---@field requirementPaths  OwnerRequirementPath[]
+---@field offerQty          number
+-- left panel components
+---@field searchPanel    ShopSearchFilterPanel|nil
+---@field productPanel   ProductListPanel|nil
+---@field pathsTableLayout ISTableLayout
+---@field pathItems      ShopCustomerOptionItem[]
+-- right panel widgets
+---@field rightPanel    ISPanel
+---@field offerIcon     ISLabel
+---@field offerName     ISLabel
+---@field offerDebug    ISLabel
+---@field offerStock    ISLabel
+---@field offerQtyInput ISTextEntryBox
+---@field yieldInfo     ISLabel
+---@field pathsScrollList ISScrollingListBox
+---@field newPathQtyInput  ISTextEntryBox
+---@field newPathDbgInput  ISTextEntryBox
+---@field addPathBtn       ISButton
+---@field errorLabel       ISLabel
+---@field publishBtn       ISButton
+local OwnerViewWindow = ISEntityWindow:derive("OwnerViewWindow")
+
+-- ============================================================
+-- REUSED HELPER: xuiBuild (identical pattern to CustomerViewWindow)
+-- ============================================================
+
+--- Helper to build, initialise and instantiate a component in one go.
+function OwnerViewWindow:xuiBuild(style, class, ...)
+    local o = ISXuiSkin.build(self.xuiSkin, style, class, ...)
+    if o then
+        ---@diagnostic disable-next-line: unnecessary-if
+        if o.initialise then
+            o:initialise()
+        end
+        ---@diagnostic disable-next-line: unnecessary-if
+        if o.instantiate then
+            o:instantiate()
+        end
+    end
+    return o
+end
+
+-- ============================================================
+-- ENTITY HEADER OVERRIDE (reused from customer_view_window)
+-- ============================================================
+
+function OwnerViewWindow:so_override_the_entity_header()
+    if not self.entityHeader then
+        return
+    end
+
+    ---@diagnostic disable-next-line: inject-field
+    self.entityHeader.consumeMouseEvents = false
+    self.entityHeader.background = true
+    self.entityHeader.backgroundColor = { r = 0.06, g = 0.06, b = 0.06, a = 1.0 }
+    self.entityHeader.borderColor = { r = 0.95, g = 0.61, b = 0.07, a = 1.0 }
+
+    ---@cast self.entity IsoObject
+    if self.entityHeader.icon then
+        local texName = self.entity:getTextureName()
+        local size = 48
+        ---@diagnostic disable-next-line: inject-field
+        self.entityHeader.iconSize = size
+        self.entityHeader.icon.background = true
+        ---@diagnostic disable-next-line: undefined-field
+        self.entityHeader.icon.texture = getTexture(texName)
+        self.entityHeader.icon:setWidth(size)
+        self.entityHeader.icon:setHeight(size)
+        ---@diagnostic disable-next-line: inject-field
+        self.entityHeader.icon.autoScale = true
+        self.entityHeader.icon:setY(-4)
+    end
+
+    if self.entityHeader.title then
+        self.entityHeader.title:setName("SHOP OWNER CONFIG")
+        self.entityHeader.title.textColor = { r = 1.0, g = 1.0, b = 1.0, a = 1.0 }
+    end
+
+    self.entityHeader:calculateLayout(self.width, 0)
+end
+
+-- ============================================================
+-- WINDOW LIFECYCLE (reused pattern from customer_view_window)
+-- ============================================================
+
+function OwnerViewWindow:initialise()
+    print("[JASM] OwnerViewWindow:initialise() called")
+    ISEntityWindow.initialise(self)
+end
+
+function OwnerViewWindow:removeDebugPanel()
+    ---@diagnostic disable-next-line: unnecessary-if
+    if self.entityDebug then
+        self:removeChild(self.entityDebug)
+        self.entityDebug = nil
+    end
+end
+
+function OwnerViewWindow:createChildren()
+    print("[JASM] OwnerViewWindow:createChildren() called")
+    ISEntityWindow.createChildren(self)
+
+    self:removeDebugPanel()
+    self:so_override_the_entity_header()
+
+    ---@diagnostic disable-next-line: unnecessary-if
+    if self.componentsPanel then
+        self.componentsPanel:setVisible(false)
+    end
+
+    -- Hook resize
+    ---@diagnostic disable-next-line: assign-type-mismatch
+    self.resizeWidget.resizeFunction = self.calculateLayout
+    ---@diagnostic disable-next-line: assign-type-mismatch
+    self.resizeWidget2.resizeFunction = self.calculateLayout
+
+    -- Build UI
+    self:initLayout()
+    self:populateInitialData()
+
+    ---@diagnostic disable-next-line: unnecessary-if
+    if self.masterLayout then
+        self.masterLayout:backMost()
+    end
+
+    -- Keep window chrome on top
+    ---@diagnostic disable-next-line: unnecessary-if
+    if self.collapseButton then
+        self.collapseButton:bringToTop()
+    end
+    ---@diagnostic disable-next-line: unnecessary-if
+    if self.pinButton then
+        self.pinButton:bringToTop()
+    end
+    ---@diagnostic disable-next-line: unnecessary-if
+    if self.closeButton then
+        self.closeButton:bringToTop()
+    end
+
+    self.xuiPreferredResizeWidth = self.width
+    self.xuiPreferredResizeHeight = self.height
+    self:calculateLayout(self.width, self.height)
+end
+
+-- ============================================================
+-- LAYOUT CALCULATION (reused pattern from customer_view_window)
+-- ============================================================
+
+function OwnerViewWindow:xuiRecalculateLayout(
+    _preferredWidth,
+    _preferredHeight,
+    _force,
+    _anchorRight
+)
+    if self.calculateLayout and ((not self.dirtyLayout) or _force) then
+        self.xuiPreferredResizeWidth = self.width
+        self.xuiPreferredResizeHeight = self.height
+        self.xuiResizeAnchorRight = _anchorRight
+        if _preferredWidth then
+            self.xuiPreferredResizeWidth = _preferredWidth < 0 and self.width + _preferredWidth
+                or _preferredWidth
+        end
+        if _preferredHeight then
+            self.xuiPreferredResizeHeight = _preferredHeight < 0 and self.height + _preferredHeight
+                or _preferredHeight
+        end
+        self.dirtyLayout = true
+    end
+end
+
+function OwnerViewWindow:calculateLayout(_preferredWidth, _preferredHeight)
+    local th = self:titleBarHeight()
+    local rh = self.resizable and self:resizeWidgetHeight() or 0
+
+    local width = math.max(_preferredWidth or self.width, self.minimumWidth)
+    local height = math.max(_preferredHeight or self.height, self.minimumHeight)
+
+    -- Entity header
+    local y = th
+    ---@diagnostic disable-next-line: unnecessary-if
+    if self.entityHeader then
+        self.entityHeader:setX(0)
+        self.entityHeader:setY(y)
+        self.entityHeader:calculateLayout(width, 0)
+        y = y + self.entityHeader:getHeight()
+    end
+
+    -- Master layout fills everything below the entity header
+    self.masterLayout:setX(0)
+    self.masterLayout:setY(y)
+    self.masterLayout:setWidth(width)
+    self.masterLayout:setHeight(height - y - rh)
+    self.masterLayout:calculateLayout(width, height - y - rh)
+
+    -- Calculate layouts handled entirely by masterLayout now
+
+    self.pinButton:setX(width - 3 - self.pinButton:getWidth())
+    self.collapseButton:setX(width - 3 - self.collapseButton:getWidth())
+
+    if self.width ~= width then
+        self:setWidth(width)
+    end
+    if self.height ~= height then
+        self:setHeight(height)
+    end
+    self.dirtyLayout = false
+end
+
+function OwnerViewWindow:prerender()
+    ---@diagnostic disable-next-line: unnecessary-if
+    if self.dirtyLayout then
+        local oldX = self:getX()
+        local oldWidth = self:getWidth()
+
+        ---@diagnostic disable-next-line: unnecessary-if
+        if self.calculateLayout then
+            self:calculateLayout(self.xuiPreferredResizeWidth, self.xuiPreferredResizeHeight)
+        end
+        self.dirtyLayout = false
+
+        if self.xuiResizeAnchorRight then
+            self:setX(oldX - (self:getWidth() - oldWidth))
+            self.xuiResizeAnchorRight = false
+        end
+    end
+
+    ISEntityWindow.prerender(self)
+end
+
+-- ============================================================
+-- LAYOUT INIT
+-- ============================================================
+
+function OwnerViewWindow:initLayout()
+    local th = self:titleBarHeight()
+
+    -- MASTER LAYOUT: vertical columns (left stack | right panel)
+    ---@type ISTableLayout
+    self.masterLayout = self:xuiBuild(nil, ISTableLayout, 0, th, self.width, self.height - th)
+    self.masterLayout.background = false
+    ---@diagnostic disable-next-line: inject-field
+    self.masterLayout.consumeMouseEvents = false
+    self:addChild(self.masterLayout)
+
+    -- Two columns: fixed left (280px) + fill right
+    local colL = self.masterLayout:addColumn()
+    colL.minimumWidth = LEFT_PANEL_WIDTH
+    ---@diagnostic disable-next-line: inject-field
+    colL.maximumWidth = LEFT_PANEL_WIDTH
+    self.masterLayout:addColumnFill()
+    self.masterLayout:addRowFill()
+
+    -- LEFT STACK LAYOUT: vertical (search row + list fill)
+    ---@type ISTableLayout
+    self.leftStackLayout = self:xuiBuild(nil, ISTableLayout, 0, 0, 10, 10)
+    self.leftStackLayout:addColumnFill()
+    local rowS = self.leftStackLayout:addRow()
+    if rowS then
+        rowS.minimumHeight = 90 -- tighter slim filter bar height
+        ---@diagnostic disable-next-line: inject-field
+        rowS.maximumHeight = 90
+    end
+    self.leftStackLayout:addRowFill()
+    self.masterLayout:setElement(0, 0, self.leftStackLayout)
+
+    -- Build the two left-panel sub-components
+    self:initLeftPanels()
+
+    -- RIGHT PANEL
+    self:initRightPanel()
+    self.masterLayout:setElement(1, 0, self.rightPanel)
+
+    self:calculateLayout(self.width, self.height)
+end
+
+-- ============================================================
+-- LEFT PANEL - ShopSearchFilterPanel (slim) + ProductListView
+-- ============================================================
+
+--- Build the search filter and product list panels into leftStackLayout.
+function OwnerViewWindow:initLeftPanels()
+    -- Search filter (slim: search box + sort combo only)
+    ---@type ShopSearchFilterPanel
+    self.searchPanel = self:xuiBuild(
+        nil,
+        SearchFilterPanel,
+        0,
+        0,
+        10,
+        90,
+        self,
+        self.xuiSkin,
+        true -- slim=true
+    )
+    self.searchPanel.onSearch = self.onInventorySearch
+    self.searchPanel.onSort = self.onInventorySort
+    -- Removed onViewToggle: owner view is strictly list-only
+    self.leftStackLayout:setElement(0, 0, self.searchPanel)
+
+    -- List view (fills remaining height)
+    self.productPanel =
+        self:xuiBuild(nil, ProductListPanel, 0, 0, 10, 10, self.player, self.xuiSkin)
+    ---@diagnostic disable-next-line: unnecessary-if
+    if self.productPanel then
+        self.productPanel.target = self
+        ---@diagnostic disable-next-line: inject-field
+        self.productPanel.onSelectProduct = self.onSelectInventoryItem
+        self.leftStackLayout:setElement(0, 1, self.productPanel)
+
+        -- Force List Mode (no grid in owner config)
+        local panel = self.productPanel
+        ---@cast panel ProductListPanel
+        panel:setViewMode("list")
+    end
+end
+
+-- ============================================================
+-- RIGHT PANEL - Configuration
+-- ============================================================
+
+local R_PAD = 16 -- inner padding for right panel
+local LABEL_H = 20 -- standard label height
+local INPUT_H = 26 -- standard input height
+
+function OwnerViewWindow:initRightPanel()
+    local rw = self.width - LEFT_PANEL_WIDTH
+    local rh = self.height
+
+    ---@type ISTableLayout|nil
+    self.rightPanel = self:xuiBuild(nil, ISTableLayout, 0, 0, rw, rh)
+    if not self.rightPanel then
+        return
+    end
+
+    self.rightPanel.background = true
+    -- #0f0f0f - right panel background
+    self.rightPanel.backgroundColor = { r = 0.06, g = 0.06, b = 0.06, a = 1.0 }
+
+    -- One column that fills the right panel width
+    self.rightPanel:addColumnFill()
+
+    -- (Removed "Configure Trade Pair" section header as per request)
+
+    -- ── OFFER SECTION ───────────────────────────────────────────────
+    local offerSecRow = self.rightPanel:addRow()
+    if offerSecRow then
+        ---@type ShopTradeOfferPanel|nil
+        self.offerPanel = ShopTradeOfferPanel:new(
+            0,
+            0,
+            rw - R_PAD * 2,
+            120,
+            self,
+            self.onOfferQtyChanged,
+            self.xuiSkin
+        )
+        if self.offerPanel then
+            self.offerPanel:initialise()
+            self.offerPanel:instantiate()
+            self.rightPanel:setElement(0, offerSecRow:index(), self.offerPanel)
+        end
+    end
+
+    -- ── REQUIREMENT PATHS SECTION ───────────────────────────────────
+    local pathsRow = self.rightPanel:addRow()
+    if pathsRow then
+        ---@diagnostic disable-next-line: inject-field
+        pathsRow.marginTop = 10
+        local callbacks = {
+            onUnsavedChanges = function()
+                self.hasUnsavedChanges = true
+            end,
+            onError = function(_, msg)
+                self:showError(msg)
+            end,
+            onClearError = function()
+                self:clearError()
+            end,
+        }
+        self.requirementPanel = ShopRequirementPanel:new(
+            0,
+            0,
+            rw - R_PAD * 2,
+            300,
+            self.requirementPaths,
+            MAX_PATHS,
+            self.inventory,
+            self,
+            callbacks,
+            self.xuiSkin
+        )
+        self.requirementPanel:initialise()
+        self.requirementPanel:instantiate()
+        self.rightPanel:setElement(0, pathsRow:index(), self.requirementPanel)
+    end
+
+    -- ── FOOTER ──────────────────────────────────────────────────────
+    self.rightPanel:addRowFill() -- Flex row to push footer to bottom
+
+    local footerRow = self.rightPanel:addRow()
+    if footerRow then
+        footerRow.minimumHeight = 64
+        ---@diagnostic disable-next-line: inject-field
+        footerRow.marginTop = 10
+        self.footerPanel =
+            ShopFooterPanel:new(0, 0, rw - R_PAD * 2, 60, self, self.onPublishClicked, self.xuiSkin)
+        ---@diagnostic disable-next-line: unnecessary-if
+        if self.footerPanel then
+            self.footerPanel:initialise()
+            self.footerPanel:instantiate()
+            self.rightPanel:setElement(0, footerRow:index(), self.footerPanel)
+        end
+    end
+end
+
+-- ============================================================
+-- INVENTORY LIST RENDERING (custom draw via ISScrollingListBox)
+-- ============================================================
+
+--- Populate the product panel with the current inventory.
+---@param inv CustomerViewInventory
+function OwnerViewWindow:refreshInventoryList(inv)
+    ---@diagnostic disable-next-line: unnecessary-if
+    if self.productPanel then
+        self.productPanel:setProducts(inv)
+    end
+end
+
+-- ============================================================
+-- DATA POPULATION
+-- ============================================================
+
+function OwnerViewWindow:populateInitialData()
+    self.requirementPaths = {}
+    self.hasUnsavedChanges = false
+    self.offerQty = 1
+    self.selectedItem = nil
+
+    -- Load inventory
+    self:refreshInventoryList(self.inventory)
+
+    -- If inventory has items, select the first automatically
+    if self.inventory and #self.inventory.list > 0 then
+        self:onSelectInventoryItem(self.inventory.list[1])
+    else
+        self:updateOfferPreview(nil)
+    end
+end
+
+-- ============================================================
+-- CALLBACKS
+-- ============================================================
+
+--- Inventory search callback. Passed as `onSearch` to the SearchFilterPanel.
+---@param text string
+function OwnerViewWindow:onInventorySearch(text)
+    print("[JASM] OwnerViewWindow:onInventorySearch() query: " .. tostring(text))
+    local filtered = self.dataManager:search(text)
+    self:refreshInventoryList(filtered)
+end
+
+--- Inventory sort callback. Passed as `onSort` to the SearchFilterPanel.
+---@param mode string
+function OwnerViewWindow:onInventorySort(mode)
+    print("[JASM] OwnerViewWindow:onInventorySort() mode: " .. tostring(mode))
+    local sorted = self.dataManager:sort(mode)
+    self:refreshInventoryList(sorted)
+end
+
+--- Select an inventory item as the current trade "offer".
+---@param entry CustomerViewInventoryItem
+function OwnerViewWindow:onSelectInventoryItem(entry)
+    print("[JASM] OwnerViewWindow:onSelectInventoryItem() item: " .. tostring(entry and entry.name))
+    self.selectedItem = entry
+    -- Clear paths from previous selection
+    self.requirementPaths = {}
+    -- Load saved per-item paths if the entry has trades stored
+    ---@diagnostic disable-next-line: undefined-field
+    if entry and entry.trades and type(entry.trades) == "table" then
+        ---@diagnostic disable-next-line: undefined-field
+        for _, t in ipairs(entry.trades) do
+            local path = {
+                dbg = t.requestItem or "",
+                qty = t.requestQty or 1,
+                name = t.name or t.requestItem or "",
+                icon = nil,
+            }
+            -- Try to look up icon from inventory map
+            local mapped = self.inventory and self.inventory.map and self.inventory.map[path.dbg]
+            ---@diagnostic disable-next-line: unnecessary-if
+            if mapped then
+                path.icon = mapped.icon
+            end
+            table.insert(self.requirementPaths, path)
+        end
+    end
+    self.hasUnsavedChanges = false
+    self:updateOfferPreview(entry)
+    ---@diagnostic disable-next-line: unnecessary-if
+    if self.requirementPanel then
+        ---@diagnostic disable-next-line: undefined-field
+        self.requirementPanel:setRequirementPaths(self.requirementPaths)
+    end
+    -- Sync selection highlight in the product panel
+    if self.productPanel then
+        self.productPanel:setSelectedProduct(entry)
+    end
+end
+
+--- Update the offer preview box (right panel header area).
+---@param entry CustomerViewInventoryItem|nil
+function OwnerViewWindow:updateOfferPreview(entry)
+    if self.offerPanel then
+        local name = entry and (entry.name or "?") or "Select an item"
+        local dbg = "Dbg: " .. (entry and (entry.type or "--") or "--")
+        local stock = entry and (entry.stock or 0) or 0
+        local tex = entry and entry.icon or nil
+
+        -- Check if it's a proxy string not supported by emojis
+        if tex and type(tex) == "string" and not getTexture(tex) then
+            tex = nil -- will default to ?
+        end
+
+        self.offerPanel:setOfferItem(name, dbg, stock, tex)
+    end
+
+    -- Yield info
+    self:updateYieldInfo()
+end
+
+--- Recalculate and display yield info.
+function OwnerViewWindow:updateYieldInfo()
+    if not self.offerPanel then
+        return
+    end
+
+    if not self.selectedItem then
+        self.offerPanel:setYieldInfo("Select an item to configure.")
+        return
+    end
+
+    local qty = self.offerPanel:getQty()
+    if qty < 1 then
+        qty = 1
+    end
+
+    local stock = self.selectedItem.stock or 0
+    local totalTrades = math.floor(stock / qty)
+    self.offerPanel:setYieldInfo(
+        string.format("This will create %d total trades based on your current stock.", totalTrades)
+    )
+end
+
+--- Called when the offer quantity input changes.
+function OwnerViewWindow:onOfferQtyChanged()
+    local qty = self.offerPanel and self.offerPanel:getQty() or 1
+    self.offerQty = math.max(1, qty)
+    self:updateYieldInfo()
+end
+
+--- Called when "Add" button is clicked to add a requirement path.
+
+--- Published trade: validate -> save -> notify.
+function OwnerViewWindow:onPublishClicked()
+    print("[JASM] OwnerViewWindow:onPublishClicked() called")
+    if not self.selectedItem then
+        self:showError("Error: Select an item to configure first")
+        return
+    end
+
+    -- Validation: at least one confirmed path
+    local confirmedCount = 0
+    for _, _ in ipairs(self.requirementPaths) do
+        confirmedCount = confirmedCount + 1
+    end
+    if confirmedCount == 0 then
+        self:showError("Error: Every trade must have at least one requirement path")
+        return
+    end
+
+    -- Validation: stock >= qty
+    local qty = self.offerPanel and self.offerPanel:getQty() or 1
+    local stock = self.selectedItem.stock or 0
+    if stock < qty then
+        self:showError("Error: Stock is insufficient for even one trade")
+        return
+    end
+
+    -- Persist paths back onto the entry's trades table
+    self.selectedItem.trades = {}
+    for _, p in ipairs(self.requirementPaths) do
+        table.insert(self.selectedItem.trades, {
+            requestItem = p.dbg,
+            requestQty = p.qty,
+            name = p.name,
+        })
+    end
+    self.selectedItem.offerQty = qty
+
+    self:clearError()
+    self.hasUnsavedChanges = false
+
+    -- Notify (in a real mod this would send to server)
+    print(
+        string.format(
+            "[JASM] OwnerViewWindow: Published trade  Offer: %s x%d  Paths: %d",
+            self.selectedItem.name,
+            qty,
+            confirmedCount
+        )
+    )
+
+    ---@diagnostic disable-next-line: unnecessary-if
+    -- Visual feedback: flash or info message
+    if self.footerPanel then
+        ---@diagnostic disable-next-line: undefined-field
+        self.footerPanel:setSuccess(
+            "Trade published! ("
+                .. self.selectedItem.name
+                .. " x"
+                .. qty
+                .. ", "
+                .. confirmedCount
+                .. " paths)"
+        )
+    end
+end
+
+--- Show an error (or info) message in the footer error space.
+---@param msg string
+function OwnerViewWindow:showError(msg)
+    ---@diagnostic disable-next-line: unnecessary-if
+    if self.footerPanel then
+        ---@diagnostic disable-next-line: undefined-field
+        self.footerPanel:setError(msg)
+    end
+end
+
+--- Clear the error/info message.
+function OwnerViewWindow:clearError()
+    ---@diagnostic disable-next-line: unnecessary-if
+    if self.footerPanel then
+        ---@diagnostic disable-next-line: undefined-field
+        self.footerPanel:clearError()
+    end
+end
+
+-- ============================================================
+-- CONSTRUCTOR
+-- ============================================================
+
+---@param x number
+---@param y number
+---@param w number
+---@param h number
+---@param player IsoPlayer
+---@param entity IsoObject
+---@return OwnerViewWindow
+function OwnerViewWindow:new(x, y, w, h, player, entity)
+    print("[JASM] OwnerViewWindow:new() instantiating window")
+    local xuiSkin = XuiManager.GetDefaultSkin()
+    local style = xuiSkin:getEntityUiStyle("JASM_OwnerViewWindow")
+    ---@type OwnerViewWindow
+    local o = ISEntityWindow:new(x, y, w, h, player, entity, style)
+    setmetatable(o, self)
+    self.__index = self
+
+    o.player = player
+    o.xuiSkin = xuiSkin
+    o.title = "Shop Config"
+    o.titleBar = true
+    o.moveWithMouse = true
+    o.enableHeader = true
+    o:setResizable(false) -- disable resize because of performance
+    -- Fixed dimensions per design5_rule §1 (but allow resize through standard handler)
+    o.minimumWidth = 800
+    o.minimumHeight = 600
+    o.entity = entity
+
+    -- Data
+    o.dataManager = ShopDataManager()
+    local container = entity:getContainer()
+    ---@diagnostic disable-next-line: unnecessary-if
+    if container then
+        o.inventory = o.dataManager:scanContainer(container)
+    else
+        o.inventory = { map = {}, list = {} }
+    end
+
+    o.requirementPaths = {}
+    o.hasUnsavedChanges = false
+    o.selectedItem = nil
+    o.offerQty = 1
+
+    return o
+end
+
+-- ============================================================
+-- REGISTRATION / CONTEXT MENU
+-- ============================================================
+
+---@param playerIndex integer
+---@param _context any
+---@param entity IsoObject
+local function openOwnerViewWindow(playerIndex, _context, entity)
+    local screenWidth = getCore():getScreenWidth()
+    local screenHeight = getCore():getScreenHeight()
+
+    local windowWidth = 800
+    local windowHeight = 600
+    local windowX = (screenWidth - windowWidth) / 2
+    local windowY = (screenHeight - windowHeight) / 2
+
+    local player = getSpecificPlayer(playerIndex)
+    local window = OwnerViewWindow:new(windowX, windowY, windowWidth, windowHeight, player, entity)
+    window:initialise()
+    window:addToUIManager()
+    return window
+end
+
+local function onFillWorldObjectContextMenu(playerIndex, context, worldObjects)
+    if worldObjects and #worldObjects > 0 then
+        ---@type IsoObject
+        local wObj = worldObjects and worldObjects[1] or nil
+        ---@diagnostic disable-next-line: unnecessary-if
+        if wObj and wObj:getContainer() then
+            context:addOption("Open Owner Shop Config", nil, function()
+                openOwnerViewWindow(playerIndex, context, wObj)
+            end)
+        end
+    end
+end
+
+Events.OnFillWorldObjectContextMenu.Add(onFillWorldObjectContextMenu)
+
+return OwnerViewWindow
