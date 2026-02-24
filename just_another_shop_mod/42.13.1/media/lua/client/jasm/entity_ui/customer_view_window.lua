@@ -8,6 +8,9 @@ local ProductListPanel = require("jasm/entity_ui/components/product_list_panel")
 local ItemDetailsPanel = require("jasm/entity_ui/components/shop_item_details_panel")
 local ShopDataManager = require("jasm/entity_ui/models/shop_data_manager")
 
+local ZUL = require("ZUL")
+local logger = ZUL.new("JASM")
+
 --- Main window for the Customer Shop View.
 --- This window handles the display of shop inventory, searching, sorting, and selecting products for detailed view.
 ---@class CustomerViewWindow : ISEntityWindow
@@ -46,7 +49,7 @@ end
 
 --- Initialise the window.
 function CustomerViewWindow:initialise()
-    print("[JASM] CustomerViewWindow:initialise() called")
+    logger:debug("CustomerViewWindow:initialise() called")
     ISEntityWindow.initialise(self)
 end
 
@@ -105,7 +108,7 @@ end
 
 --- Create child components and set up the layout.
 function CustomerViewWindow:createChildren()
-    print("[JASM] CustomerViewWindow:createChildren() called")
+    logger:debug("CustomerViewWindow:createChildren() called")
     ISEntityWindow.createChildren(self)
 
     self:removeDebugPanel()
@@ -387,7 +390,7 @@ end
 --- Callback for search input. Filters the product list based on the query.
 ---@param text string The search query.
 function CustomerViewWindow:onSearch(text)
-    print("[JASM] CustomerViewWindow:onSearch() query: " .. tostring(text))
+    logger:debug("CustomerViewWindow:onSearch() query: " .. tostring(text))
     local filteredInventory = self.dataManager:search(text)
     ---@diagnostic disable-next-line: unnecessary-if
     if self.productPanel then
@@ -398,7 +401,7 @@ end
 --- Callback for sort selection. Sorts the product list based on the chosen mode.
 ---@param mode string The sort mode ("High Stock", "Low Stock", or default A-Z).
 function CustomerViewWindow:onSort(mode)
-    print("[JASM] CustomerViewWindow:onSort() mode: " .. tostring(mode))
+    logger:debug("CustomerViewWindow:onSort() mode: " .. tostring(mode))
     local sortedInventory = self.dataManager:sort(mode)
     ---@diagnostic disable-next-line: unnecessary-if
     if self.productPanel then
@@ -409,7 +412,7 @@ end
 --- Callback for view toggle (Grid/List).
 ---@param mode string The view mode.
 function CustomerViewWindow:onViewToggle(mode)
-    print("[JASM] CustomerViewWindow:onViewToggle() mode: " .. tostring(mode))
+    logger:debug("CustomerViewWindow:onViewToggle() mode: " .. tostring(mode))
     ---@diagnostic disable-next-line: unnecessary-if
     if self.productPanel then
         self.productPanel:setViewMode(mode)
@@ -419,8 +422,8 @@ end
 --- Callback when a product is selected in the list/grid.
 ---@param product CustomerViewInventoryItem The selected product entry.
 function CustomerViewWindow:onSelectProduct(product)
-    print(
-        "[JASM] CustomerViewWindow:onSelectProduct() product: "
+    logger:debug(
+        "CustomerViewWindow:onSelectProduct() product: "
             .. (product and tostring(product.name) or "nil")
     )
     if not product then
@@ -445,7 +448,7 @@ end
 ---@param entity IsoObject
 ---@return CustomerViewWindow
 function CustomerViewWindow:new(x, y, w, h, player, entity)
-    print("[JASM] CustomerViewWindow:new() instantiating window")
+    logger:debug("CustomerViewWindow:new() instantiating window")
     local xuiSkin = XuiManager.GetDefaultSkin()
     local style = xuiSkin:getEntityUiStyle("JASM_CustomerViewWindow")
     ---@type CustomerViewWindow

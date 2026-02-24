@@ -3,6 +3,9 @@ require("ISUI/ISTextEntryBox")
 require("ISUI/ISComboBox")
 require("ISUI/ISButton")
 
+local ZUL = require("ZUL")
+local logger = ZUL.new("JASM")
+
 --- Panel that contains the search box, sort options, and optionally view mode toggle.
 --- Set `self.slim = true` before initialise() to build a single-row
 --- search + sort panel with no category combo or view-toggle button.
@@ -190,7 +193,7 @@ end
 --- Callback when the view mode is toggled via buttons.
 ---@param mode string "grid" or "list".
 function ShopSearchFilterPanel:onToggleMode(mode)
-    print("[JASM] ShopSearchFilterPanel:onToggleMode() mode: " .. tostring(mode))
+    logger:debug("ShopSearchFilterPanel:onToggleMode() mode: " .. tostring(mode))
     self.viewMode = mode
 
     ---@diagnostic disable-next-line: unnecessary-if
@@ -210,7 +213,7 @@ end
 
 --- Callback when a sort option is selected from the combo box.
 function ShopSearchFilterPanel:onSelectSort()
-    print("[JASM] ShopSearchFilterPanel:onSelectSort() called")
+    logger:debug("ShopSearchFilterPanel:onSelectSort() called")
     ---@diagnostic disable-next-line: unnecessary-if
     if self.onSort then
         self.onSort(self.target, self.sortCombo:getOptionText(self.sortCombo.selected))
@@ -240,7 +243,7 @@ end
 ---@param slim boolean|nil  Pass true for search+sort only (no category/view toggle)
 ---@return ShopSearchFilterPanel
 function ShopSearchFilterPanel:new(x, y, width, height, target, xuiSkin, slim)
-    print("[JASM] ShopSearchFilterPanel:new() called slim=" .. tostring(slim))
+    logger:debug("ShopSearchFilterPanel:new() called slim=" .. tostring(slim))
     ---@type ShopSearchFilterPanel
     local o = ISPanel.new(self, x, y, width, height)
     setmetatable(o, self)

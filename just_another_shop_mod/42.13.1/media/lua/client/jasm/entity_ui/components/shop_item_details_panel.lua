@@ -4,6 +4,9 @@ require("ISUI/ISScrollingListBox")
 require("ISUI/ISImage")
 require("Entity/ISUI/Controls/ISTableLayout")
 
+local ZUL = require("ZUL")
+local logger = ZUL.new("JASM")
+
 local ShopItemHeader = require("jasm/entity_ui/components/shop_item_header")
 local ShopItemGivesPanel = require("jasm/entity_ui/components/shop_item_gives_panel")
 local ShopItemRequirementsPanel = require("jasm/entity_ui/components/shop_item_requirements_panel")
@@ -36,7 +39,7 @@ local KUtilities = pz_utils.konijima.Utilities
 local ShopItemDetailsPanel = ISPanel:derive("ShopItemDetailsPanel")
 
 function ShopItemDetailsPanel:createChildren()
-    print("[JASM] ShopItemDetailsPanel:createChildren() called")
+    logger:debug("ShopItemDetailsPanel:createChildren() called")
     ISPanel.createChildren(self)
 
     -- 1. Main Table Layout
@@ -128,12 +131,12 @@ function ShopItemDetailsPanel:createChildren()
     end
 
     self.dirtyLayout = true
-    print("[JASM] ShopItemDetailsPanel:createChildren() finishing layout")
+    logger:debug("ShopItemDetailsPanel:createChildren() finishing layout")
 end
 
 --- Callback for the debug Force Give button.
 function ShopItemDetailsPanel:onDebugForceGive()
-    print("[JASM] ShopItemDetailsPanel:onDebugForceGive() called (debug)")
+    logger:debug("ShopItemDetailsPanel:onDebugForceGive() called (debug)")
 end
 
 --- Callback when a requirement (trade option) is selected.
@@ -146,7 +149,7 @@ end
 --- Set the current player inventory for requirement checking.
 ---@param inventory CustomerViewInventory The player's inventory structure.
 function ShopItemDetailsPanel:setInventory(inventory)
-    print("[JASM] ShopItemDetailsPanel:setInventory() called")
+    logger:debug("ShopItemDetailsPanel:setInventory() called")
     self.inventory = inventory
 end
 
@@ -239,7 +242,7 @@ end
 
 --- Callback when the trade button is clicked.
 function ShopItemDetailsPanel:onAcceptTrade()
-    print("[JASM] ShopItemDetailsPanel:onAcceptTrade() executing trade")
+    logger:info("ShopItemDetailsPanel:onAcceptTrade() executing trade")
 
     local selectedTrade = self.requirementsPanel:getSelectedTrade()
     if not selectedTrade or not self.product then
@@ -249,7 +252,7 @@ function ShopItemDetailsPanel:onAcceptTrade()
     ---@cast self.entity IsoObject
     local entity = self.entity
     if not entity then
-        print("[JASM] ShopItemDetailsPanel:onAcceptTrade() ERROR: no entity")
+        logger:error("ShopItemDetailsPanel:onAcceptTrade() ERROR: no entity")
         return
     end
 
@@ -265,7 +268,7 @@ function ShopItemDetailsPanel:onAcceptTrade()
         requestQty = selectedTrade.requestQty,
     }
 
-    print("[JASM] ShopItemDetailsPanel:onAcceptTrade() sending command JASM_ShopManager ManageShop")
+    logger:info("ShopItemDetailsPanel:onAcceptTrade() sending command JASM_ShopManager ManageShop")
     KUtilities.SendClientCommand("JASM_ShopManager", "ManageShop", args)
 end
 
@@ -321,7 +324,7 @@ end
 
 --- Create a new instance of ShopItemDetailsPanel.
 function ShopItemDetailsPanel:new(x, y, width, height, player, xuiSkin)
-    print("[JASM] ShopItemDetailsPanel:new() called")
+    logger:debug("ShopItemDetailsPanel:new() called")
     ---@type ShopItemDetailsPanel
     local o = ISPanel.new(self, x, y, width, height)
     setmetatable(o, self)

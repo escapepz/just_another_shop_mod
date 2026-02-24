@@ -2,6 +2,9 @@ require("ISUI/ISPanel")
 require("ISUI/ISScrollingListBox")
 require("Entity/ISUI/CraftRecipe/ISTiledIconListBox")
 
+local ZUL = require("ZUL")
+local logger = ZUL.new("JASM")
+
 local ProductListView = require("jasm/entity_ui/components/product_list_view")
 
 --- Panel that displays a list of products, either as a grid or a list.
@@ -110,8 +113,8 @@ end
 
 ---@param product any
 function ProductListPanel:onTileClicked(product)
-    print(
-        "[JASM] ProductListPanel:onTileClicked() product: "
+    logger:debug(
+        "ProductListPanel:onTileClicked() product: "
             .. (product and tostring(product.name) or "nil")
     )
     ---@diagnostic disable-next-line: unnecessary-if
@@ -121,7 +124,7 @@ function ProductListPanel:onTileClicked(product)
 end
 
 function ProductListPanel:createChildren()
-    print("[JASM] ProductListPanel:createChildren() called")
+    logger:debug("ProductListPanel:createChildren() called")
     ISPanel.createChildren(self)
 
     ---@diagnostic disable-next-line: undefined-global
@@ -131,23 +134,13 @@ function ProductListPanel:createChildren()
     local btnSize = getTextManager():getFontHeight(UIFont.Small) + 6
 
     ---@type ISButton
-    self.gridPrevBtn = self:xuiBuild(
-        nil,
-        ISButton,
-        0,
-        0,
-        btnSize,
-        btnSize,
-        nil,
-        self,
-        function()
-            ---@diagnostic disable-next-line: unnecessary-if
-            if self.iconPanel then
-                self.iconPanel:setCurrentPage(self.iconPanel:getCurrentPage() - 1)
-                self:onGridPageChanged()
-            end
+    self.gridPrevBtn = self:xuiBuild(nil, ISButton, 0, 0, btnSize, btnSize, nil, self, function()
+        ---@diagnostic disable-next-line: unnecessary-if
+        if self.iconPanel then
+            self.iconPanel:setCurrentPage(self.iconPanel:getCurrentPage() - 1)
+            self:onGridPageChanged()
         end
-    )
+    end)
     ---@diagnostic disable-next-line: unnecessary-if
     if self.gridPrevBtn then
         self.gridPrevBtn.image = getTexture("ArrowLeft")
@@ -161,23 +154,13 @@ function ProductListPanel:createChildren()
     self:addChild(self.gridPageLabel)
 
     ---@type ISButton
-    self.gridNextBtn = self:xuiBuild(
-        nil,
-        ISButton,
-        0,
-        0,
-        btnSize,
-        btnSize,
-        nil,
-        self,
-        function()
-            ---@diagnostic disable-next-line: unnecessary-if
-            if self.iconPanel then
-                self.iconPanel:setCurrentPage(self.iconPanel:getCurrentPage() + 1)
-                self:onGridPageChanged()
-            end
+    self.gridNextBtn = self:xuiBuild(nil, ISButton, 0, 0, btnSize, btnSize, nil, self, function()
+        ---@diagnostic disable-next-line: unnecessary-if
+        if self.iconPanel then
+            self.iconPanel:setCurrentPage(self.iconPanel:getCurrentPage() + 1)
+            self:onGridPageChanged()
         end
-    )
+    end)
     ---@diagnostic disable-next-line: unnecessary-if
     if self.gridNextBtn then
         self.gridNextBtn.image = getTexture("ArrowRight")
@@ -186,15 +169,8 @@ function ProductListPanel:createChildren()
 
     -- 1b. GRID VIEW (ISTiledIconListBox)
     ---@type ISTiledIconListBox
-    self.iconPanel = self:xuiBuild(
-        nil,
-        ISTiledIconListBox,
-        0,
-        0,
-        self.width,
-        self.height,
-        self.dataList
-    )
+    self.iconPanel =
+        self:xuiBuild(nil, ISTiledIconListBox, 0, 0, self.width, self.height, self.dataList)
     ---@diagnostic disable-next-line: unnecessary-if
     if self.iconPanel then
         self.iconPanel.onRenderTile = onRenderTile
@@ -323,7 +299,7 @@ function ProductListPanel:onResize()
 end
 
 function ProductListPanel:setViewMode(mode)
-    print("[JASM] ProductListPanel:setViewMode() mode: " .. tostring(mode))
+    logger:debug("ProductListPanel:setViewMode() mode: " .. tostring(mode))
     self.viewMode = mode
     local isGrid = mode == "grid"
     ---@diagnostic disable-next-line: unnecessary-if
@@ -351,8 +327,8 @@ function ProductListPanel:setViewMode(mode)
 end
 
 function ProductListPanel:setSelectedProduct(product)
-    print(
-        "[JASM] ProductListPanel:setSelectedProduct() product: "
+    logger:debug(
+        "ProductListPanel:setSelectedProduct() product: "
             .. (product and tostring(product.name) or "nil")
     )
     self.selectedProduct = product
@@ -372,8 +348,8 @@ function ProductListPanel:setSelectedProduct(product)
 end
 
 function ProductListPanel:setProducts(products)
-    print(
-        "[JASM] ProductListPanel:setProducts() count: "
+    logger:debug(
+        "ProductListPanel:setProducts() count: "
             .. (products and products.list and #products.list or (products and #products or 0))
     )
     if self.dataList then
@@ -407,7 +383,7 @@ function ProductListPanel:setProducts(products)
 end
 
 function ProductListPanel:new(x, y, w, h, player, xuiSkin)
-    print("[JASM] ProductListPanel:new() called")
+    logger:debug("ProductListPanel:new() called")
     ---@type ProductListPanel
     local o = ISPanel:new(x, y, w, h)
     setmetatable(o, self)
@@ -424,4 +400,3 @@ function ProductListPanel:new(x, y, w, h, player, xuiSkin)
 end
 
 return ProductListPanel
-

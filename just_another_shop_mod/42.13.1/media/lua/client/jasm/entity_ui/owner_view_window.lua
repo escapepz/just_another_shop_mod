@@ -14,6 +14,9 @@ local ShopSectionHeader = require("jasm/entity_ui/components/shop_section_header
 local ShopRequirementPanel = require("jasm/entity_ui/components/shop_requirement_panel")
 local ShopFooterPanel = require("jasm/entity_ui/components/shop_footer_panel")
 
+local ZUL = require("ZUL")
+local logger = ZUL.new("JASM")
+
 local pz_utils = require("pz_utils_shared")
 local KUtilities = pz_utils.konijima.Utilities
 
@@ -142,7 +145,7 @@ end
 -- ============================================================
 
 function OwnerViewWindow:initialise()
-    print("[JASM] OwnerViewWindow:initialise() called")
+    logger:debug("OwnerViewWindow:initialise() called")
     ISEntityWindow.initialise(self)
 end
 
@@ -155,7 +158,7 @@ function OwnerViewWindow:removeDebugPanel()
 end
 
 function OwnerViewWindow:createChildren()
-    print("[JASM] OwnerViewWindow:createChildren() called")
+    logger:debug("OwnerViewWindow:createChildren() called")
     ISEntityWindow.createChildren(self)
 
     self:removeDebugPanel()
@@ -512,7 +515,7 @@ end
 --- Inventory search callback. Passed as `onSearch` to the SearchFilterPanel.
 ---@param text string
 function OwnerViewWindow:onInventorySearch(text)
-    print("[JASM] OwnerViewWindow:onInventorySearch() query: " .. tostring(text))
+    logger:debug("OwnerViewWindow:onInventorySearch() query: " .. tostring(text))
     local filtered = self.dataManager:search(text)
     self:refreshInventoryList(filtered)
 end
@@ -520,7 +523,7 @@ end
 --- Inventory sort callback. Passed as `onSort` to the SearchFilterPanel.
 ---@param mode string
 function OwnerViewWindow:onInventorySort(mode)
-    print("[JASM] OwnerViewWindow:onInventorySort() mode: " .. tostring(mode))
+    logger:debug("OwnerViewWindow:onInventorySort() mode: " .. tostring(mode))
     local sorted = self.dataManager:sort(mode)
     self:refreshInventoryList(sorted)
 end
@@ -528,7 +531,7 @@ end
 --- Select an inventory item as the current trade "offer".
 ---@param entry CustomerViewInventoryItem
 function OwnerViewWindow:onSelectInventoryItem(entry)
-    print("[JASM] OwnerViewWindow:onSelectInventoryItem() item: " .. tostring(entry and entry.name))
+    logger:debug("OwnerViewWindow:onSelectInventoryItem() item: " .. tostring(entry and entry.name))
     self.selectedItem = entry
     -- Clear paths from previous selection
     self.requirementPaths = {}
@@ -620,7 +623,7 @@ end
 
 --- Published trade: validate -> save -> notify.
 function OwnerViewWindow:onPublishClicked()
-    print("[JASM] OwnerViewWindow:onPublishClicked() called")
+    logger:debug("OwnerViewWindow:onPublishClicked() called")
     if not self.selectedItem then
         self:showError("Error: Select an item to configure first")
         return
@@ -632,7 +635,7 @@ function OwnerViewWindow:onPublishClicked()
         confirmedCount = confirmedCount + 1
     end
     if confirmedCount == 0 then
-        print("[JASM] OwnerViewWindow:onPublishClicked() ERROR: confirmedCount == 0")
+        logger:error("OwnerViewWindow:onPublishClicked() ERROR: confirmedCount == 0")
         self:showError("Error: Every trade must have at least one requirement path")
         return
     end
@@ -641,8 +644,8 @@ function OwnerViewWindow:onPublishClicked()
     local qty = self.offerPanel and self.offerPanel:getQty() or 1
     local stock = self.selectedItem.stock or 0
     if stock < qty then
-        print(
-            "[JASM] OwnerViewWindow:onPublishClicked() ERROR: stock < qty ("
+        logger:error(
+            "OwnerViewWindow:onPublishClicked() ERROR: stock < qty ("
                 .. tostring(stock)
                 .. " < "
                 .. tostring(qty)
@@ -677,7 +680,7 @@ function OwnerViewWindow:onPublishClicked()
         trades = self.selectedItem.trades,
     }
 
-    print("[JASM] OwnerViewWindow:onPublishClicked() sending command JASM_ShopManager ManageShop")
+    logger:info("OwnerViewWindow:onPublishClicked() sending command JASM_ShopManager ManageShop")
     KUtilities.SendClientCommand("JASM_ShopManager", "ManageShop", args)
 
     ---@diagnostic disable-next-line: unnecessary-if
@@ -699,7 +702,7 @@ end
 --- Show an error (or info) message in the footer error space.
 ---@param msg string
 function OwnerViewWindow:showError(msg)
-    print("[JASM] OwnerViewWindow:showError(): " .. tostring(msg))
+    logger:error("OwnerViewWindow:showError(): " .. tostring(msg))
     ---@diagnostic disable-next-line: unnecessary-if
     if self.footerPanel then
         ---@diagnostic disable-next-line: undefined-field
@@ -728,7 +731,7 @@ end
 ---@param entity IsoObject
 ---@return OwnerViewWindow
 function OwnerViewWindow:new(x, y, w, h, player, entity)
-    print("[JASM] OwnerViewWindow:new() instantiating window")
+    logger:debug("OwnerViewWindow:new() instantiating window")
     local xuiSkin = XuiManager.GetDefaultSkin()
     local style = xuiSkin:getEntityUiStyle("JASM_OwnerViewWindow")
     ---@type OwnerViewWindow
