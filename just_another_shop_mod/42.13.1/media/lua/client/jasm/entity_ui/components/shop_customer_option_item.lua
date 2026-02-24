@@ -3,7 +3,7 @@ require("ISUI/ISButton")
 require("ISUI/ISLabel")
 require("ISUI/ISImage")
 
-local TextureUtils = require("jasm_test/utils/texture_utils")
+local TextureUtils = require("jasm/entity_ui/utils/texture_utils")
 
 --- Individual row item representing one "Customer Option" (requirement path).
 ---@class ShopCustomerOptionItem : ISPanel

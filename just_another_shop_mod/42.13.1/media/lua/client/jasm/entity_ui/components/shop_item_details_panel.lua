@@ -4,10 +4,13 @@ require("ISUI/ISScrollingListBox")
 require("ISUI/ISImage")
 require("Entity/ISUI/Controls/ISTableLayout")
 
-local ShopItemHeader = require("jasm_test/components/shop_item_header")
-local ShopItemGivesPanel = require("jasm_test/components/shop_item_gives_panel")
-local ShopItemRequirementsPanel = require("jasm_test/components/shop_item_requirements_panel")
-local ShopItemActionFooter = require("jasm_test/components/shop_item_action_footer")
+local ShopItemHeader = require("jasm/entity_ui/components/shop_item_header")
+local ShopItemGivesPanel = require("jasm/entity_ui/components/shop_item_gives_panel")
+local ShopItemRequirementsPanel = require("jasm/entity_ui/components/shop_item_requirements_panel")
+local ShopItemActionFooter = require("jasm/entity_ui/components/shop_item_action_footer")
+
+local pz_utils = require("pz_utils_shared")
+local KUtilities = pz_utils.konijima.Utilities
 
 ---@class TradeItem : umbrella.ISScrollingListBox.Item
 ---@field hasCount number
@@ -236,8 +239,32 @@ end
 --- Callback when the trade button is clicked.
 function ShopItemDetailsPanel:onAcceptTrade()
     print("[JASM] ShopItemDetailsPanel:onAcceptTrade() executing trade")
-    -- Implementation of trade execution
-    print("Trade Accepted!")
+
+    local selectedTrade = self.requirementsPanel:getSelectedTrade()
+    if not selectedTrade or not self.product then
+        return
+    end
+
+    local entity = self.entity
+    if not entity then
+        print("[JASM] ShopItemDetailsPanel:onAcceptTrade() ERROR: no entity")
+        return
+    end
+
+    local args = {
+        x = entity:getX(),
+        y = entity:getY(),
+        z = entity:getZ(),
+        index = entity:getObjectIndex(),
+        action = "BUY_TRADE",
+        itemType = self.product.type,
+        -- Trade data
+        requestItem = selectedTrade.requestItem,
+        requestQty = selectedTrade.requestQty,
+    }
+
+    print("[JASM] ShopItemDetailsPanel:onAcceptTrade() sending command JASM_ShopManager ManageShop")
+    KUtilities.SendClientCommand("JASM_ShopManager", "ManageShop", args)
 end
 
 function ShopItemDetailsPanel:prerender()

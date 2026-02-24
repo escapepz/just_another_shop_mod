@@ -3,7 +3,7 @@ require("ISUI/ISLabel")
 require("ISUI/ISTextEntryBox")
 require("ISUI/ISImage")
 require("build_ui_skeleton/ISTableLayout")
-local ShopSectionHeader = require("jasm_test/components/shop_section_header")
+local ShopSectionHeader = require("jasm/entity_ui/components/shop_section_header")
 
 ---@class ShopTradeOfferPanel : ISPanel
 ---@field target any

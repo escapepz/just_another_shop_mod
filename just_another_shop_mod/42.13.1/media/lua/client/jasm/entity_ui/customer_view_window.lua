@@ -3,10 +3,10 @@ require("Entity/ISUI/Controls/ISTableLayout")
 require("ISUI/ISLabel")
 require("ISUI/ISButton")
 
-local SearchFilterPanel = require("jasm_test/components/shop_search_filter_panel")
-local ProductListPanel = require("jasm_test/components/product_list_panel")
-local ItemDetailsPanel = require("jasm_test/components/shop_item_details_panel")
-local ShopDataManager = require("jasm_test/models/shop_data_manager")
+local SearchFilterPanel = require("jasm/entity_ui/components/shop_search_filter_panel")
+local ProductListPanel = require("jasm/entity_ui/components/product_list_panel")
+local ItemDetailsPanel = require("jasm/entity_ui/components/shop_item_details_panel")
+local ShopDataManager = require("jasm/entity_ui/models/shop_data_manager")
 
 --- Main window for the Customer Shop View.
 --- This window handles the display of shop inventory, searching, sorting, and selecting products for detailed view.
@@ -353,6 +353,9 @@ function CustomerViewWindow:initPanels()
         self.player,
         self.xuiSkin
     )
+    if self.detailsPanel then
+        self.detailsPanel.entity = self.entity
+    end
 end
 
 --- Populate components with initial data.
@@ -476,7 +479,10 @@ end
 ---@param playerIndex integer
 ---@param _context any
 ---@param entity IsoObject
-local function openCustomerViewWindow(playerIndex, _context, entity)
+---@param playerIndex integer
+---@param _context any
+---@param entity IsoObject
+function CustomerViewWindow.open(playerIndex, _context, entity)
     local screenWidth = getCore():getScreenWidth()
     local screenHeight = getCore():getScreenHeight()
 
@@ -500,12 +506,12 @@ local function onFillWorldObjectContextMenu(playerIndex, context, worldObjects)
         ---@diagnostic disable-next-line: unnecessary-if
         if wObj and wObj:getContainer() then
             context:addOption("Open Customer Shop View", nil, function()
-                openCustomerViewWindow(playerIndex, context, wObj)
+                CustomerViewWindow.open(playerIndex, context, wObj)
             end)
         end
     end
 end
 
-Events.OnFillWorldObjectContextMenu.Add(onFillWorldObjectContextMenu)
+-- Events.OnFillWorldObjectContextMenu.Add(onFillWorldObjectContextMenu)
 
 return CustomerViewWindow

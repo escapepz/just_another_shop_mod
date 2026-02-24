@@ -2,7 +2,7 @@ require("ISUI/ISPanel")
 require("ISUI/ISScrollingListBox")
 require("Entity/ISUI/CraftRecipe/ISTiledIconListBox")
 
-local ProductListView = require("jasm_test/components/product_list_view")
+local ProductListView = require("jasm/entity_ui/components/product_list_view")
 
 --- Panel that displays a list of products, either as a grid or a list.
 ---@class ProductListPanel : ISPanel

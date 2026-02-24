@@ -5,14 +5,17 @@ require("ISUI/ISButton")
 require("ISUI/ISPanel")
 require("ISUI/ISScrollingListBox")
 
-local ShopDataManager = require("jasm_test/models/shop_data_manager")
-local SearchFilterPanel = require("jasm_test/components/shop_search_filter_panel")
-local ProductListPanel = require("jasm_test/components/product_list_panel")
-local CustomerOptionItem = require("jasm_test/components/shop_customer_option_item")
-local ShopTradeOfferPanel = require("jasm_test/components/shop_trade_offer_panel")
-local ShopSectionHeader = require("jasm_test/components/shop_section_header")
-local ShopRequirementPanel = require("jasm_test/components/shop_requirement_panel")
-local ShopFooterPanel = require("jasm_test/components/shop_footer_panel")
+local ShopDataManager = require("jasm/entity_ui/models/shop_data_manager")
+local SearchFilterPanel = require("jasm/entity_ui/components/shop_search_filter_panel")
+local ProductListPanel = require("jasm/entity_ui/components/product_list_panel")
+local CustomerOptionItem = require("jasm/entity_ui/components/shop_customer_option_item")
+local ShopTradeOfferPanel = require("jasm/entity_ui/components/shop_trade_offer_panel")
+local ShopSectionHeader = require("jasm/entity_ui/components/shop_section_header")
+local ShopRequirementPanel = require("jasm/entity_ui/components/shop_requirement_panel")
+local ShopFooterPanel = require("jasm/entity_ui/components/shop_footer_panel")
+
+local pz_utils = require("pz_utils_shared")
+local KUtilities = pz_utils.konijima.Utilities
 
 -- ============================================================
 -- COLOR PALETTE (matches design5.html / customer_view_window)
@@ -629,6 +632,7 @@ function OwnerViewWindow:onPublishClicked()
         confirmedCount = confirmedCount + 1
     end
     if confirmedCount == 0 then
+        print("[JASM] OwnerViewWindow:onPublishClicked() ERROR: confirmedCount == 0")
         self:showError("Error: Every trade must have at least one requirement path")
         return
     end
@@ -637,6 +641,13 @@ function OwnerViewWindow:onPublishClicked()
     local qty = self.offerPanel and self.offerPanel:getQty() or 1
     local stock = self.selectedItem.stock or 0
     if stock < qty then
+        print(
+            "[JASM] OwnerViewWindow:onPublishClicked() ERROR: stock < qty ("
+                .. tostring(stock)
+                .. " < "
+                .. tostring(qty)
+                .. ")"
+        )
         self:showError("Error: Stock is insufficient for even one trade")
         return
     end
@@ -655,15 +666,18 @@ function OwnerViewWindow:onPublishClicked()
     self:clearError()
     self.hasUnsavedChanges = false
 
-    -- Notify (in a real mod this would send to server)
-    print(
-        string.format(
-            "[JASM] OwnerViewWindow: Published trade  Offer: %s x%d  Paths: %d",
-            self.selectedItem.name,
-            qty,
-            confirmedCount
-        )
-    )
+    local args = {
+        x = self.entity:getX(),
+        y = self.entity:getY(),
+        z = self.entity:getZ(),
+        index = self.entity:getObjectIndex(),
+        action = "SET_TRADES",
+        itemType = self.selectedItem.type,
+        trades = self.selectedItem.trades,
+    }
+
+    print("[JASM] OwnerViewWindow:onPublishClicked() sending command JASM_ShopManager ManageShop")
+    KUtilities.SendClientCommand("JASM_ShopManager", "ManageShop", args)
 
     ---@diagnostic disable-next-line: unnecessary-if
     -- Visual feedback: flash or info message
@@ -684,6 +698,7 @@ end
 --- Show an error (or info) message in the footer error space.
 ---@param msg string
 function OwnerViewWindow:showError(msg)
+    print("[JASM] OwnerViewWindow:showError(): " .. tostring(msg))
     ---@diagnostic disable-next-line: unnecessary-if
     if self.footerPanel then
         ---@diagnostic disable-next-line: undefined-field
@@ -757,7 +772,10 @@ end
 ---@param playerIndex integer
 ---@param _context any
 ---@param entity IsoObject
-local function openOwnerViewWindow(playerIndex, _context, entity)
+---@param playerIndex integer
+---@param _context any
+---@param entity IsoObject
+function OwnerViewWindow.open(playerIndex, _context, entity)
     local screenWidth = getCore():getScreenWidth()
     local screenHeight = getCore():getScreenHeight()
 
@@ -780,12 +798,12 @@ local function onFillWorldObjectContextMenu(playerIndex, context, worldObjects)
         ---@diagnostic disable-next-line: unnecessary-if
         if wObj and wObj:getContainer() then
             context:addOption("Open Owner Shop Config", nil, function()
-                openOwnerViewWindow(playerIndex, context, wObj)
+                OwnerViewWindow.open(playerIndex, context, wObj)
             end)
         end
     end
 end
 
-Events.OnFillWorldObjectContextMenu.Add(onFillWorldObjectContextMenu)
+-- Events.OnFillWorldObjectContextMenu.Add(onFillWorldObjectContextMenu)
 
 return OwnerViewWindow
