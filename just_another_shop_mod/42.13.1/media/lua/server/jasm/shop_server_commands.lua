@@ -2,7 +2,7 @@ local ZUL = require("ZUL")
 local pz_utils = require("pz_utils_shared")
 
 local KUtilities = pz_utils.konijima.Utilities
-local logger = ZUL.new("ShopServer")
+local logger = ZUL.new("JASM")
 
 -- Shops are protected by two main mechanisms:
 -- 1. When shops are placed, shop:setIsThumpable(false) prevents zombies from targeting and damaging them.

@@ -11,35 +11,35 @@ local RuleShopAudit = require("jasm/rules/shop_audit_rule")
 
 local ServerCommand = require("jasm/shop_server_commands")
 
-local logger = ZUL.new("ShopSystem")
+local logger = ZUL.new("JASM")
 
 local function Init()
-	logger:info("Just Another Shop Mod initializing...")
+    logger:info("Just Another Shop Mod initializing...")
 
-	-- Register the Shop Rules with CAF
+    -- Register the Shop Rules with CAF
 
-	-- Trade Rules
-	CAF:registerRule("validation", "ShopTradeCheck", RuleShopTrade.Validation, 5) -- Priority 5 (Must run before Protection)
-	CAF:registerRule("pre", "ShopPayment", RuleShopTrade.Payment, 5)
+    -- Trade Rules
+    CAF:registerRule("validation", "ShopTradeCheck", RuleShopTrade.Validation, 5) -- Priority 5 (Must run before Protection)
+    CAF:registerRule("pre", "ShopPayment", RuleShopTrade.Payment, 5)
 
-	-- Protection Rules
-	CAF:registerRule("validation", "ShopProtection", RuleShopProtection, 10) -- Priority 10
+    -- Protection Rules
+    CAF:registerRule("validation", "ShopProtection", RuleShopProtection, 10) -- Priority 10
 
-	-- Audit Rules
-	CAF:registerRule("post", "ShopAudit", RuleShopAudit, 100) -- Lower priority for auditing
+    -- Audit Rules
+    CAF:registerRule("post", "ShopAudit", RuleShopAudit, 100) -- Lower priority for auditing
 
-	-- Singleton pattern
-	if not _G.JASM_ShopManager then
-		---@diagnostic disable-next-line: global-in-non-module
-		---@type ShopManager
-		_G.JASM_ShopManager = ShopManager()
-	end
+    -- Singleton pattern
+    if not _G.JASM_ShopManager then
+        ---@diagnostic disable-next-line: global-in-non-module
+        ---@type ShopManager
+        _G.JASM_ShopManager = ShopManager()
+    end
 
-	Events.OnClientCommand.Add(ServerCommand)
+    Events.OnClientCommand.Add(ServerCommand)
 
-	logger:info("Just Another Shop Mod (CAF-Based) loaded successfully.")
+    logger:info("Just Another Shop Mod (CAF-Based) loaded successfully.")
 
-	return _G.JASM_ShopManager
+    return _G.JASM_ShopManager
 end
 
 return Init
