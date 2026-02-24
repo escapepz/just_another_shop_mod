@@ -72,6 +72,7 @@ function ShopSearchFilterPanel:createChildren()
     self.searchBox = self:xuiBuild(nil, ISTextEntryBox, "", 0, 0, 10, 24)
     ---@diagnostic disable-next-line: unnecessary-if
     if self.searchBox then
+        ---@diagnostic disable-next-line: inject-field
         self.searchBox.calculateLayout = function(_self, _w, _h)
             _self:setWidth(_w)
             -- No height sync: keep fixed 24px
@@ -117,9 +118,11 @@ function ShopSearchFilterPanel:createChildren()
                 )
                 ---@diagnostic disable-next-line: unnecessary-if
                 if self.categoryCombo then
+                    ---@diagnostic disable-next-line: inject-field
                     self.categoryCombo.calculateLayout = function(_self, _w, _h)
                         _self:setWidth(_w)
                     end
+                    ---@diagnostic disable-next-line: inject-field
                     self.categoryCombo.doRepaintStencil = true
                     self.categoryCombo:addOption("Shop Stock")
                     self.categoryCombo:addOption("Required Items")
@@ -159,9 +162,11 @@ function ShopSearchFilterPanel:createChildren()
         self.sortCombo = self:xuiBuild(nil, ISComboBox, 0, 0, 10, 24, self, self.onSelectSort)
         ---@diagnostic disable-next-line: unnecessary-if
         if self.sortCombo then
+            ---@diagnostic disable-next-line: inject-field
             self.sortCombo.calculateLayout = function(_self, _w, _h)
                 _self:setWidth(_w)
             end
+            ---@diagnostic disable-next-line: inject-field
             self.sortCombo.doRepaintStencil = true
             self.sortCombo:addOption("Alphabetical (A-Z)")
             self.sortCombo:addOption("High Stock")

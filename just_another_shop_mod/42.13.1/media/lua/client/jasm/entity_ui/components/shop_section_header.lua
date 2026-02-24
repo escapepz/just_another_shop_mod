@@ -77,6 +77,7 @@ function ShopSectionHeader:addLineRow()
         ---@type ISPanel|nil
         local headerLine = self:xuiBuild(nil, ISPanel, 0, 0, self.width, 2)
         if headerLine then
+            ---@diagnostic disable-next-line: inject-field
             headerLine.calculateLayout = function(_self, _w, _h)
                 _self:setWidth(_w)
             end

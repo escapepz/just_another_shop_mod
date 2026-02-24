@@ -1,4 +1,4 @@
-local pz_lua_commons = require("pz_lua_commons/client")
+local pz_lua_commons = require("pz_lua_commons_client")
 local class = pz_lua_commons.yonaba.yon_30log
 
 ---@class CustomerViewInventory

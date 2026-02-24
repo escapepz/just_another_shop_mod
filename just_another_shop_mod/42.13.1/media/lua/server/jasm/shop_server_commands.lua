@@ -82,6 +82,7 @@ local function OnClientCommand(module, command, player, args)
         local prices = modData.shopPrices or {}
         local priceInfo = prices[args.itemType]
 
+        ---@diagnostic disable-next-line: unnecessary-if
         if not args.requestItem and priceInfo then
             -- Old BUY logic
             local shopContainer = containerObj:getContainer()

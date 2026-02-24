@@ -97,6 +97,7 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
         return
     end
 
+    ---@diagnostic disable-next-line: unnecessary-if
     -- Top Level Shop Access
     if isShop then
         -- Open Customer View
@@ -110,9 +111,11 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
     local jMenu = ISContextMenu:getNew(context)
     context:addSubMenu(jOption, jMenu)
 
+    ---@diagnostic disable-next-line: unnecessary-if
     if isShop then
         -- Open Owner View (if owner or admin)
         local isOwner = modData.shopOwnerID == playerObj:getUsername()
+        ---@diagnostic disable-next-line: unnecessary-if
         if isOwner or isAdmin then
             jMenu:addOption("Manage Shop", worldObjects, function()
                 JASM_ShopView_Owner.open(playerIndex, nil, containerObj)
@@ -120,6 +123,7 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
         end
     end
 
+    ---@diagnostic disable-next-line: unnecessary-if
     -- Player Shop Submenu
     if not isShop or shopType == "PLAYER" or isAdmin then
         local pOption = jMenu:addOption("Player Shop", worldObjects, nil)

@@ -105,6 +105,7 @@ function ShopRequirementPanel:createChildren()
                 ---@type ISTextEntryBox|nil
                 self.newPathDbgInput = self:xuiBuild(nil, ISTextEntryBox, "", 0, 0, 10, INPUT_H)
                 if self.newPathDbgInput then
+                    ---@diagnostic disable-next-line: inject-field
                     self.newPathDbgInput.calculateLayout = function(_self, _w, _h)
                         _self:setWidth(_w)
                     end

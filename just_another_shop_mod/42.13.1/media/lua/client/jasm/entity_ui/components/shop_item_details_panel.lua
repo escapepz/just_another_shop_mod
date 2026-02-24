@@ -27,6 +27,7 @@ local KUtilities = pz_utils.konijima.Utilities
 ---@field requirementsPanel ShopItemRequirementsPanel
 ---@field footerPanel ShopItemActionFooter
 ---@field inventory any
+---@field entity GameEntity
 ---@field dirtyLayout boolean
 ---@field xuiPreferredResizeWidth number
 ---@field xuiPreferredResizeHeight number
@@ -245,6 +246,7 @@ function ShopItemDetailsPanel:onAcceptTrade()
         return
     end
 
+    ---@cast self.entity IsoObject
     local entity = self.entity
     if not entity then
         print("[JASM] ShopItemDetailsPanel:onAcceptTrade() ERROR: no entity")

@@ -666,6 +666,7 @@ function OwnerViewWindow:onPublishClicked()
     self:clearError()
     self.hasUnsavedChanges = false
 
+    ---@cast self.entity IsoObject
     local args = {
         x = self.entity:getX(),
         y = self.entity:getY(),

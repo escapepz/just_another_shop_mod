@@ -340,6 +340,7 @@ function CustomerViewWindow:initPanels()
     end
 
     -- -- Build Details Panel -> Main Content Col 1
+    ---@type ShopItemDetailsPanel|nil
     self.detailsPanel = self:xuiBuildInLayout(
         self.mainContentLayout,
         1,
