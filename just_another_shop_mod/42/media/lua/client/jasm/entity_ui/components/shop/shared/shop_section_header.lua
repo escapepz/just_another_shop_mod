@@ -1,6 +1,6 @@
 require("ISUI/ISPanel")
 require("ISUI/ISLabel")
-require("build_ui_skeleton/ISTableLayout")
+require("Entity/ISUI/Controls/ISTableLayout")
 
 --- A reusable styled section header with an orange bottom-border line.
 ---@class ShopSectionHeader : ISPanel

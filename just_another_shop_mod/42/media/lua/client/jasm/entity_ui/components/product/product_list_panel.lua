@@ -3,7 +3,7 @@ require("ISUI/ISScrollingListBox")
 require("Entity/ISUI/CraftRecipe/ISTiledIconListBox")
 
 local ZUL = require("ZUL")
-local logger = ZUL.new("JASM")
+local logger = ZUL.new("just_another_shop_mod")
 
 local ProductListView = require("jasm/entity_ui/components/product/product_list_view")
 

@@ -15,7 +15,7 @@ local ShopRequirementPanel = require("jasm/entity_ui/components/shop/owner/shop_
 local ShopFooterPanel = require("jasm/entity_ui/components/shop/owner/shop_footer_panel")
 
 local ZUL = require("ZUL")
-local logger = ZUL.new("JASM")
+local logger = ZUL.new("just_another_shop_mod")
 
 local pz_utils = require("pz_utils_shared")
 local KUtilities = pz_utils.konijima.Utilities

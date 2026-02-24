@@ -1,7 +1,7 @@
 require("ISUI/ISPanel")
 require("ISUI/ISLabel")
 require("ISUI/ISButton")
-require("build_ui_skeleton/ISTableLayout")
+require("Entity/ISUI/Controls/ISTableLayout")
 
 --- Footer panel with error label and publish button.
 ---@class ShopFooterPanel : ISPanel

@@ -9,7 +9,7 @@ local ItemDetailsPanel = require("jasm/entity_ui/components/shop/customer/shop_i
 local ShopDataManager = require("jasm/entity_ui/models/shop_data_manager")
 
 local ZUL = require("ZUL")
-local logger = ZUL.new("JASM")
+local logger = ZUL.new("just_another_shop_mod")
 
 --- Main window for the Customer Shop View.
 --- This window handles the display of shop inventory, searching, sorting, and selecting products for detailed view.

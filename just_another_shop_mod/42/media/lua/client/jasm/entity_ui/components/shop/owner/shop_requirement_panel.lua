@@ -2,7 +2,7 @@ require("ISUI/ISPanel")
 require("ISUI/ISLabel")
 require("ISUI/ISButton")
 require("ISUI/ISTextEntryBox")
-require("build_ui_skeleton/ISTableLayout")
+require("Entity/ISUI/Controls/ISTableLayout")
 
 local ShopSectionHeader = require("jasm/entity_ui/components/shop/shared/shop_section_header")
 local CustomerOptionItem = require("jasm/entity_ui/components/shop/owner/shop_customer_option_item")

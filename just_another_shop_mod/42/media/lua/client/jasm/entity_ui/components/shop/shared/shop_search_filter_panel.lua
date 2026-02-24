@@ -4,7 +4,7 @@ require("ISUI/ISComboBox")
 require("ISUI/ISButton")
 
 local ZUL = require("ZUL")
-local logger = ZUL.new("JASM")
+local logger = ZUL.new("just_another_shop_mod")
 
 --- Panel that contains the search box, sort options, and optionally view mode toggle.
 --- Set `self.slim = true` before initialise() to build a single-row

@@ -1,7 +1,13 @@
+author=escapepz
+
 id=just_another_shop_mod
 name=Just Another Shop Mod
+description=A lightweight shop system based on the Container Authority Framework.
+
 poster=poster.png
 icon=icon.png
+
+modversion=1.0.0
+versionMin=42.13.1
+
 require=\zul,\pz_lua_commons,\container_authority_framework
-description=A lightweight shop system based on the Container Authority Framework.
-version=1.0.0
