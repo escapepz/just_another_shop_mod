@@ -1,4 +1,4 @@
-local ShopSectionHeader = require("jasm/entity_ui/components/shop_section_header")
+local ShopSectionHeader = require("jasm/entity_ui/components/shop/shared/shop_section_header")
 require("Entity/ISUI/Controls/ISTableLayout")
 require("ISUI/ISImage")
 

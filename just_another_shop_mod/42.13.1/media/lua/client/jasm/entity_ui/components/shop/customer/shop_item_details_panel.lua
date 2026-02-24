@@ -7,10 +7,12 @@ require("Entity/ISUI/Controls/ISTableLayout")
 local ZUL = require("ZUL")
 local logger = ZUL.new("JASM")
 
-local ShopItemHeader = require("jasm/entity_ui/components/shop_item_header")
-local ShopItemGivesPanel = require("jasm/entity_ui/components/shop_item_gives_panel")
-local ShopItemRequirementsPanel = require("jasm/entity_ui/components/shop_item_requirements_panel")
-local ShopItemActionFooter = require("jasm/entity_ui/components/shop_item_action_footer")
+local ShopItemHeader = require("jasm/entity_ui/components/shop/customer/shop_item_header")
+local ShopItemGivesPanel = require("jasm/entity_ui/components/shop/customer/shop_item_gives_panel")
+local ShopItemRequirementsPanel =
+    require("jasm/entity_ui/components/shop/customer/shop_item_requirements_panel")
+local ShopItemActionFooter =
+    require("jasm/entity_ui/components/shop/customer/shop_item_action_footer")
 
 local pz_utils = require("pz_utils_shared")
 local KUtilities = pz_utils.konijima.Utilities

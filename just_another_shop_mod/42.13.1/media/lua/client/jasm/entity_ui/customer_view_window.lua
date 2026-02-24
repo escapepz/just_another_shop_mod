@@ -3,9 +3,9 @@ require("Entity/ISUI/Controls/ISTableLayout")
 require("ISUI/ISLabel")
 require("ISUI/ISButton")
 
-local SearchFilterPanel = require("jasm/entity_ui/components/shop_search_filter_panel")
-local ProductListPanel = require("jasm/entity_ui/components/product_list_panel")
-local ItemDetailsPanel = require("jasm/entity_ui/components/shop_item_details_panel")
+local SearchFilterPanel = require("jasm/entity_ui/components/shop/shared/shop_search_filter_panel")
+local ProductListPanel = require("jasm/entity_ui/components/product/product_list_panel")
+local ItemDetailsPanel = require("jasm/entity_ui/components/shop/customer/shop_item_details_panel")
 local ShopDataManager = require("jasm/entity_ui/models/shop_data_manager")
 
 local ZUL = require("ZUL")

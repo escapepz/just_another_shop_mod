@@ -4,8 +4,8 @@ require("ISUI/ISButton")
 require("ISUI/ISTextEntryBox")
 require("build_ui_skeleton/ISTableLayout")
 
-local ShopSectionHeader = require("jasm/entity_ui/components/shop_section_header")
-local CustomerOptionItem = require("jasm/entity_ui/components/shop_customer_option_item")
+local ShopSectionHeader = require("jasm/entity_ui/components/shop/shared/shop_section_header")
+local CustomerOptionItem = require("jasm/entity_ui/components/shop/owner/shop_customer_option_item")
 
 --- A panel that manages requirement paths (CUSTOMER OPTIONS).
 ---@class ShopRequirementPanel : ISPanel
