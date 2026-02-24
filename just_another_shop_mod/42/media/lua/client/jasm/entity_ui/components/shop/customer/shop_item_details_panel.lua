@@ -4,7 +4,7 @@ require("ISUI/ISScrollingListBox")
 require("ISUI/ISImage")
 require("Entity/ISUI/Controls/ISTableLayout")
 
-local ZUL = require("ZUL")
+local ZUL = require("zul")
 local logger = ZUL.new("just_another_shop_mod")
 
 local ShopItemHeader = require("jasm/entity_ui/components/shop/customer/shop_item_header")

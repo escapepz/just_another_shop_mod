@@ -1,5 +1,5 @@
-local ZUL = require("ZUL")
-local logger = ZUL.new("JASM")
+local ZUL = require("zul")
+local logger = ZUL.new("just_another_shop_mod")
 
 local ShopTrade = {}
 

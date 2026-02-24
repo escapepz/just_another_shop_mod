@@ -1,7 +1,7 @@
-local ZUL = require("ZUL")
+local ZUL = require("zul")
 local pz_utils = require("pz_utils_shared")
 
-local logger = ZUL.new("JASM")
+local logger = ZUL.new("just_another_shop_mod")
 
 local SandboxVarsModule = pz_utils.escape.SandboxVarsModule
 local KUtilities = pz_utils.konijima.Utilities
