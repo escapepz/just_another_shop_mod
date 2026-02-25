@@ -5,5 +5,13 @@
     },
     "[lua]": {
         "editor.defaultFormatter": "JohnnyMorganz.stylua"
-    }
+    },
+    "cSpell.words": [
+        "initialise",
+        "ISUI",
+        "jasm",
+        "JASM",
+        "konijima",
+        "prerender"
+    ]
 }

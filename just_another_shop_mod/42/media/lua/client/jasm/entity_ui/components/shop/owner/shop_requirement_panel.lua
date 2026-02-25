@@ -6,6 +6,8 @@ require("Entity/ISUI/Controls/ISTableLayout")
 
 local ShopSectionHeader = require("jasm/entity_ui/components/shop/shared/shop_section_header")
 local CustomerOptionItem = require("jasm/entity_ui/components/shop/owner/shop_customer_option_item")
+local ShopAddRequirementRow =
+    require("jasm/entity_ui/components/shop/owner/shop_add_requirement_row")
 
 --- A panel that manages requirement paths (CUSTOMER OPTIONS).
 ---@class ShopRequirementPanel : ISPanel
@@ -16,11 +18,11 @@ local CustomerOptionItem = require("jasm/entity_ui/components/shop/owner/shop_cu
 ---@field onError fun(target: any, msg: string)
 ---@field onClearError fun(target: any)
 ---@field target any
+---@field addComp ShopAddRequirementRow|nil
+---@field addPathRow ISTableLayoutRow|nil
 ---@field xuiSkin any
 ---@field tableLayout ISTableLayout|nil
 ---@field pathsTable ISTableLayout|nil
----@field addPathLayout ISTableLayout|nil
----@field addPathRow ISTableLayoutRow|nil
 local ShopRequirementPanel = ISPanel:derive("ShopRequirementPanel")
 
 function ShopRequirementPanel:xuiBuild(style, class, ...)
@@ -79,67 +81,25 @@ function ShopRequirementPanel:createChildren()
             self.tableLayout:setElement(0, listRow:index(), self.pathsTable)
         end
     end
-    -- 3. Prepare the "Add Path" row (we'll add it dynamically in refreshList)
-    local INPUT_H_VAL = 26
-    ---@type ISTableLayout
-    self.addPathLayout = self:xuiBuild(nil, ISTableLayout, 0, 0, self.width, 40)
-    ---@diagnostic disable-next-line: unnecessary-if
-    if self.addPathLayout then
-        local cQ = self.addPathLayout:addColumn()
-        cQ.minimumWidth = 55
-        self.addPathLayout:addColumnFill()
-        local cA = self.addPathLayout:addColumn()
-        cA.minimumWidth = 50
-
-        local ar = self.addPathLayout:addRowFill()
-        if ar then
-            ar.minimumHeight = 40
-            ---@type ISTextEntryBox|nil
-            self.newPathQtyInput = self:xuiBuild(nil, ISTextEntryBox, "1", 0, 0, 55, INPUT_H_VAL)
-            if self.newPathQtyInput then
-                self.newPathQtyInput:setPlaceholderText("Qty")
-                self.addPathLayout:setElement(0, ar:index(), self.newPathQtyInput)
-            end
-
-            ---@type ISTextEntryBox|nil
-            self.newPathTypeInput = self:xuiBuild(nil, ISTextEntryBox, "", 0, 0, 10, INPUT_H_VAL)
-            if self.newPathTypeInput then
-                self.newPathTypeInput:setPlaceholderText("Type e.g. Base.GoldBar")
-                self.addPathLayout:setElement(1, ar:index(), self.newPathTypeInput)
-            end
-
-            ---@type ISButton|nil
-            self.addPathBtn = self:xuiBuild(
-                nil,
-                ISButton,
-                0,
-                0,
-                50,
-                INPUT_H_VAL,
-                "Add",
-                self,
-                self.onAddPathClicked
-            )
-            if self.addPathBtn then
-                self.addPathLayout:setElement(2, ar:index(), self.addPathBtn)
-            end
-        end
-    end
+    -- 3. Prepare the "Add Path" component
+    self.addComp = self:xuiBuild(
+        nil,
+        ShopAddRequirementRow,
+        0,
+        0,
+        self.width,
+        40,
+        self,
+        self.onAddPathClicked,
+        self.xuiSkin
+    )
     self.addPathRow = nil
 
     self:refreshList()
 end
 
-function ShopRequirementPanel:onAddPathClicked()
-    if not self.newPathQtyInput or not self.newPathTypeInput then
-        return
-    end
-
-    local qty = tonumber(self.newPathQtyInput:getText()) or 1
-    local itemType = self.newPathTypeInput:getText()
-    itemType = itemType and itemType:match("^%s*(.-)%s*$") or ""
-
-    if itemType == "" then
+function ShopRequirementPanel:onAddPathClicked(qty, itemType)
+    if not itemType or itemType == "" then
         ---@diagnostic disable-next-line: unnecessary-if
         if self.onError then
             self.onError(self.target, "Type cannot be empty")
@@ -180,8 +140,9 @@ function ShopRequirementPanel:onAddPathClicked()
         self.onUnsavedChanges(self.target)
     end
 
-    self.newPathQtyInput:setText("1")
-    self.newPathTypeInput:setText("")
+    if self.addComp then
+        self.addComp:clearInputs()
+    end
     ---@diagnostic disable-next-line: unnecessary-if
     if self.onClearError then
         self.onClearError(self.target)
@@ -240,11 +201,11 @@ function ShopRequirementPanel:refreshList()
         end
     end
 
-    if #self.requirementPaths < self.maxPaths and self.addPathLayout then
+    if #self.requirementPaths < self.maxPaths and self.addComp then
         self.addPathRow = self.pathsTable:addRow()
         if self.addPathRow then
             self.addPathRow.minimumHeight = 40
-            self.pathsTable:setElement(0, self.addPathRow:index(), self.addPathLayout)
+            self.pathsTable:setElement(0, self.addPathRow:index(), self.addComp)
         end
     else
         self.addPathRow = nil
@@ -267,6 +228,10 @@ function ShopRequirementPanel:calculateLayout(width, height)
     if self.tableLayout then
         self.tableLayout:calculateLayout(width, height)
         self:setHeight(self.tableLayout:getHeight())
+    end
+
+    if self.addComp then
+        self.addComp:calculateLayout(width, 40)
     end
 end
 

@@ -842,7 +842,7 @@ function OwnerViewWindow:new(x, y, w, h, player, entity)
 
     o.player = player
     o.xuiSkin = xuiSkin
-    o.title = "Shop Config"
+    o.title = "JASM - Just Another Shop Mod"
     o.titleBar = true
     o.moveWithMouse = true
     o.enableHeader = true
