@@ -14,10 +14,6 @@ local ShopItemRequirementsPanel =
 local ShopItemActionFooter =
     require("jasm/entity_ui/components/shop/customer/shop_item_action_footer")
 
-local pz_utils = require("pz_utils_shared")
-local KUtilities = pz_utils.konijima.Utilities
-local JASM_AcceptTradeAction = require("jasm/timed_actions/jasm_accept_trade_action")
-
 ---@class TradeItem : umbrella.ISScrollingListBox.Item
 ---@field hasCount number
 ---@field requestQty number
@@ -160,6 +156,7 @@ function ShopItemDetailsPanel:onDebugForceGive()
     if luautils.walkAdj(self.player, sq, true) then
         ISTimedActionQueue.add(JASM_AcceptTradeAction:new(self.player, entity, {
             itemType = self.product.type,
+            offerQty = self.product.offerQty or 1,
             requestItem = selectedTrade.requestItem,
             requestQty = selectedTrade.requestQty,
             isForceGive = true,
@@ -217,23 +214,41 @@ function ShopItemDetailsPanel:setProduct(product)
     end
     ---@diagnostic disable-next-line: unnecessary-if
     if self.givesPanel then
-        self.givesPanel:setItem(product.name, 1, product.icon)
+        -- Read offerQty from the IsoObject modData (single source of trust)
+        ---@diagnostic disable-next-line: undefined-field
+        local shopTrades = self.entity and self.entity:getModData().shopTrades
+        local tradeData = shopTrades and shopTrades[product.type]
+        local offerQty = math.floor(tonumber(tradeData and tradeData.offerQty) or 1)
+        product.offerQty = offerQty -- Save it for the action payload
+        self.givesPanel:setItem(product.name, offerQty, product.icon)
     end
 
-    -- The trade data from modData can be a direct array or a table containing a 'paths' field
-    local tradeData = product.trades
-    local paths = tradeData and (tradeData.paths or tradeData) or {}
+    -- Read trade paths from the IsoObject modData (single source of trust)
+    ---@diagnostic disable-next-line: undefined-field
+    local shopTrades = self.entity and self.entity:getModData().shopTrades
+    local tradeData = shopTrades and shopTrades[product.type]
+
+    -- Schema: { offerQty = number, paths = { {requestItem, requestQty, name}, ... } }
+    local rawPaths = tradeData and tradeData.paths or {}
     local pInvMap = self.inventory and self.inventory.map
 
     local trades = {}
-    for _, trade in ipairs(paths) do
+    for _, t in ipairs(rawPaths) do
+        -- Strictly follow the canonical schema and ensure integer quantities
+        local trade = {
+            requestItem = t.requestItem,
+            requestQty = math.floor(tonumber(t.requestQty) or 1),
+            name = t.name or "",
+            icon = t.icon,
+        }
+
         local hasCount = 0.0
         if pInvMap and pInvMap[trade.requestItem] then
             hasCount = pInvMap[trade.requestItem].count
         end
 
         trade.hasCount = hasCount
-        -- Preserve the "official" icon from modData if available
+        -- Resolve icon from player inventory map if not already set in modData
         if not trade.icon then
             trade.icon = (pInvMap and pInvMap[trade.requestItem])
                     and pInvMap[trade.requestItem].icon
@@ -301,6 +316,7 @@ function ShopItemDetailsPanel:onAcceptTrade()
     if luautils.walkAdj(self.player, sq, true) then
         ISTimedActionQueue.add(JASM_AcceptTradeAction:new(self.player, entity, {
             itemType = self.product.type,
+            offerQty = self.product.offerQty or 1,
             requestItem = selectedTrade.requestItem,
             requestQty = selectedTrade.requestQty,
             isForceGive = false,

@@ -456,6 +456,7 @@ function CustomerViewWindow:new(x, y, w, h, player, entity)
     setmetatable(o, self)
     self.__index = self
 
+    o.panelCloseDistance = 2
     o.player = player
     o.xuiSkin = xuiSkin
     o.title = "JASM - Just Another Shop Mod"
@@ -492,7 +493,7 @@ function CustomerViewWindow.open(playerIndex, _context, entity)
 
     local windowWidth = 800
     local windowHeight = 600
-    local windowX = (screenWidth - windowWidth) / 2
+    local windowX = (screenWidth - windowWidth - 90)
     local windowY = (screenHeight - windowHeight) / 2
 
     local player = getSpecificPlayer(playerIndex)
@@ -503,7 +504,7 @@ function CustomerViewWindow.open(playerIndex, _context, entity)
     return window
 end
 
-local function onFillWorldObjectContextMenu(playerIndex, context, worldObjects)
+local function _onFillWorldObjectContextMenu(playerIndex, context, worldObjects)
     if worldObjects and #worldObjects > 0 then
         ---@type IsoObject
         local wObj = worldObjects and worldObjects[1] or nil
@@ -516,6 +517,6 @@ local function onFillWorldObjectContextMenu(playerIndex, context, worldObjects)
     end
 end
 
--- Events.OnFillWorldObjectContextMenu.Add(onFillWorldObjectContextMenu)
+-- Events.OnFillWorldObjectContextMenu.Add(_onFillWorldObjectContextMenu)
 
 return CustomerViewWindow

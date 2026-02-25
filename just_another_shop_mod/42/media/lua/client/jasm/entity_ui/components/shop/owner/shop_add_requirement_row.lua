@@ -103,12 +103,12 @@ function ShopAddRequirementRow:onAddClicked()
         return
     end
 
-    local qty = tonumber(self.newPathQtyInput:getText()) or 1
+    local requestQty = math.floor(tonumber(self.newPathQtyInput:getText()) or 1)
     local itemType = self.newPathTypeInput:getText()
     itemType = itemType and itemType:match("^%s*(.-)%s*$") or ""
 
     if itemType ~= "" and self.onAdd then
-        self.onAdd(self.target, qty, itemType)
+        self.onAdd(self.target, requestQty, itemType)
     end
 end
 

@@ -37,8 +37,6 @@ end
 function ShopRequirementPanel:createChildren()
     ISPanel.createChildren(self)
 
-    local INPUT_H = 26
-
     ---@type ISTableLayout|nil
     self.tableLayout = self:xuiBuild(nil, ISTableLayout, 0, 0, self.width, self.height)
     if not self.tableLayout then
@@ -98,7 +96,7 @@ function ShopRequirementPanel:createChildren()
     self:refreshList()
 end
 
-function ShopRequirementPanel:onAddPathClicked(qty, itemType)
+function ShopRequirementPanel:onAddPathClicked(requestQty, itemType)
     if not itemType or itemType == "" then
         ---@diagnostic disable-next-line: unnecessary-if
         if self.onError then
@@ -116,9 +114,7 @@ function ShopRequirementPanel:onAddPathClicked(qty, itemType)
         return
     end
 
-    if qty < 1 then
-        qty = 1
-    end
+    requestQty = math.max(1, math.floor(tonumber(requestQty) or 1))
 
     if #self.requirementPaths >= self.maxPaths then
         ---@diagnostic disable-next-line: unnecessary-if
@@ -130,7 +126,7 @@ function ShopRequirementPanel:onAddPathClicked(qty, itemType)
 
     local path = {
         itemType = itemType,
-        qty = qty,
+        requestQty = requestQty,
         name = itemScript:getDisplayName() or itemType,
         icon = itemScript:getIcon(),
     }

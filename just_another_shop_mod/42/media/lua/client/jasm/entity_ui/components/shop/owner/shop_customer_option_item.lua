@@ -88,7 +88,7 @@ function ShopCustomerOptionItem:updatePath(path)
     end
 
     -- Update Text
-    local dispName = tostring(path.qty) .. "x " .. (path.name or path.itemType)
+    local dispName = tostring(path.requestQty) .. "x " .. (path.name or path.itemType)
     self.nameLabel:setName(dispName)
     self.typeLabel:setName(path.itemType or "")
 

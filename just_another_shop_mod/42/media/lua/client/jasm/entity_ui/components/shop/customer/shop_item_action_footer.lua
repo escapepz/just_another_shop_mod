@@ -116,8 +116,8 @@ function ShopItemActionFooter:calculateLayout(width, height)
     self:setHeight(height)
     ---@diagnostic disable-next-line: unnecessary-if
     if self.errorLabel then
-        self.errorLabel:setX(width / 2)
-        self.errorLabel:setWidth(1)
+        self.errorLabel:setX(0)
+        self.errorLabel:setWidth(width)
     end
 
     local btnW = math.min(200, width - UI_BORDER_SPACING * 2)

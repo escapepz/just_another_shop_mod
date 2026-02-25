@@ -8,10 +8,10 @@ local JASM_ShopView_Owner = require("jasm/entity_ui/owner_view_window")
 local allowedCrates = { ["Base.Wood_Crate"] = true, ["Base.Metal_Crate"] = true }
 
 ---@param worldObjects IsoObject[]
----@param playerObj IsoPlayer
+---@param _playerObj IsoPlayer
 ---@param action string
 ---@param shopType string
-local function onShopAction(worldObjects, playerObj, action, shopType)
+local function onShopAction(worldObjects, _playerObj, action, shopType)
     local containerObj = nil
     for _, obj in ipairs(worldObjects) do
         ---@diagnostic disable-next-line: unnecessary-if
@@ -21,7 +21,7 @@ local function onShopAction(worldObjects, playerObj, action, shopType)
         end
     end
 
-    -- print(playerObj)
+    -- print(_playerObj)
 
     if not containerObj then
         return
@@ -102,7 +102,9 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
     if isShop then
         -- Open Customer View
         context:addOption("Open Shop UI", worldObjects, function()
-            JASM_ShopView_Customer.open(playerIndex, nil, containerObj)
+            if luautils.walkAdj(playerObj, containerObj:getSquare()) then
+                JASM_ShopView_Customer.open(playerIndex, nil, containerObj)
+            end
         end)
     end
 
@@ -118,14 +120,16 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
         ---@diagnostic disable-next-line: unnecessary-if
         if isOwner or isAdmin then
             jMenu:addOption("Manage Shop", worldObjects, function()
-                JASM_ShopView_Owner.open(playerIndex, nil, containerObj)
+                if luautils.walkAdj(playerObj, containerObj:getSquare()) then
+                    JASM_ShopView_Owner.open(playerIndex, nil, containerObj)
+                end
             end)
         end
     end
 
     ---@diagnostic disable-next-line: unnecessary-if
     -- Player Shop Submenu
-    if not isShop or shopType == "PLAYER" or isAdmin then
+    if not isShop or shopType == "PLAYER" then
         local pOption = jMenu:addOption("Player Shop", worldObjects, nil)
         local pMenu = ISContextMenu:getNew(jMenu)
         jMenu:addSubMenu(pOption, pMenu)

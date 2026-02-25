@@ -120,6 +120,7 @@ function ShopFooterPanel:createChildren()
                             -- ── PROGRESS BAR OVERLAY ────────────────────────────────
                             local parent = self
                             local oldRender = self.publishBtn.render
+                            ---@diagnostic disable-next-line: redundant-parameter
                             self.publishBtn.render = function(btn)
                                 -- Draw normal button first
                                 ---@diagnostic disable-next-line: redundant-parameter

@@ -12,8 +12,6 @@ local TextureUtils = require("jasm/entity_ui/utils/texture_utils")
 ---@field xuiSkin any
 local ShopItemRequirementsPanel = ISPanel:derive("ShopItemRequirementsPanel")
 
-local UI_BORDER_SPACING = 12
-
 function ShopItemRequirementsPanel:xuiBuild(style, class, ...)
     local o = ISXuiSkin.build(self.xuiSkin, style, class, ...)
     if o then
@@ -40,6 +38,7 @@ function ShopItemRequirementsPanel:createChildren()
     end
 
     -- Header
+    ---@type ISPanel
     self.headerPanel =
         ShopSectionHeader:new(0, 0, self.width, 40, "YOU NEED (CHOOSE ONE)", self.xuiSkin)
     if self.headerPanel and self.tableLayout then
@@ -87,7 +86,7 @@ function ShopItemRequirementsPanel:createChildren()
     end
 end
 
-function ShopItemRequirementsPanel.doDrawReqItem(listbox, y, item, alt)
+function ShopItemRequirementsPanel.doDrawReqItem(listbox, y, item, _alt)
     local self = listbox
     ---@cast self ISScrollingListBox
 
@@ -164,7 +163,7 @@ function ShopItemRequirementsPanel:getSelectedTrade()
     return nil
 end
 
-function ShopItemRequirementsPanel:calculateLayout(width, height)
+function ShopItemRequirementsPanel:calculateLayout(width, _height)
     self:setWidth(width)
 
     ---@diagnostic disable-next-line: unnecessary-if

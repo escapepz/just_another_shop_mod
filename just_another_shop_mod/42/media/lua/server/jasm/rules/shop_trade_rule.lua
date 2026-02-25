@@ -56,7 +56,19 @@ function ShopTrade.Payment(ctx)
     local playerInv = ctx.character:getInventory()
     local srcContainer = ctx.src
 
-    -- 2. PAYMENT EXECUTION
+    -- 2. RACE CONDITION PROTECTION
+    -- Verify item is still physically present in the container
+    if not srcContainer:contains(ctx.item) then
+        ctx.flags.rejected = true
+        ctx.flags.reason = "Item no longer available"
+        logger:error("Trade Failed: Item removed before payment", {
+            buyer = ctx.character:getUsername(),
+            item = itemType,
+        })
+        return
+    end
+
+    -- 3. PAYMENT EXECUTION
     -- Remove from player
     for i = 1, priceConfig.count do
         playerInv:RemoveOneOf(priceConfig.type)

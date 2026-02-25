@@ -6,22 +6,16 @@ require("ISUI/ISPanel")
 require("ISUI/ISScrollingListBox")
 require("TimedActions/ISBaseTimedAction")
 require("TimedActions/ISTimedActionQueue")
-local JASM_PublishTradeAction = require("jasm/timed_actions/jasm_publish_trade_action")
 
 local ShopDataManager = require("jasm/entity_ui/models/shop_data_manager")
 local SearchFilterPanel = require("jasm/entity_ui/components/shop/shared/shop_search_filter_panel")
 local ProductListPanel = require("jasm/entity_ui/components/product/product_list_panel")
-local CustomerOptionItem = require("jasm/entity_ui/components/shop/owner/shop_customer_option_item")
 local ShopTradeOfferPanel = require("jasm/entity_ui/components/shop/owner/shop_trade_offer_panel")
-local ShopSectionHeader = require("jasm/entity_ui/components/shop/shared/shop_section_header")
 local ShopRequirementPanel = require("jasm/entity_ui/components/shop/owner/shop_requirement_panel")
 local ShopFooterPanel = require("jasm/entity_ui/components/shop/owner/shop_footer_panel")
 
 local ZUL = require("zul")
 local logger = ZUL.new("just_another_shop_mod")
-
-local pz_utils = require("pz_utils_shared")
-local KUtilities = pz_utils.konijima.Utilities
 
 -- ============================================================
 -- COLOR PALETTE (matches design5.html / customer_view_window)
@@ -47,7 +41,7 @@ local MAX_PATHS = 5 -- design5_rule §3: max 5 confirmed paths
 
 ---@class OwnerRequirementPath
 ---@field itemType    string   Full type (e.g. "Base.GoldBar")
----@field qty    number
+---@field requestQty    integer
 ---@field name   string
 
 ---@class OwnerViewWindow : ISEntityWindow
@@ -62,7 +56,7 @@ local MAX_PATHS = 5 -- design5_rule §3: max 5 confirmed paths
 ---@field selectedItem      CustomerViewInventoryItem|nil
 ---@field hasUnsavedChanges boolean
 ---@field requirementPaths  OwnerRequirementPath[]
----@field offerQty          number
+---@field offerQty          integer
 -- left panel components
 ---@field searchPanel    ShopSearchFilterPanel|nil
 ---@field productPanel   ProductListPanel|nil
@@ -384,8 +378,6 @@ end
 -- ============================================================
 
 local R_PAD = 16 -- inner padding for right panel
-local LABEL_H = 20 -- standard label height
-local INPUT_H = 26 -- standard input height
 
 function OwnerViewWindow:initRightPanel()
     local rw = self.width - LEFT_PANEL_WIDTH
@@ -549,7 +541,7 @@ function OwnerViewWindow:onSelectInventoryItem(entry)
             for _, t in ipairs(loadedPaths) do
                 local path = {
                     itemType = t.requestItem or "",
-                    qty = t.requestQty or 1,
+                    requestQty = math.floor(tonumber(t.requestQty) or 1),
                     name = t.name or t.requestItem or "",
                     icon = nil,
                 }
@@ -712,12 +704,12 @@ function OwnerViewWindow:onPublishClicked()
     for _, p in ipairs(self.requirementPaths) do
         table.insert(tradesPayload, {
             requestItem = p.itemType,
-            requestQty = p.qty,
+            requestQty = math.floor(p.requestQty or 1),
             name = p.name,
         })
     end
     self.selectedItem.trades = tradesPayload
-    self.selectedItem.offerQty = qty
+    self.selectedItem.offerQty = math.floor(qty)
 
     -- ── CLIENT-SIDE ONLY: store pending trade in local entity modData ──────
     -- This does NOT call transmitModData() – the server owns the authoritative write.
@@ -725,7 +717,7 @@ function OwnerViewWindow:onPublishClicked()
     local clientModData = self.entity:getModData()
     clientModData.pendingTrade = {
         itemType = self.selectedItem.type,
-        offerQty = qty,
+        offerQty = math.floor(qty),
         paths = tradesPayload,
     }
     -- ────────────────────────────────────────────────────────────────────────
@@ -840,6 +832,7 @@ function OwnerViewWindow:new(x, y, w, h, player, entity)
     setmetatable(o, self)
     self.__index = self
 
+    o.panelCloseDistance = 2
     o.player = player
     o.xuiSkin = xuiSkin
     o.title = "JASM - Just Another Shop Mod"
@@ -890,7 +883,7 @@ function OwnerViewWindow.open(playerIndex, _context, entity)
 
     local windowWidth = 800
     local windowHeight = 600
-    local windowX = (screenWidth - windowWidth) / 2
+    local windowX = (screenWidth / 2 - windowWidth - 69)
     local windowY = (screenHeight - windowHeight) / 2
 
     local player = getSpecificPlayer(playerIndex)
@@ -900,7 +893,7 @@ function OwnerViewWindow.open(playerIndex, _context, entity)
     return window
 end
 
-local function onFillWorldObjectContextMenu(playerIndex, context, worldObjects)
+local function _onFillWorldObjectContextMenu(playerIndex, context, worldObjects)
     if worldObjects and #worldObjects > 0 then
         ---@type IsoObject
         local wObj = worldObjects and worldObjects[1] or nil
@@ -913,6 +906,6 @@ local function onFillWorldObjectContextMenu(playerIndex, context, worldObjects)
     end
 end
 
--- Events.OnFillWorldObjectContextMenu.Add(onFillWorldObjectContextMenu)
+-- Events.OnFillWorldObjectContextMenu.Add(_onFillWorldObjectContextMenu)
 
 return OwnerViewWindow

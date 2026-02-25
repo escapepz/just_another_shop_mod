@@ -30,12 +30,10 @@ local pz_utils = require("pz_utils_shared")
 ---@field itemType     string
 ---@field requestItem  string
 ---@field requestQty   number
+---@field offerQty     number
 ---@field isForceGive  boolean
-local JASM_AcceptTradeAction = ISBaseTimedAction:derive("JASM_AcceptTradeAction")
+JASM_AcceptTradeAction = ISBaseTimedAction:derive("JASM_AcceptTradeAction")
 JASM_AcceptTradeAction.Type = "JASM_AcceptTradeAction"
-
--- Assign to global for the engine's serialization logic (B42 Networking)
-_G[JASM_AcceptTradeAction.Type] = JASM_AcceptTradeAction
 
 -- ============================================================
 -- CONSTRUCTOR
@@ -59,6 +57,7 @@ function JASM_AcceptTradeAction:new(character, containerObj, payload)
     o.itemType = payload.itemType
     o.requestItem = payload.requestItem
     o.requestQty = payload.requestQty or 1
+    o.offerQty = payload.offerQty or 1
     o.isForceGive = payload.isForceGive or false
 
     o.maxTime = payload.time or 30
@@ -189,6 +188,7 @@ end
 function JASM_AcceptTradeAction:complete()
     logger:info("JASM_AcceptTradeAction:complete() - SERVER processing inventory", {
         itemType = self.itemType,
+        offerQty = self.offerQty,
         player = self.character:getUsername(),
         force = self.isForceGive,
     })
@@ -227,9 +227,18 @@ function JASM_AcceptTradeAction:complete()
             return false
         end
 
-        shopContainer:Remove(product)
-        playerInv:AddItem(product)
-        logger:info("JASM_AcceptTradeAction:complete() - Force Give Success")
+        for i = 1, self.offerQty do
+            local item = shopContainer:getFirstType(self.itemType)
+            ---@diagnostic disable-next-line: unnecessary-if
+            if item then
+                shopContainer:Remove(item)
+                playerInv:AddItem(item)
+            end
+        end
+        logger:info(
+            "JASM_AcceptTradeAction:complete() - Force Give Success",
+            { qty = self.offerQty }
+        )
     else
         -- 3. Trade logic
         local playerFunds = playerInv:getItemCount(self.requestItem)
@@ -248,16 +257,21 @@ function JASM_AcceptTradeAction:complete()
         end
 
         -- Move product from shop to player
-        shopContainer:Remove(product)
-        playerInv:AddItem(product)
+        for i = 1, self.offerQty do
+            local item = shopContainer:getFirstType(self.itemType)
+            ---@diagnostic disable-next-line: unnecessary-if
+            if item then
+                shopContainer:Remove(item)
+                playerInv:AddItem(item)
+            end
+        end
 
         logger:info("JASM_AcceptTradeAction:complete() - Trade Success", {
             item = self.itemType,
+            qty = self.offerQty,
             price = self.requestQty .. "x " .. self.requestItem,
         })
     end
 
     return true
 end
-
-return JASM_AcceptTradeAction

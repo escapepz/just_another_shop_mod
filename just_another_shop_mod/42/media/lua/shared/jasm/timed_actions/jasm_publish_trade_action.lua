@@ -26,13 +26,10 @@ local logger = ZUL.new("just_another_shop_mod")
 ---@field z          number
 ---@field index      integer     Object index on the square
 ---@field itemType   string      Full item type string (e.g. "Base.Axe")
----@field trades     table       Array of trade paths [{requestItem, requestQty, name}]
+---@field tradeCount integer     Number of trade paths (flat-serialized)
 ---@field offerQty   integer
-local JASM_PublishTradeAction = ISBaseTimedAction:derive("JASM_PublishTradeAction")
+JASM_PublishTradeAction = ISBaseTimedAction:derive("JASM_PublishTradeAction")
 JASM_PublishTradeAction.Type = "JASM_PublishTradeAction"
-
--- Assign to global for the engine's serialization logic (B42 Networking)
-_G[JASM_PublishTradeAction.Type] = JASM_PublishTradeAction
 
 -- ============================================================
 -- CONSTRUCTOR
@@ -47,13 +44,22 @@ function JASM_PublishTradeAction:new(character, entity, payload)
     ---@cast o JASM_PublishTradeAction
 
     o.entity = entity
-    o.x = payload.x -- serialised to server via field name matching
+    o.x = payload.x
     o.y = payload.y
     o.z = payload.z
     o.index = payload.index
     o.itemType = payload.itemType
-    o.trades = payload.trades
-    o.offerQty = payload.offerQty or 1
+    o.offerQty = math.floor(tonumber(payload.offerQty) or 1)
+
+    -- Flatten trades into numbered primitive fields so PZ's TimedAction
+    -- serializer can transmit them (nested tables are not reliably sent).
+    local trades = payload.trades or {}
+    o.tradeCount = #trades
+    for i, t in ipairs(trades) do
+        o["trade" .. i .. "_requestItem"] = t.requestItem
+        o["trade" .. i .. "_requestQty"] = math.floor(tonumber(t.requestQty) or 1)
+        o["trade" .. i .. "_name"] = t.name or ""
+    end
 
     -- Progress bar behaviour
     o.maxTime = 30 -- ~3 s at 10 ticks/s; server can override via getDuration()
@@ -176,15 +182,15 @@ end
 -- SERVER - complete
 -- Called on the server when the action finishes successfully.
 -- This is the ONLY place that writes and syncs modData.
--- Fields on self (x, y, z, index, itemType, trades, offerQty)
--- are automatically deserialised from the client payload.
+-- Fields on self (x, y, z, index, itemType, tradeCount, trade1_*, offerQty)
+-- are automatically deserialised from the client payload as flat primitives.
 -- ============================================================
 
 ---@return boolean
 function JASM_PublishTradeAction:complete()
     logger:info("JASM_PublishTradeAction:complete() - SERVER writing modData", {
         itemType = self.itemType,
-        tradeCount = self.trades and #self.trades or 0,
+        tradeCount = self.tradeCount or 0,
     })
 
     local square = getSquare(self.x, self.y, self.z)
@@ -221,8 +227,9 @@ function JASM_PublishTradeAction:complete()
         return false
     end
 
-    -- Wait... enforce max 5 paths per shopTrades
-    local pathCount = self.trades and #self.trades or 0
+    -- Enforce max 5 paths per shopTrades entry
+    local pathCount = self.tradeCount or 0
+    ---@diagnostic disable-next-line: unnecessary-if
     if pathCount > 5 then
         logger:error(
             "JASM_PublishTradeAction:complete() - exceeding max 5 paths ("
@@ -232,11 +239,21 @@ function JASM_PublishTradeAction:complete()
         return false
     end
 
+    -- Reconstruct trades from flat serialized fields
+    local cleanPaths = {}
+    for i = 1, (self.tradeCount or 0) do
+        table.insert(cleanPaths, {
+            requestItem = self["trade" .. i .. "_requestItem"],
+            requestQty = math.floor(tonumber(self["trade" .. i .. "_requestQty"]) or 1),
+            name = self["trade" .. i .. "_name"] or "",
+        })
+    end
+
     -- Write trade data server-side (authoritative write)
     modData.shopTrades = modData.shopTrades or {}
     modData.shopTrades[self.itemType] = {
-        offerQty = self.offerQty,
-        paths = self.trades,
+        offerQty = math.floor(tonumber(self.offerQty) or 1),
+        paths = cleanPaths,
     }
 
     -- Sync to ALL clients (broadcasts the updated modData to everyone)
