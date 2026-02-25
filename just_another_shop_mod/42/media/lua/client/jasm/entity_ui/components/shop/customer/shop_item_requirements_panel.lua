@@ -99,26 +99,24 @@ function ShopItemRequirementsPanel.doDrawReqItem(listbox, y, item, alt)
         self:drawRect(0, y, self.width, item.height, 0.15, 0.95, 0.61, 0.07)
         self:drawRectBorder(0, y, self.width, item.height, 0.6, 0.95, 0.61, 0.07)
     elseif self.mouseoverselected == item.index then
-        -- Hover: slight white tint
         self:drawRect(0, y, self.width, item.height, 0.05, 0.10, 0.10, 0.10)
     end
 
-    -- Wait, the original file used `self.mouseover == item.index`.
-    -- I should check how ISScrollingListBox handles mouseover.
-    -- Actually, let's just use the original logic and adapt it.
-
-    -- Mini Icon Slot
-    -- self:drawRectBorder(10, y + 6, 28, 28, 0.25, 0.25, 0.25, 1)
+    -- Always get texture from itemFullID (requestItem)
     local texture = TextureUtils.getItemTexture(req.requestItem)
     if texture then
         self:drawTextureScaled(texture, 12, y + 8, 24, 24, 1, 1, 1, 1)
     end
 
-    -- Name
-    local name = req.name or "Unknown Item"
-    if name == "InventoryItem" then
-        name = "Money"
-    end
+    -- Name Logic: ScriptManager > req.name fallback
+    local scriptItem = ScriptManager.instance:getItem(req.requestItem)
+    local name = scriptItem and scriptItem:getDisplayName() or req.name or "Unknown Item"
+
+    -- Specific fallback for money
+    -- if req.requestItem == "Base.Money" then
+    --     name = "Money"
+    -- end
+
     self:drawText(name, 46, y + 5, 0.80, 0.80, 0.80, 1, UIFont.Small)
 
     -- Status

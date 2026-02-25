@@ -194,20 +194,25 @@ function ShopItemDetailsPanel:setProduct(product)
         self.givesPanel:setItem(product.name, 1, product.icon)
     end
 
-    -- Assuming 'self.inventory' is the map {map={}, list={}}
+    -- The trade data from modData can be a direct array or a table containing a 'paths' field
+    local tradeData = product.trades
+    local paths = tradeData and (tradeData.paths or tradeData) or {}
     local pInvMap = self.inventory and self.inventory.map
 
     local trades = {}
-    ---@diagnostic disable-next-line: undefined-field
-    for _, trade in ipairs(product.trades or {}) do
+    for _, trade in ipairs(paths) do
         local hasCount = 0.0
         if pInvMap and pInvMap[trade.requestItem] then
             hasCount = pInvMap[trade.requestItem].count
         end
 
         trade.hasCount = hasCount
-        trade.icon = (pInvMap and pInvMap[trade.requestItem]) and pInvMap[trade.requestItem].icon
-            or "InventoryItem_Default"
+        -- Preserve the "official" icon from modData if available
+        if not trade.icon then
+            trade.icon = (pInvMap and pInvMap[trade.requestItem])
+                    and pInvMap[trade.requestItem].icon
+                or nil
+        end
         table.insert(trades, trade)
     end
 
@@ -215,6 +220,7 @@ function ShopItemDetailsPanel:setProduct(product)
     if self.requirementsPanel then
         self.requirementsPanel:setTrades(trades)
     end
+    self.dirtyLayout = true
     self:updateTradeButton()
 end
 
