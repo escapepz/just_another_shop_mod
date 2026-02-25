@@ -19,7 +19,8 @@ local CustomerOptionItem = require("jasm/entity_ui/components/shop/owner/shop_cu
 ---@field xuiSkin any
 ---@field tableLayout ISTableLayout|nil
 ---@field pathsTable ISTableLayout|nil
----@field addRow ISTableLayoutRow|nil
+---@field addPathLayout ISTableLayout|nil
+---@field addPathRow ISTableLayoutRow|nil
 local ShopRequirementPanel = ISPanel:derive("ShopRequirementPanel")
 
 function ShopRequirementPanel:xuiBuild(style, class, ...)
@@ -70,6 +71,7 @@ function ShopRequirementPanel:createChildren()
         ---@diagnostic disable-next-line: inject-field
         listRow.marginTop = 6
         local pathListH = 210
+        listRow.minimumHeight = pathListH
         ---@type ISTableLayout|nil
         self.pathsTable = self:xuiBuild(nil, ISTableLayout, 0, 0, self.width, pathListH)
         if self.pathsTable then
@@ -77,62 +79,53 @@ function ShopRequirementPanel:createChildren()
             self.tableLayout:setElement(0, listRow:index(), self.pathsTable)
         end
     end
+    -- 3. Prepare the "Add Path" row (we'll add it dynamically in refreshList)
+    local INPUT_H_VAL = 26
+    ---@type ISTableLayout
+    self.addPathLayout = self:xuiBuild(nil, ISTableLayout, 0, 0, self.width, 40)
+    ---@diagnostic disable-next-line: unnecessary-if
+    if self.addPathLayout then
+        local cQ = self.addPathLayout:addColumn()
+        cQ.minimumWidth = 55
+        self.addPathLayout:addColumnFill()
+        local cA = self.addPathLayout:addColumn()
+        cA.minimumWidth = 50
 
-    -- 3. Add Row
-    self.addRow = self.tableLayout:addRow()
-    if self.addRow then
-        ---@diagnostic disable-next-line: inject-field
-        self.addRow.marginTop = 8
-        ---@type ISTableLayout|nil
-        local addPathLayout = self:xuiBuild(nil, ISTableLayout, 0, 0, self.width, INPUT_H)
-        if addPathLayout then
-            local cQ = addPathLayout:addColumn()
-            cQ.minimumWidth = 55
-            addPathLayout:addColumnFill()
-            local cA = addPathLayout:addColumn()
-            cA.minimumWidth = 50
-
-            local ar = addPathLayout:addRowFill()
-            if ar then
-                ---@type ISTextEntryBox|nil
-                self.newPathQtyInput = self:xuiBuild(nil, ISTextEntryBox, "1", 0, 0, 55, INPUT_H)
-                if self.newPathQtyInput then
-                    ---@diagnostic disable-next-line: undefined-field
-                    self.newPathQtyInput:setPlaceholderText("Qty")
-                    addPathLayout:setElement(0, ar:index(), self.newPathQtyInput)
-                end
-
-                ---@type ISTextEntryBox|nil
-                self.newPathTypeInput = self:xuiBuild(nil, ISTextEntryBox, "", 0, 0, 10, INPUT_H)
-                if self.newPathTypeInput then
-                    ---@diagnostic disable-next-line: inject-field
-                    self.newPathTypeInput.calculateLayout = function(_self, _w, _h)
-                        _self:setWidth(_w)
-                        _self:setHeight(_h)
-                    end
-                    self.newPathTypeInput:setPlaceholderText("Type e.g. Base.GoldBar")
-                    addPathLayout:setElement(1, ar:index(), self.newPathTypeInput)
-                end
-
-                ---@type ISButton|nil
-                self.addPathBtn = self:xuiBuild(
-                    nil,
-                    ISButton,
-                    0,
-                    0,
-                    50,
-                    INPUT_H,
-                    "Add",
-                    self,
-                    self.onAddPathClicked
-                )
-                if self.addPathBtn then
-                    addPathLayout:setElement(2, ar:index(), self.addPathBtn)
-                end
+        local ar = self.addPathLayout:addRowFill()
+        if ar then
+            ar.minimumHeight = 40
+            ---@type ISTextEntryBox|nil
+            self.newPathQtyInput = self:xuiBuild(nil, ISTextEntryBox, "1", 0, 0, 55, INPUT_H_VAL)
+            if self.newPathQtyInput then
+                self.newPathQtyInput:setPlaceholderText("Qty")
+                self.addPathLayout:setElement(0, ar:index(), self.newPathQtyInput)
             end
-            self.tableLayout:setElement(0, self.addRow:index(), addPathLayout)
+
+            ---@type ISTextEntryBox|nil
+            self.newPathTypeInput = self:xuiBuild(nil, ISTextEntryBox, "", 0, 0, 10, INPUT_H_VAL)
+            if self.newPathTypeInput then
+                self.newPathTypeInput:setPlaceholderText("Type e.g. Base.GoldBar")
+                self.addPathLayout:setElement(1, ar:index(), self.newPathTypeInput)
+            end
+
+            ---@type ISButton|nil
+            self.addPathBtn = self:xuiBuild(
+                nil,
+                ISButton,
+                0,
+                0,
+                50,
+                INPUT_H_VAL,
+                "Add",
+                self,
+                self.onAddPathClicked
+            )
+            if self.addPathBtn then
+                self.addPathLayout:setElement(2, ar:index(), self.addPathBtn)
+            end
         end
     end
+    self.addPathRow = nil
 
     self:refreshList()
 end
@@ -214,13 +207,7 @@ function ShopRequirementPanel:onRemovePath(path)
     self:refreshList()
 end
 
-function ShopRequirementPanel:updateAddRowVisibility()
-    local visible = #self.requirementPaths < self.maxPaths
-    if self.addRow then
-        self.addRow:setVisible(visible)
-    end
-end
-
+-- refreshList adds items and potentially the "add path" row to the pathsTable.
 function ShopRequirementPanel:refreshList()
     if not self.pathsTable then
         return
@@ -253,7 +240,15 @@ function ShopRequirementPanel:refreshList()
         end
     end
 
-    self:updateAddRowVisibility()
+    if #self.requirementPaths < self.maxPaths and self.addPathLayout then
+        self.addPathRow = self.pathsTable:addRow()
+        if self.addPathRow then
+            self.addPathRow.minimumHeight = 40
+            self.pathsTable:setElement(0, self.addPathRow:index(), self.addPathLayout)
+        end
+    else
+        self.addPathRow = nil
+    end
 
     -- Visibility update for "Add" row logic if needed
     ---@diagnostic disable-next-line: unnecessary-if
