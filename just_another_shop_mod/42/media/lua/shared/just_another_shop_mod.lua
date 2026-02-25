@@ -1,2 +1,3 @@
 -- place hold for external API
-require("jasm/patches/init")
+local init_patches = require("jasm/patches/shared_patches_init")
+init_patches()
