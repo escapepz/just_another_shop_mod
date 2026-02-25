@@ -46,7 +46,7 @@ local MAX_PATHS = 5 -- design5_rule §3: max 5 confirmed paths
 -- ============================================================
 
 ---@class OwnerRequirementPath
----@field dbg    string   Full type (e.g. "Base.GoldBar")
+---@field itemType    string   Full type (e.g. "Base.GoldBar")
 ---@field qty    number
 ---@field name   string
 
@@ -78,7 +78,7 @@ local MAX_PATHS = 5 -- design5_rule §3: max 5 confirmed paths
 ---@field yieldInfo     ISLabel
 ---@field pathsScrollList ISScrollingListBox
 ---@field newPathQtyInput  ISTextEntryBox
----@field newPathDbgInput  ISTextEntryBox
+---@field newPathTypeInput  ISTextEntryBox
 ---@field addPathBtn       ISButton
 ---@field errorLabel       ISLabel
 ---@field currentPublishAction JASM_PublishTradeAction|nil
@@ -548,7 +548,7 @@ function OwnerViewWindow:onSelectInventoryItem(entry)
         if type(loadedPaths) == "table" then
             for _, t in ipairs(loadedPaths) do
                 local path = {
-                    dbg = t.requestItem or "",
+                    itemType = t.requestItem or "",
                     qty = t.requestQty or 1,
                     name = t.name or t.requestItem or "",
                     icon = nil,
@@ -556,7 +556,7 @@ function OwnerViewWindow:onSelectInventoryItem(entry)
                 -- Try to look up icon from inventory map
                 local mapped = self.inventory
                     and self.inventory.map
-                    and self.inventory.map[path.dbg]
+                    and self.inventory.map[path.itemType]
                 ---@diagnostic disable-next-line: unnecessary-if
                 if mapped then
                     path.icon = mapped.icon
@@ -565,7 +565,13 @@ function OwnerViewWindow:onSelectInventoryItem(entry)
             end
         end
     end
-    self.hasUnsavedChanges = false
+
+    ---@cast self.entity IsoObject
+    local clientModData = self.entity:getModData()
+    self.hasUnsavedChanges = (
+        clientModData.pendingTrade ~= nil and clientModData.pendingTrade.itemType == entry.type
+    )
+
     self:updateOfferPreview(entry)
     ---@diagnostic disable-next-line: unnecessary-if
     if self.requirementPanel then
@@ -602,7 +608,7 @@ end
 function OwnerViewWindow:updateOfferPreview(entry)
     if self.offerPanel then
         local name = entry and (entry.name or "?") or "Select an item"
-        local dbg = "Dbg: " .. (entry and (entry.type or "--") or "--")
+        local typeStr = "Type: " .. (entry and (entry.type or "--") or "--")
         local stock = entry and (entry.stock or 0) or 0
         local tex = entry and entry.icon or nil
 
@@ -620,7 +626,7 @@ function OwnerViewWindow:updateOfferPreview(entry)
             tex = nil -- will default to ?
         end
 
-        self.offerPanel:setOfferItem(name, dbg, stock, tex)
+        self.offerPanel:setOfferItem(name, typeStr, stock, tex)
     end
 
     -- Yield info
@@ -654,6 +660,7 @@ end
 function OwnerViewWindow:onOfferQtyChanged()
     local qty = self.offerPanel and self.offerPanel:getQty() or 1
     self.offerQty = math.max(1, qty)
+    self.hasUnsavedChanges = true
     self:updateYieldInfo()
 end
 
@@ -704,7 +711,7 @@ function OwnerViewWindow:onPublishClicked()
     local tradesPayload = {}
     for _, p in ipairs(self.requirementPaths) do
         table.insert(tradesPayload, {
-            requestItem = p.dbg,
+            requestItem = p.itemType,
             requestQty = p.qty,
             name = p.name,
         })

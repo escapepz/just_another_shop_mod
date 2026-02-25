@@ -225,7 +225,7 @@ function ShopTradeOfferPanel:setYieldInfo(text)
     end
 end
 
-function ShopTradeOfferPanel:setOfferItem(name, dbg, stock, tex)
+function ShopTradeOfferPanel:setOfferItem(name, itemType, stock, tex)
     ---@diagnostic disable-next-line: unnecessary-if
     if self.offerName then
         ---@diagnostic disable-next-line: undefined-field
@@ -234,7 +234,7 @@ function ShopTradeOfferPanel:setOfferItem(name, dbg, stock, tex)
     ---@diagnostic disable-next-line: unnecessary-if
     if self.offerDebug then
         ---@diagnostic disable-next-line: undefined-field
-        self.offerDebug:setName(dbg)
+        self.offerDebug:setName(itemType)
     end
     ---@diagnostic disable-next-line: unnecessary-if
     if self.offerStock then

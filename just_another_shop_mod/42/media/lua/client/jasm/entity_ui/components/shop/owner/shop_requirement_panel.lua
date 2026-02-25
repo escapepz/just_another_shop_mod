@@ -103,10 +103,15 @@ function ShopRequirementPanel:createChildren()
                 end
 
                 ---@type ISTextEntryBox|nil
-                self.newPathDbgInput = self:xuiBuild(nil, ISTextEntryBox, "", 0, 0, 10, INPUT_H)
-                if self.newPathDbgInput then
-                    self.newPathDbgInput:setPlaceholderText("e.g. Base.GoldBar")
-                    addPathLayout:setElement(1, ar:index(), self.newPathDbgInput)
+                self.newPathTypeInput = self:xuiBuild(nil, ISTextEntryBox, "", 0, 0, 10, INPUT_H)
+                if self.newPathTypeInput then
+                    ---@diagnostic disable-next-line: inject-field
+                    self.newPathTypeInput.calculateLayout = function(_self, _w, _h)
+                        _self:setWidth(_w)
+                        _self:setHeight(_h)
+                    end
+                    self.newPathTypeInput:setPlaceholderText("Type e.g. Base.GoldBar")
+                    addPathLayout:setElement(1, ar:index(), self.newPathTypeInput)
                 end
 
                 ---@type ISButton|nil
@@ -133,27 +138,27 @@ function ShopRequirementPanel:createChildren()
 end
 
 function ShopRequirementPanel:onAddPathClicked()
-    if not self.newPathQtyInput or not self.newPathDbgInput then
+    if not self.newPathQtyInput or not self.newPathTypeInput then
         return
     end
 
     local qty = tonumber(self.newPathQtyInput:getText()) or 1
-    local dbg = self.newPathDbgInput:getText()
-    dbg = dbg and dbg:match("^%s*(.-)%s*$") or ""
+    local itemType = self.newPathTypeInput:getText()
+    itemType = itemType and itemType:match("^%s*(.-)%s*$") or ""
 
-    if dbg == "" then
+    if itemType == "" then
         ---@diagnostic disable-next-line: unnecessary-if
         if self.onError then
-            self.onError(self.target, "Debug name cannot be empty")
+            self.onError(self.target, "Type cannot be empty")
         end
         return
     end
 
-    local itemScript = ScriptManager.instance:getItem(dbg)
+    local itemScript = ScriptManager.instance:getItem(itemType)
     if not itemScript then
         ---@diagnostic disable-next-line: unnecessary-if
         if self.onError then
-            self.onError(self.target, "Invalid item type: " .. dbg)
+            self.onError(self.target, "Invalid item type: " .. itemType)
         end
         return
     end
@@ -171,9 +176,9 @@ function ShopRequirementPanel:onAddPathClicked()
     end
 
     local path = {
-        dbg = dbg,
+        itemType = itemType,
         qty = qty,
-        name = itemScript:getDisplayName() or dbg,
+        name = itemScript:getDisplayName() or itemType,
         icon = itemScript:getIcon(),
     }
     table.insert(self.requirementPaths, path)
@@ -183,7 +188,7 @@ function ShopRequirementPanel:onAddPathClicked()
     end
 
     self.newPathQtyInput:setText("1")
-    self.newPathDbgInput:setText("")
+    self.newPathTypeInput:setText("")
     ---@diagnostic disable-next-line: unnecessary-if
     if self.onClearError then
         self.onClearError(self.target)

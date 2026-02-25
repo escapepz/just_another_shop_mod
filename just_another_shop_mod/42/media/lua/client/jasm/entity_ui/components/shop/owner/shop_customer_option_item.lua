@@ -58,10 +58,10 @@ function ShopCustomerOptionItem:createChildren()
     self.nameLabel = ISLabel:new(0, 0, 20, "Item Name", 0.8, 0.8, 0.8, 1, UIFont.Small, true)
     self.tableLayout:setElement(1, 0, self.nameLabel)
 
-    -- Debug Type (Muted)
+    -- Item Type (Muted)
     ---@type ISLabel
-    self.debugLabel = ISLabel:new(0, 0, 20, "Base.Type", 0.33, 0.33, 0.33, 1, UIFont.Small, false)
-    self.tableLayout:setElement(2, 0, self.debugLabel)
+    self.typeLabel = ISLabel:new(0, 0, 20, "Base.Type", 0.33, 0.33, 0.33, 1, UIFont.Small, false)
+    self.tableLayout:setElement(2, 0, self.typeLabel)
 
     -- Remove Button
     ---@type ISButton
@@ -88,14 +88,14 @@ function ShopCustomerOptionItem:updatePath(path)
     end
 
     -- Update Text
-    local dispName = tostring(path.qty) .. "x " .. (path.name or path.dbg)
+    local dispName = tostring(path.qty) .. "x " .. (path.name or path.itemType)
     self.nameLabel:setName(dispName)
-    self.debugLabel:setName(path.dbg or "")
+    self.typeLabel:setName(path.itemType or "")
 
     -- Update Icon
     ---@diagnostic disable-next-line: unnecessary-if
-    if path.dbg then
-        self.iconSlot.texture = TextureUtils.getItemTexture(path.dbg)
+    if path.itemType then
+        self.iconSlot.texture = TextureUtils.getItemTexture(path.itemType)
     else
         self.iconSlot.texture = nil
     end

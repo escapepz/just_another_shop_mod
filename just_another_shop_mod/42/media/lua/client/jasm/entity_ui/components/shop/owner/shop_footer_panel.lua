@@ -144,8 +144,11 @@ function ShopFooterPanel:createChildren()
                                     end
                                 end
 
-                                -- Anti-spam: disable button while publishing
-                                btn:setEnable(not (win and win.isPublishing))
+                                -- Anti-spam: disable button while publishing or if no changes
+                                btn:setEnable(
+                                    not (win and win.isPublishing)
+                                        and (win and win.hasUnsavedChanges)
+                                )
                             end
                             -- ────────────────────────────────────────────────────────
 
