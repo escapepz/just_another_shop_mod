@@ -20,13 +20,22 @@ end
 
 function patches.serverSidePatch()
     -- Server Protection (Final Guard) - ALWAYS ENABLED
+    local original_ISDismantleAction_getDuration = ISDismantleAction.getDuration
+    function ISDismantleAction:getDuration()
+        local object = self.thumpable
+        if object and object:getModData().isShop then
+            return 1 --0 * 60 * 1000 -- 600000 ticks/10 ticks/s = 1000 minutes
+        end
+        return original_ISDismantleAction_getDuration(self)
+    end
+
     local original_ISDismantleAction_complete = ISDismantleAction.complete
     function ISDismantleAction:complete()
         local object = self.thumpable
         if object and object:getModData().isShop then
             ---@diagnostic disable-next-line: unnecessary-if
             if self.action then
-                self:forceStop()
+                self:stop()
             end
             return false
         end
