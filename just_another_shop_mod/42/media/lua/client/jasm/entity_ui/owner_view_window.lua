@@ -6,7 +6,7 @@ require("ISUI/ISPanel")
 require("ISUI/ISScrollingListBox")
 require("TimedActions/ISBaseTimedAction")
 require("TimedActions/ISTimedActionQueue")
-require("jasm/timed_actions/JASM_PublishTradeAction")
+local JASM_PublishTradeAction = require("jasm/timed_actions/jasm_publish_trade_action")
 
 local ShopDataManager = require("jasm/entity_ui/models/shop_data_manager")
 local SearchFilterPanel = require("jasm/entity_ui/components/shop/shared/shop_search_filter_panel")
@@ -26,14 +26,14 @@ local KUtilities = pz_utils.konijima.Utilities
 -- ============================================================
 -- COLOR PALETTE (matches design5.html / customer_view_window)
 -- ============================================================
--- #0f0f0f  → { r=0.06, g=0.06, b=0.06 }  Main bg / right panel
--- #1a1a1a  → { r=0.10, g=0.10, b=0.10 }  Left panel / row bg
--- #2a2416  → { r=0.16, g=0.14, b=0.09 }  Selected item bg
--- #f39c12  → { r=0.95, g=0.61, b=0.07 }  Orange accent
--- #333     → { r=0.20, g=0.20, b=0.20 }  Border / divider
--- #ff4444  → { r=1.00, g=0.27, b=0.27 }  Error text
--- #ccc     → { r=0.80, g=0.80, b=0.80 }  Secondary text
--- #888     → { r=0.53, g=0.53, b=0.53 }  Muted text
+-- #0f0f0f  -> { r=0.06, g=0.06, b=0.06 }  Main bg / right panel
+-- #1a1a1a  -> { r=0.10, g=0.10, b=0.10 }  Left panel / row bg
+-- #2a2416  -> { r=0.16, g=0.14, b=0.09 }  Selected item bg
+-- #f39c12  -> { r=0.95, g=0.61, b=0.07 }  Orange accent
+-- #333     -> { r=0.20, g=0.20, b=0.20 }  Border / divider
+-- #ff4444  -> { r=1.00, g=0.27, b=0.27 }  Error text
+-- #ccc     -> { r=0.80, g=0.80, b=0.80 }  Secondary text
+-- #888     -> { r=0.53, g=0.53, b=0.53 }  Muted text
 
 -- ============================================================
 -- CONSTANTS

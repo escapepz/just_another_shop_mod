@@ -16,6 +16,7 @@ local ShopItemActionFooter =
 
 local pz_utils = require("pz_utils_shared")
 local KUtilities = pz_utils.konijima.Utilities
+local JASM_AcceptTradeAction = require("jasm/timed_actions/jasm_accept_trade_action")
 
 ---@class TradeItem : umbrella.ISScrollingListBox.Item
 ---@field hasCount number
@@ -76,8 +77,8 @@ function ShopItemDetailsPanel:createChildren()
         local rHeader = self.tableLayout:addRow()
         if rHeader then
             rHeader.minimumHeight = 76
+            self.tableLayout:setElement(0, rHeader:index(), self.headerPanel)
         end
-        self.tableLayout:setElement(0, 0, self.headerPanel)
     end
 
     -- 1b "Shop Gives" Container
@@ -90,8 +91,8 @@ function ShopItemDetailsPanel:createChildren()
         local rGives = self.tableLayout:addRow()
         if rGives then
             rGives.minimumHeight = 84
+            self.tableLayout:setElement(0, rGives:index(), self.givesPanel)
         end
-        self.tableLayout:setElement(0, 1, self.givesPanel)
     end
 
     -- 1c Requirements Container
@@ -102,8 +103,10 @@ function ShopItemDetailsPanel:createChildren()
     if self.requirementsPanel then
         self.requirementsPanel:initialise()
         self.requirementsPanel:instantiate()
-        self.tableLayout:addRow()
-        self.tableLayout:setElement(0, 2, self.requirementsPanel)
+        local rReq = self.tableLayout:addRow()
+        if rReq then
+            self.tableLayout:setElement(0, rReq:index(), self.requirementsPanel)
+        end
     end
 
     -- Spacer row to push footer to bottom
@@ -121,15 +124,12 @@ function ShopItemDetailsPanel:createChildren()
         self.onDebugForceGive,
         self.xuiSkin
     )
-    ---@diagnostic disable-next-line: unnecessary-if
-    if self.footerPanel then
-        self.footerPanel:initialise()
-        self.footerPanel:instantiate()
-        local rFooter = self.tableLayout:addRow()
-        if rFooter then
-            rFooter.minimumHeight = 90
-        end
-        self.tableLayout:setElement(0, 4, self.footerPanel)
+    self.footerPanel:initialise()
+    self.footerPanel:instantiate()
+    local rFooter = self.tableLayout:addRow()
+    if rFooter then
+        rFooter.minimumHeight = 90
+        self.tableLayout:setElement(0, rFooter:index(), self.footerPanel)
     end
 
     self.dirtyLayout = true
@@ -139,6 +139,32 @@ end
 --- Callback for the debug Force Give button.
 function ShopItemDetailsPanel:onDebugForceGive()
     logger:debug("ShopItemDetailsPanel:onDebugForceGive() called (debug)")
+    local selectedTrade = self.requirementsPanel:getSelectedTrade()
+    if not selectedTrade or not self.product then
+        return
+    end
+
+    ---@cast self.entity IsoObject
+    local entity = self.entity
+    if not entity then
+        logger:error("ShopItemDetailsPanel:onDebugForceGive() ERROR: no entity")
+        return
+    end
+
+    -- Force give still requires an item type check to know *what* to give
+    local sq = entity:getSquare()
+    if not sq then
+        return
+    end
+
+    if luautils.walkAdj(self.player, sq, true) then
+        ISTimedActionQueue.add(JASM_AcceptTradeAction:new(self.player, entity, {
+            itemType = self.product.type,
+            requestItem = selectedTrade.requestItem,
+            requestQty = selectedTrade.requestQty,
+            isForceGive = true,
+        }))
+    end
 end
 
 --- Callback when a requirement (trade option) is selected.
@@ -220,7 +246,8 @@ function ShopItemDetailsPanel:setProduct(product)
     if self.requirementsPanel then
         self.requirementsPanel:setTrades(trades)
     end
-    self.dirtyLayout = true
+    -- Trigger layout update immediately so children are properly tiered in this frame
+    self:calculateLayout(self.width, self.height)
     self:updateTradeButton()
 end
 
@@ -264,20 +291,21 @@ function ShopItemDetailsPanel:onAcceptTrade()
         return
     end
 
-    local args = {
-        x = entity:getX(),
-        y = entity:getY(),
-        z = entity:getZ(),
-        index = entity:getObjectIndex(),
-        action = "BUY_TRADE",
-        itemType = self.product.type,
-        -- Trade data
-        requestItem = selectedTrade.requestItem,
-        requestQty = selectedTrade.requestQty,
-    }
+    -- Walk to and queue action
+    local sq = entity:getSquare()
+    if not sq then
+        logger:error("ShopItemDetailsPanel:onAcceptTrade() ERROR: no square")
+        return
+    end
 
-    logger:info("ShopItemDetailsPanel:onAcceptTrade() sending command JASM_ShopManager ManageShop")
-    KUtilities.SendClientCommand("JASM_ShopManager", "ManageShop", args)
+    if luautils.walkAdj(self.player, sq, true) then
+        ISTimedActionQueue.add(JASM_AcceptTradeAction:new(self.player, entity, {
+            itemType = self.product.type,
+            requestItem = selectedTrade.requestItem,
+            requestQty = selectedTrade.requestQty,
+            isForceGive = false,
+        }))
+    end
 end
 
 function ShopItemDetailsPanel:prerender()
@@ -302,29 +330,18 @@ function ShopItemDetailsPanel:calculateLayout(_preferredWidth, _preferredHeight)
     self:setHeight(height)
 
     ---@diagnostic disable-next-line: unnecessary-if
-    -- Resize tableLayout to fill panel
+    -- 1. First, tell the Requirements panel to determine its own height based on current list items
+    -- This ensures its :getHeight() is stable before the parent table uses it to allocate row space.
+    if self.requirementsPanel then
+        self.requirementsPanel:calculateLayout(width, 0)
+    end
+
+    ---@diagnostic disable-next-line: unnecessary-if
+    -- 2. Resize tableLayout to fill panel and re-flow rows based on new heights
     if self.tableLayout then
         self.tableLayout:setWidth(width)
         self.tableLayout:setHeight(height)
         self.tableLayout:calculateLayout(width, height)
-    end
-
-    -- Resize components
-    ---@diagnostic disable-next-line: unnecessary-if
-    if self.headerPanel then
-        self.headerPanel:calculateLayout(width, 76)
-    end
-    ---@diagnostic disable-next-line: unnecessary-if
-    if self.givesPanel then
-        self.givesPanel:calculateLayout(width, 84)
-    end
-    ---@diagnostic disable-next-line: unnecessary-if
-    if self.requirementsPanel then
-        self.requirementsPanel:calculateLayout(width, self.requirementsPanel:getHeight())
-    end
-    ---@diagnostic disable-next-line: unnecessary-if
-    if self.footerPanel then
-        self.footerPanel:calculateLayout(width, 90)
     end
 
     self.dirtyLayout = false

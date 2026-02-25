@@ -7,13 +7,20 @@
         "editor.defaultFormatter": "JohnnyMorganz.stylua"
     },
     "cSpell.words": [
+        "behaviour",
+        "deserialised",
         "initialise",
         "ISUI",
         "itemheight",
         "jasm",
         "JASM",
         "konijima",
+        "luautils",
         "mouseoverselected",
-        "prerender"
+        "npcshop",
+        "playershop",
+        "prerender",
+        "serialised",
+        "Thumpable"
     ]
 }

@@ -8,11 +8,11 @@ local logger = ZUL.new("just_another_shop_mod")
 -- B42 Networked TimedAction for owner "Publish Trade".
 --
 -- CLIENT side (per-frame):
---   perform()  → called after animation/time finishes, CLIENT-ONLY
+--   perform()  -> called after animation/time finishes, CLIENT-ONLY
 --
 -- SERVER side (authoritative):
---   getDuration() → returns tick count for the progress bar
---   complete()    → writes modData + transmitModData()
+--   getDuration() -> returns tick count for the progress bar
+--   complete()    -> writes modData + transmitModData()
 --
 -- NOTE: This file is in shared/ so the class table is visible to
 -- both client (queues the action) and server (runs complete()).
@@ -28,8 +28,11 @@ local logger = ZUL.new("just_another_shop_mod")
 ---@field itemType   string      Full item type string (e.g. "Base.Axe")
 ---@field trades     table       Array of trade paths [{requestItem, requestQty, name}]
 ---@field offerQty   integer
-JASM_PublishTradeAction = ISBaseTimedAction:derive("JASM_PublishTradeAction")
+local JASM_PublishTradeAction = ISBaseTimedAction:derive("JASM_PublishTradeAction")
 JASM_PublishTradeAction.Type = "JASM_PublishTradeAction"
+
+-- Assign to global for the engine's serialization logic (B42 Networking)
+_G[JASM_PublishTradeAction.Type] = JASM_PublishTradeAction
 
 -- ============================================================
 -- CONSTRUCTOR
@@ -53,7 +56,7 @@ function JASM_PublishTradeAction:new(character, entity, payload)
     o.offerQty = payload.offerQty or 1
 
     -- Progress bar behaviour
-    o.maxTime = 60 -- ~6 s at 10 ticks/s; server can override via getDuration()
+    o.maxTime = 30 -- ~3 s at 10 ticks/s; server can override via getDuration()
     o.stopOnWalk = true
     o.stopOnRun = true
     o.forceProgressBar = true
@@ -74,8 +77,14 @@ function JASM_PublishTradeAction:isValid()
     end
     -- Entity must still be in the world
     ---@cast self.entity IsoObject
-    if not self.entity:getSquare() then
+    local sq = self.entity:getSquare()
+    if not sq then
         logger:error("JASM_PublishTradeAction:isValid() - entity has no square")
+        return false
+    end
+
+    if self.character:DistTo(sq:getX(), sq:getY()) > 3.0 then
+        logger:debug("JASM_PublishTradeAction:isValid() - distance check failed")
         return false
     end
     return true
