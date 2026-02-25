@@ -1,4 +1,4 @@
-local ZUL = require("ZUL")
+local ZUL = require("zul")
 local CAF = require("container_authority_framework")
 
 -- Initialize Shop Manager
@@ -11,7 +11,7 @@ local RuleShopAudit = require("jasm/rules/shop_audit_rule")
 
 local ServerCommand = require("jasm/shop_server_commands")
 
-local logger = ZUL.new("JASM")
+local logger = ZUL.new("just_another_shop_mod")
 
 local function Init()
     logger:info("Just Another Shop Mod initializing...")
@@ -35,6 +35,7 @@ local function Init()
         _G.JASM_ShopManager = ShopManager()
     end
 
+    ---@diagnostic disable-next-line: assign-type-mismatch
     Events.OnClientCommand.Add(ServerCommand)
 
     logger:info("Just Another Shop Mod (CAF-Based) loaded successfully.")

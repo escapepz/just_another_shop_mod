@@ -4,6 +4,9 @@ require("ISUI/ISLabel")
 require("ISUI/ISButton")
 require("ISUI/ISPanel")
 require("ISUI/ISScrollingListBox")
+require("TimedActions/ISBaseTimedAction")
+require("TimedActions/ISTimedActionQueue")
+require("jasm/timed_actions/JASM_PublishTradeAction")
 
 local ShopDataManager = require("jasm/entity_ui/models/shop_data_manager")
 local SearchFilterPanel = require("jasm/entity_ui/components/shop/shared/shop_search_filter_panel")
@@ -14,7 +17,7 @@ local ShopSectionHeader = require("jasm/entity_ui/components/shop/shared/shop_se
 local ShopRequirementPanel = require("jasm/entity_ui/components/shop/owner/shop_requirement_panel")
 local ShopFooterPanel = require("jasm/entity_ui/components/shop/owner/shop_footer_panel")
 
-local ZUL = require("ZUL")
+local ZUL = require("zul")
 local logger = ZUL.new("just_another_shop_mod")
 
 local pz_utils = require("pz_utils_shared")
@@ -43,7 +46,7 @@ local MAX_PATHS = 5 -- design5_rule §3: max 5 confirmed paths
 -- ============================================================
 
 ---@class OwnerRequirementPath
----@field dbg    string   Full type (e.g. "Base.Gold")
+---@field dbg    string   Full type (e.g. "Base.GoldBar")
 ---@field qty    number
 ---@field name   string
 
@@ -78,7 +81,8 @@ local MAX_PATHS = 5 -- design5_rule §3: max 5 confirmed paths
 ---@field newPathDbgInput  ISTextEntryBox
 ---@field addPathBtn       ISButton
 ---@field errorLabel       ISLabel
----@field publishBtn       ISButton
+---@field currentPublishAction JASM_PublishTradeAction|nil
+---@field isPublishing      boolean
 local OwnerViewWindow = ISEntityWindow:derive("OwnerViewWindow")
 
 -- ============================================================
@@ -535,24 +539,30 @@ function OwnerViewWindow:onSelectInventoryItem(entry)
     self.selectedItem = entry
     -- Clear paths from previous selection
     self.requirementPaths = {}
+
+    local tradesToLoad = self:getTradeData(entry)
+
     -- Load saved per-item paths if the entry has trades stored
-    ---@diagnostic disable-next-line: undefined-field
-    if entry and entry.trades and type(entry.trades) == "table" then
-        ---@diagnostic disable-next-line: undefined-field
-        for _, t in ipairs(entry.trades) do
-            local path = {
-                dbg = t.requestItem or "",
-                qty = t.requestQty or 1,
-                name = t.name or t.requestItem or "",
-                icon = nil,
-            }
-            -- Try to look up icon from inventory map
-            local mapped = self.inventory and self.inventory.map and self.inventory.map[path.dbg]
-            ---@diagnostic disable-next-line: unnecessary-if
-            if mapped then
-                path.icon = mapped.icon
+    if entry and tradesToLoad and type(tradesToLoad) == "table" then
+        local loadedPaths = tradesToLoad.paths or tradesToLoad -- fallback for legacy/flat
+        if type(loadedPaths) == "table" then
+            for _, t in ipairs(loadedPaths) do
+                local path = {
+                    dbg = t.requestItem or "",
+                    qty = t.requestQty or 1,
+                    name = t.name or t.requestItem or "",
+                    icon = nil,
+                }
+                -- Try to look up icon from inventory map
+                local mapped = self.inventory
+                    and self.inventory.map
+                    and self.inventory.map[path.dbg]
+                ---@diagnostic disable-next-line: unnecessary-if
+                if mapped then
+                    path.icon = mapped.icon
+                end
+                table.insert(self.requirementPaths, path)
             end
-            table.insert(self.requirementPaths, path)
         end
     end
     self.hasUnsavedChanges = false
@@ -568,6 +578,25 @@ function OwnerViewWindow:onSelectInventoryItem(entry)
     end
 end
 
+--- Internal helper to handle draft/pending recovery logic.
+---@param entry CustomerViewInventoryItem|nil
+---@return ShopItemTradeData|nil
+function OwnerViewWindow:getTradeData(entry)
+    if not entry then
+        return nil
+    end
+
+    ---@cast self.entity IsoObject
+    local clientModData = self.entity:getModData()
+    if clientModData.pendingTrade and clientModData.pendingTrade.itemType == entry.type then
+        ---@cast clientModData.pendingTrade ShopItemTradeData
+        return clientModData.pendingTrade
+    end
+
+    ---@cast entry.trades ShopItemTradeData
+    return entry.trades
+end
+
 --- Update the offer preview box (right panel header area).
 ---@param entry CustomerViewInventoryItem|nil
 function OwnerViewWindow:updateOfferPreview(entry)
@@ -576,6 +605,15 @@ function OwnerViewWindow:updateOfferPreview(entry)
         local dbg = "Dbg: " .. (entry and (entry.type or "--") or "--")
         local stock = entry and (entry.stock or 0) or 0
         local tex = entry and entry.icon or nil
+
+        -- Pre-fill configured offerQty from the saved payload, or default to 1
+        local configuredOfferQty = 1
+        local trades = self:getTradeData(entry)
+        if trades then
+            configuredOfferQty = trades.offerQty or 1
+        end
+
+        self.offerPanel:setQty(configuredOfferQty)
 
         -- Check if it's a proxy string not supported by emojis
         if tex and type(tex) == "string" and not getTexture(tex) then
@@ -621,13 +659,20 @@ end
 
 --- Called when "Add" button is clicked to add a requirement path.
 
---- Published trade: validate -> save -> notify.
+--- Published trade: validate -> save to CLIENT modData -> queue TimedAction.
+--- The server completes the authoritative modData write via JASM_PublishTradeAction:complete().
 function OwnerViewWindow:onPublishClicked()
     logger:debug("OwnerViewWindow:onPublishClicked() called")
     if not self.selectedItem then
         self:showError("Error: Select an item to configure first")
         return
     end
+
+    -- ── ANTI-SPAM: Prevent multiple actions ──
+    if self.isPublishing then
+        return
+    end
+    -- ──────────────────────────────────────────
 
     -- Validation: at least one confirmed path
     local confirmedCount = 0
@@ -655,48 +700,97 @@ function OwnerViewWindow:onPublishClicked()
         return
     end
 
-    -- Persist paths back onto the entry's trades table
-    self.selectedItem.trades = {}
+    -- Build the trades table from confirmed requirement paths
+    local tradesPayload = {}
     for _, p in ipairs(self.requirementPaths) do
-        table.insert(self.selectedItem.trades, {
+        table.insert(tradesPayload, {
             requestItem = p.dbg,
             requestQty = p.qty,
             name = p.name,
         })
     end
+    self.selectedItem.trades = tradesPayload
     self.selectedItem.offerQty = qty
+
+    -- ── CLIENT-SIDE ONLY: store pending trade in local entity modData ──────
+    -- This does NOT call transmitModData() – the server owns the authoritative write.
+    ---@cast self.entity IsoObject
+    local clientModData = self.entity:getModData()
+    clientModData.pendingTrade = {
+        itemType = self.selectedItem.type,
+        offerQty = qty,
+        paths = tradesPayload,
+    }
+    -- ────────────────────────────────────────────────────────────────────────
 
     self:clearError()
     self.hasUnsavedChanges = false
 
-    ---@cast self.entity IsoObject
-    local args = {
+    -- ── Queue the TimedAction (progress bar + server-authoritative write) ───
+    local payload = {
         x = self.entity:getX(),
         y = self.entity:getY(),
         z = self.entity:getZ(),
         index = self.entity:getObjectIndex(),
-        action = "SET_TRADES",
         itemType = self.selectedItem.type,
-        trades = self.selectedItem.trades,
+        trades = tradesPayload,
+        offerQty = qty,
     }
 
-    logger:info("OwnerViewWindow:onPublishClicked() sending command JASM_ShopManager ManageShop")
-    KUtilities.SendClientCommand("JASM_ShopManager", "ManageShop", args)
+    local action = JASM_PublishTradeAction:new(self.player, self.entity, payload)
 
-    ---@diagnostic disable-next-line: unnecessary-if
-    -- Visual feedback: flash or info message
-    if self.footerPanel then
-        ---@diagnostic disable-next-line: undefined-field
-        self.footerPanel:setSuccess(
-            "Trade published! ("
-                .. self.selectedItem.name
-                .. " x"
-                .. qty
-                .. ", "
-                .. confirmedCount
-                .. " paths)"
-        )
-    end
+    -- Track publish state
+    self.isPublishing = true
+    self.currentPublishAction = action
+
+    -- Success callback: show UI feedback after complete() confirmed by server
+    local window = self
+    local itemName = self.selectedItem.name
+    local finalQty = qty
+    local finalCount = confirmedCount
+    ---@diagnostic disable-next-line: undefined-field
+    action:setOnComplete(function()
+        logger:info("JASM_PublishTradeAction – complete callback: trade confirmed by server")
+
+        -- Reset state
+        window.isPublishing = false
+        window.currentPublishAction = nil
+
+        ---@diagnostic disable-next-line: unnecessary-if
+        if window.footerPanel then
+            ---@diagnostic disable-next-line: undefined-field
+            window.footerPanel:setSuccess(
+                "Trade published! ("
+                    .. itemName
+                    .. " x"
+                    .. finalQty
+                    .. ", "
+                    .. finalCount
+                    .. " paths)"
+            )
+        end
+        -- Clear the optimistic pending marker now that server confirmed
+        clientModData.pendingTrade = nil
+    end, nil)
+
+    -- Cancel callback: clear pending marker if player aborts
+    ---@diagnostic disable-next-line: undefined-field
+    action:setOnCancel(function()
+        logger:debug("JASM_PublishTradeAction – cancel callback")
+
+        -- Reset state
+        window.isPublishing = false
+        window.currentPublishAction = nil
+
+        clientModData.pendingTrade = nil
+    end, nil)
+
+    logger:info("OwnerViewWindow:onPublishClicked() – queuing JASM_PublishTradeAction", {
+        itemType = payload.itemType,
+        tradeCount = #tradesPayload,
+    })
+    ISTimedActionQueue.add(action)
+    -- ────────────────────────────────────────────────────────────────────────
 end
 
 --- Show an error (or info) message in the footer error space.
@@ -765,6 +859,10 @@ function OwnerViewWindow:new(x, y, w, h, player, entity)
     o.hasUnsavedChanges = false
     o.selectedItem = nil
     o.offerQty = 1
+
+    -- TimedAction state for anti-spam/progress
+    o.isPublishing = false
+    o.currentPublishAction = nil
 
     return o
 end

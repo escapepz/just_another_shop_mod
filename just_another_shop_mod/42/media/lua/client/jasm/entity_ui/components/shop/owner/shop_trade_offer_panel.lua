@@ -18,6 +18,7 @@ local ShopSectionHeader = require("jasm/entity_ui/components/shop/shared/shop_se
 ---@field offerQtyInput ISTextEntryBox
 ---@field yieldInfo ISLabel
 ---@field tableLayout ISTableLayout
+---@field setQty fun(qty: number)
 local ShopTradeOfferPanel = ISPanel:derive("ShopTradeOfferPanel")
 
 function ShopTradeOfferPanel:xuiBuild(style, class, ...)
@@ -248,6 +249,13 @@ function ShopTradeOfferPanel:setOfferItem(name, dbg, stock, tex)
             iconTex = getTexture(iconTex)
         end
         self.offerIcon.texture = iconTex
+    end
+end
+
+function ShopTradeOfferPanel:setQty(qty)
+    ---@diagnostic disable-next-line: unnecessary-if
+    if self.offerQtyInput then
+        self.offerQtyInput:setText(tostring(qty or 1))
     end
 end
 

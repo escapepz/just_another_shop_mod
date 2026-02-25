@@ -105,11 +105,7 @@ function ShopRequirementPanel:createChildren()
                 ---@type ISTextEntryBox|nil
                 self.newPathDbgInput = self:xuiBuild(nil, ISTextEntryBox, "", 0, 0, 10, INPUT_H)
                 if self.newPathDbgInput then
-                    ---@diagnostic disable-next-line: inject-field
-                    self.newPathDbgInput.calculateLayout = function(_self, _w, _h)
-                        _self:setWidth(_w)
-                    end
-                    self.newPathDbgInput:setPlaceholderText("e.g. Base.Gold")
+                    self.newPathDbgInput:setPlaceholderText("e.g. Base.GoldBar")
                     addPathLayout:setElement(1, ar:index(), self.newPathDbgInput)
                 end
 
@@ -153,11 +149,11 @@ function ShopRequirementPanel:onAddPathClicked()
         return
     end
 
-    local mapped = self.inventory and self.inventory.map and self.inventory.map[dbg]
-    if not mapped then
+    local itemScript = ScriptManager.instance:getItem(dbg)
+    if not itemScript then
         ---@diagnostic disable-next-line: unnecessary-if
         if self.onError then
-            self.onError(self.target, "Invalid debug name: " .. dbg)
+            self.onError(self.target, "Invalid item type: " .. dbg)
         end
         return
     end
@@ -177,8 +173,8 @@ function ShopRequirementPanel:onAddPathClicked()
     local path = {
         dbg = dbg,
         qty = qty,
-        name = mapped.name or dbg,
-        icon = mapped.icon,
+        name = itemScript:getDisplayName() or dbg,
+        icon = itemScript:getIcon(),
     }
     table.insert(self.requirementPaths, path)
     ---@diagnostic disable-next-line: unnecessary-if
@@ -242,12 +238,13 @@ function ShopRequirementPanel:refreshList()
         )
         ---@diagnostic disable-next-line: unnecessary-if
         if item then
+            item:initialise()
+            item:instantiate()
             local row = self.pathsTable:addRow()
-            ---@diagnostic disable-next-line: unnecessary-if
             if row then
                 row.minimumHeight = 40
+                self.pathsTable:setElement(0, row:index(), item)
             end
-            self.pathsTable:setElement(0, i - 1, item)
         end
     end
 

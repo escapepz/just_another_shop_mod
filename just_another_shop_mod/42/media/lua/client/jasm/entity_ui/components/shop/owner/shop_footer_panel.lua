@@ -116,6 +116,39 @@ function ShopFooterPanel:createChildren()
                                 { r = 1.00, g = 0.70, b = 0.28, a = 1.0 }
                             self.publishBtn.borderColor = { r = 0.95, g = 0.61, b = 0.07, a = 1.0 }
                             self.publishBtn.textColor = { r = 0.0, g = 0.0, b = 0.0, a = 1.0 }
+
+                            -- ── PROGRESS BAR OVERLAY ────────────────────────────────
+                            local parent = self
+                            local oldRender = self.publishBtn.render
+                            self.publishBtn.render = function(btn)
+                                -- Draw normal button first
+                                ---@diagnostic disable-next-line: redundant-parameter
+                                oldRender(btn)
+
+                                -- Draw progress bar if publishing
+                                local win = parent.target
+                                if win and win.isPublishing and win.currentPublishAction then
+                                    local delta = win.currentPublishAction:getJobDelta()
+                                    if delta > 0 then
+                                        -- Draw semi-transparent overlay
+                                        btn:drawRect(
+                                            0,
+                                            0,
+                                            btn.width * delta,
+                                            btn.height,
+                                            0.4,
+                                            0.2,
+                                            0.6,
+                                            1.0
+                                        )
+                                    end
+                                end
+
+                                -- Anti-spam: disable button while publishing
+                                btn:setEnable(not (win and win.isPublishing))
+                            end
+                            -- ────────────────────────────────────────────────────────
+
                             btnLayout:setElement(1, br:index(), self.publishBtn)
                         end
                     end

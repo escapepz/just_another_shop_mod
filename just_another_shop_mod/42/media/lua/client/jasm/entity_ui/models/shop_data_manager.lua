@@ -12,8 +12,19 @@ local class = pz_lua_commons.yonaba.yon_30log
 ---@field type string
 ---@field count integer
 ---@field stock integer
----@field trades table[]|nil -- Trade rules
+---@field trades ShopItemTradeData|CustomerViewInventoryItemTradePath[]
 ---@field offerQty integer|nil
+
+---@class ShopItemTradeData
+---@field offerQty integer|nil
+---@field paths CustomerViewInventoryItemTradePath[]
+
+---@class CustomerViewInventoryItemTradePath
+---@field requestItem string
+---@field requestQty integer
+---@field name string
+---@field hasCount number|nil
+---@field icon Texture|nil
 
 ---@class ShopDataManager
 ---@field inventory CustomerViewInventory
@@ -50,6 +61,9 @@ function ShopDataManager:scanContainer(container)
     local size = allItems:size()
     local listCount = 0
 
+    local modData = container:getParent() and container:getParent():getModData()
+    local shopTrades = modData and modData.shopTrades or {}
+
     for i = 0, size - 1 do
         local item = allItems:get(i)
         local itemType = item:getFullType()
@@ -63,14 +77,8 @@ function ShopDataManager:scanContainer(container)
                 type = itemType,
                 count = 0,
                 stock = 0,
-                -- Default trade for now
-                trades = {
-                    { requestItem = "Base.Money", requestQty = 11, name = "Money1" },
-                    { requestItem = "Base.Money", requestQty = 12, name = "Money2" },
-                    { requestItem = "Base.Money", requestQty = 13, name = "Money3" },
-                    { requestItem = "Base.Money", requestQty = 14, name = "Money4" },
-                    { requestItem = "Base.Money", requestQty = 15, name = "Money5" },
-                },
+                -- Load saved trades from modData if they exist
+                trades = shopTrades[itemType],
             }
             inventory.map[itemType] = entry
             listCount = listCount + 1
