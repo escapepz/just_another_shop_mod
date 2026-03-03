@@ -26,11 +26,11 @@ TestFramework.test("ShopServerCommands", "register_sets_moddata", function()
     modData.indestructible = true
     modData.immovable = true
 
-    TestFramework.assert_true(modData.isShop)
-    TestFramework.assert_equals("STORAGE", modData.shopType)
-    TestFramework.assert_equals("Owner1", modData.shopOwnerID)
-    TestFramework.assert_true(modData.indestructible)
-    TestFramework.assert_true(modData.immovable)
+    TestFramework.assert_true(modData.isShop, "isShop should be true")
+    TestFramework.assert_equals("STORAGE", modData.shopType, "shopType should match")
+    TestFramework.assert_equals("Owner1", modData.shopOwnerID, "shopOwnerID should match")
+    TestFramework.assert_true(modData.indestructible, "indestructible should be true")
+    TestFramework.assert_true(modData.immovable, "immovable should be true")
 end)
 
 -- Test: Unregister command clears modData
@@ -52,10 +52,10 @@ TestFramework.test("ShopServerCommands", "unregister_clears_moddata", function()
     modData.indestructible = nil
     modData.immovable = nil
 
-    TestFramework.assert_nil(modData.isShop)
-    TestFramework.assert_nil(modData.shopType)
-    TestFramework.assert_nil(modData.indestructible)
-    TestFramework.assert_nil(modData.immovable)
+    TestFramework.assert_nil(modData.isShop, "isShop should be nil")
+    TestFramework.assert_nil(modData.shopType, "shopType should be nil")
+    TestFramework.assert_nil(modData.indestructible, "indestructible should be nil")
+    TestFramework.assert_nil(modData.immovable, "immovable should be nil")
 end)
 
 -- Test: Only owner can unregister

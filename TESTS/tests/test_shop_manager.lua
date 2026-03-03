@@ -79,9 +79,9 @@ TestFramework.test("ShopManager", "register_shop", function()
 
     manager:registerShop(container, "Owner1", "Test Shop")
 
-    TestFramework.assert_true(obj.modData.isShop)
-    TestFramework.assert_equals("Owner1", obj.modData.shopOwnerID)
-    TestFramework.assert_equals("Test Shop", obj.modData.shopName)
+    TestFramework.assert_true(obj.modData.isShop, "Object modData should be a shop")
+    TestFramework.assert_equals("Owner1", obj.modData.shopOwnerID, "Shop owner ID should match")
+    TestFramework.assert_equals("Test Shop", obj.modData.shopName, "Shop name should match")
 end)
 
 -- Test: Unregister shop
@@ -94,9 +94,9 @@ TestFramework.test("ShopManager", "unregister_shop", function()
     manager:registerShop(container, "Owner1", "Test Shop")
     manager:unregisterShop(container)
 
-    TestFramework.assert_nil(obj.modData.isShop)
-    TestFramework.assert_nil(obj.modData.shopOwnerID)
-    TestFramework.assert_nil(obj.modData.shopName)
+    TestFramework.assert_nil(obj.modData.isShop, "Object modData shop status should be cleared")
+    TestFramework.assert_nil(obj.modData.shopOwnerID, "Shop owner ID should be cleared")
+    TestFramework.assert_nil(obj.modData.shopName, "Shop name should be cleared")
 end)
 
 -- Test: Lock shop
@@ -104,10 +104,10 @@ TestFramework.test("ShopManager", "lock_shop", function()
     local manager = createShopManager()
 
     local success = manager:lockShop("square_1", "Player1")
-    TestFramework.assert_true(success)
+    TestFramework.assert_true(success, "Shop should be locked successfully")
 
     local lock = manager:getShopLock("square_1")
-    TestFramework.assert_equals("Player1", lock)
+    TestFramework.assert_equals("Player1", lock, "Lock owner should match")
 end)
 
 -- Test: Lock conflict
@@ -128,7 +128,7 @@ TestFramework.test("ShopManager", "unlock_shop", function()
     manager:unlockShop("square_3", "Player1")
 
     local lock = manager:getShopLock("square_3")
-    TestFramework.assert_nil(lock)
+    TestFramework.assert_nil(lock, "Lock should be released")
 end)
 
 print("[OFFLINE TESTS] ShopManager tests loaded")

@@ -87,7 +87,7 @@ function TestFramework.assert_nil(value, message)
 end
 
 ---Assert table contains value
----@param table table
+---@param t table
 ---@param value any
 ---@param message string
 function TestFramework.assert_contains(t, value, message)
@@ -163,6 +163,7 @@ function TestFramework.printResults()
     print("Failed: " .. TestFramework.stats.failed)
     print("")
 
+    ---@diagnostic disable-next-line: unnecessary-if
     if TestFramework.stats.failed == 0 then
         print("OK_ ALL TESTS PASSED")
     else

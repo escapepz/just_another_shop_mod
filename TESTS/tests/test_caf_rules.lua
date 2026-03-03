@@ -61,6 +61,7 @@ local function ruleShopProtection(ctx)
     local parent = srcContainer:getParent()
 
     local modData = parent and parent:getModData() or nil
+    ---@diagnostic disable-next-line: unnecessary-if
     if modData and modData.isShop then
         local ownerID = modData.shopOwnerID
         local playerUsername = ctx.character:getUsername()

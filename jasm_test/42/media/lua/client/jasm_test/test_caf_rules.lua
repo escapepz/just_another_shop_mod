@@ -1,41 +1,55 @@
---[[
-    CAF (Cooperative Access Framework) Rules Tests
-    
-    Tests Trade, Protection, and Audit rules logic.
-]]
+---@diagnostic disable: param-type-mismatch
 
 local JASM_TestRunner = require("jasm_test_shared")
 
--- Mock CAF context object
+---Mock CAF context object
+---@param options table?
+---@return any
 local function createMockCAFContext(options)
     options = options or {}
+    local item = (
+        options.item
+        or {
+            getFullType = function()
+                return options.itemType or "Base.Item"
+            end,
+        }
+    )
 
-    return {
-        src = options.src or {
+    local flagsInput = options.flags or {}
+
+    local ctx = {
+        src = (options.src or {
             getParent = function()
                 return options.srcParent
             end,
-        },
-        dest = options.dest or {
+        }),
+        dest = (options.dest or {
             getParent = function()
                 return options.destParent
             end,
-        },
-        character = options.character or {
+        }),
+        character = (options.character or {
             getUsername = function()
                 return options.username or "TestPlayer"
             end,
             getInventory = function()
                 return options.inventory or {}
             end,
+        }),
+        item = item,
+        flags = {
+            rejected = flagsInput.rejected or false,
+            reason = flagsInput.reason or "",
+            adminOverride = flagsInput.adminOverride or false,
         },
-        item = options.item or {
-            getFullType = function()
-                return options.itemType or "Base.Item"
-            end,
-        },
-        flags = options.flags or { rejected = false, tradeAuthorized = false },
+        result = (options.result or item),
     }
+
+    ---@diagnostic disable-next-line: inject-field
+    ctx.flags.tradeAuthorized = flagsInput.tradeAuthorized or false
+
+    return ctx
 end
 
 -- Mock parent object (container owner)

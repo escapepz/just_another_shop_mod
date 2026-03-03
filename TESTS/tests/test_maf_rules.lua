@@ -124,7 +124,7 @@ TestFramework.test("MAFRules", "handle_nil_object", function()
 
     -- Should not error
     validateDestroyStuff(ctx)
-    TestFramework.assert_false(ctx.flags.rejected)
+    TestFramework.assert_false(ctx.flags.rejected, "Should not error")
 end)
 
 print("[OFFLINE TESTS] MAFRules tests loaded")

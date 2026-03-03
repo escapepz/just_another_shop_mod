@@ -1,3 +1,4 @@
+---@diagnostic disable: global-in-non-module
 --[[
     Project Zomboid API Mocks
     
