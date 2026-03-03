@@ -32,7 +32,7 @@ end
 
 -- Test: Shop registration
 JASM_TestRunner.register("shop_register", "server", function()
-    local ShopManager = require("shop_manager")
+    local ShopManager = require("just_another_shop_mod/shop_manager")
     local manager = ShopManager()
     local container = createMockContainer()
 
@@ -46,7 +46,7 @@ end)
 
 -- Test: Shop unregistration
 JASM_TestRunner.register("shop_unregister", "server", function()
-    local ShopManager = require("shop_manager")
+    local ShopManager = require("just_another_shop_mod/shop_manager")
     local manager = ShopManager()
     local container = createMockContainer()
 
@@ -60,7 +60,7 @@ end)
 
 -- Test: Shop locking
 JASM_TestRunner.register("shop_lock", "server", function()
-    local ShopManager = require("shop_manager")
+    local ShopManager = require("just_another_shop_mod/shop_manager")
     local manager = ShopManager()
 
     local success = manager:lockShop("square_123", "Player1")
@@ -72,7 +72,7 @@ end)
 
 -- Test: Shop lock conflict
 JASM_TestRunner.register("shop_lock_conflict", "server", function()
-    local ShopManager = require("shop_manager")
+    local ShopManager = require("just_another_shop_mod/shop_manager")
     local manager = ShopManager()
 
     manager:lockShop("square_456", "Player1")
@@ -82,7 +82,7 @@ end)
 
 -- Test: Shop unlock
 JASM_TestRunner.register("shop_unlock", "server", function()
-    local ShopManager = require("shop_manager")
+    local ShopManager = require("just_another_shop_mod/shop_manager")
     local manager = ShopManager()
 
     manager:lockShop("square_789", "Player1")

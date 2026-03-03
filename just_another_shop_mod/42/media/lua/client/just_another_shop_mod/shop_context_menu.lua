@@ -1,8 +1,8 @@
 local pz_utils = require("pz_utils_shared")
 local KUtilities = pz_utils.konijima.Utilities
 
-local JASM_ShopView_Customer = require("jasm/entity_ui/customer_view_window")
-local JASM_ShopView_Owner = require("jasm/entity_ui/owner_view_window")
+local JASM_ShopView_Customer = require("just_another_shop_mod/entity_ui/customer_view_window")
+local JASM_ShopView_Owner = require("just_another_shop_mod/entity_ui/owner_view_window")
 
 -- guard again non crate objects
 local allowedCrates = { ["Base.Wood_Crate"] = true, ["Base.Metal_Crate"] = true }

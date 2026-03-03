@@ -7,12 +7,17 @@ require("ISUI/ISScrollingListBox")
 require("TimedActions/ISBaseTimedAction")
 require("TimedActions/ISTimedActionQueue")
 
-local ShopDataManager = require("jasm/entity_ui/models/shop_data_manager")
-local SearchFilterPanel = require("jasm/entity_ui/components/shop/shared/shop_search_filter_panel")
-local ProductListPanel = require("jasm/entity_ui/components/product/product_list_panel")
-local ShopTradeOfferPanel = require("jasm/entity_ui/components/shop/owner/shop_trade_offer_panel")
-local ShopRequirementPanel = require("jasm/entity_ui/components/shop/owner/shop_requirement_panel")
-local ShopFooterPanel = require("jasm/entity_ui/components/shop/owner/shop_footer_panel")
+local ShopDataManager = require("just_another_shop_mod/entity_ui/models/shop_data_manager")
+local SearchFilterPanel =
+    require("just_another_shop_mod/entity_ui/components/shop/shared/shop_search_filter_panel")
+local ProductListPanel =
+    require("just_another_shop_mod/entity_ui/components/product/product_list_panel")
+local ShopTradeOfferPanel =
+    require("just_another_shop_mod/entity_ui/components/shop/owner/shop_trade_offer_panel")
+local ShopRequirementPanel =
+    require("just_another_shop_mod/entity_ui/components/shop/owner/shop_requirement_panel")
+local ShopFooterPanel =
+    require("just_another_shop_mod/entity_ui/components/shop/owner/shop_footer_panel")
 
 local ZUL = require("zul")
 local logger = ZUL.new("just_another_shop_mod")

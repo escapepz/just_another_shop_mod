@@ -1,12 +1,12 @@
 local CAF = require("container_authority_framework")
 
 -- JASM CAF Rules
-local RuleShopProtection = require("jasm/rules/caf/shop_protection_rule")
-local RuleShopTrade = require("jasm/rules/caf/shop_trade_rule")
-local RuleShopAudit = require("jasm/rules/caf/shop_audit_rule")
+local RuleShopProtection = require("just_another_shop_mod/rules/caf/shop_protection_rule")
+local RuleShopTrade = require("just_another_shop_mod/rules/caf/shop_trade_rule")
+local RuleShopAudit = require("just_another_shop_mod/rules/caf/shop_audit_rule")
 
-local OnServerCommand = require("jasm/shop_client_commands")
-local ShopContextMenu = require("jasm/shop_context_menu")
+local OnServerCommand = require("just_another_shop_mod/shop_client_commands")
+local ShopContextMenu = require("just_another_shop_mod/shop_context_menu")
 
 local function InitCAF()
     -- Register the Shop Rules with CAF

@@ -27,9 +27,11 @@
         "npcshop",
         "pcall",
         "playershop",
+        "preaction",
         "prerender",
         "serialised",
         "Thumpable",
+        "unregistration",
         "Zomboid"
     ]
 }

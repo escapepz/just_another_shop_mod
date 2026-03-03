@@ -7,12 +7,14 @@ require("Entity/ISUI/Controls/ISTableLayout")
 local ZUL = require("zul")
 local logger = ZUL.new("just_another_shop_mod")
 
-local ShopItemHeader = require("jasm/entity_ui/components/shop/customer/shop_item_header")
-local ShopItemGivesPanel = require("jasm/entity_ui/components/shop/customer/shop_item_gives_panel")
+local ShopItemHeader =
+    require("just_another_shop_mod/entity_ui/components/shop/customer/shop_item_header")
+local ShopItemGivesPanel =
+    require("just_another_shop_mod/entity_ui/components/shop/customer/shop_item_gives_panel")
 local ShopItemRequirementsPanel =
-    require("jasm/entity_ui/components/shop/customer/shop_item_requirements_panel")
+    require("just_another_shop_mod/entity_ui/components/shop/customer/shop_item_requirements_panel")
 local ShopItemActionFooter =
-    require("jasm/entity_ui/components/shop/customer/shop_item_action_footer")
+    require("just_another_shop_mod/entity_ui/components/shop/customer/shop_item_action_footer")
 
 ---@class TradeItem : umbrella.ISScrollingListBox.Item
 ---@field hasCount number

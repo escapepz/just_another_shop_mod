@@ -30,7 +30,7 @@ end
 
 -- Test: DestroyStuff rejects indestructible objects
 JASM_TestRunner.register("maf_destroy_stuff_reject", "server", function()
-    local RuleDestroyStuff = require("shop_destroy_stuff_rule")
+    local RuleDestroyStuff = require("just_another_shop_mod/rules/maf/shop_destroy_stuff_rule")
 
     local indestructibleObj = createMockObject(true, false)
     local ctx = createMockContext("DestroyStuff", indestructibleObj)
@@ -43,7 +43,7 @@ end)
 
 -- Test: DestroyStuff allows destructible objects
 JASM_TestRunner.register("maf_destroy_stuff_allow", "server", function()
-    local RuleDestroyStuff = require("shop_destroy_stuff_rule")
+    local RuleDestroyStuff = require("just_another_shop_mod/rules/maf/shop_destroy_stuff_rule")
 
     local destructibleObj = createMockObject(false, false)
     local ctx = createMockContext("DestroyStuff", destructibleObj)
@@ -56,7 +56,7 @@ end)
 
 -- Test: DestroyStuff ignores wrong action type
 JASM_TestRunner.register("maf_destroy_stuff_wrong_action", "server", function()
-    local RuleDestroyStuff = require("shop_destroy_stuff_rule")
+    local RuleDestroyStuff = require("just_another_shop_mod/rules/maf/shop_destroy_stuff_rule")
 
     local indestructibleObj = createMockObject(true, false)
     local ctx = createMockContext("Moveables", indestructibleObj) -- Wrong action type
@@ -69,7 +69,7 @@ end)
 
 -- Test: Moveables rejects immovable objects
 JASM_TestRunner.register("maf_moveables_reject", "server", function()
-    local RuleMoveables = require("shop_moveables_rule")
+    local RuleMoveables = require("just_another_shop_mod/rules/maf/shop_moveables_rule")
 
     local immovableObj = createMockObject(false, true)
     local ctx = createMockContext("Moveables", immovableObj)
@@ -82,7 +82,7 @@ end)
 
 -- Test: Moveables allows movable objects
 JASM_TestRunner.register("maf_moveables_allow", "server", function()
-    local RuleMoveables = require("shop_moveables_rule")
+    local RuleMoveables = require("just_another_shop_mod/rules/maf/shop_moveables_rule")
 
     local movableObj = createMockObject(false, false)
     local ctx = createMockContext("Moveables", movableObj)
@@ -95,7 +95,7 @@ end)
 
 -- Test: Moveables pre-action phase
 JASM_TestRunner.register("maf_moveables_preaction", "server", function()
-    local RuleMoveables = require("shop_moveables_rule")
+    local RuleMoveables = require("just_another_shop_mod/rules/maf/shop_moveables_rule")
 
     local immovableObj = createMockObject(false, true)
     local ctx = createMockContext("Moveables", immovableObj)

@@ -1,6 +1,6 @@
 ---@diagnostic disable: global-in-non-module
 local JASM_TestRunner = require("jasm_test_shared")
-local DoShopContextMenu = require("jasm/shop_context_menu")
+local DoShopContextMenu = require("just_another_shop_mod/shop_context_menu")
 
 -- Helper to mock the context menu
 local function createMockContext()

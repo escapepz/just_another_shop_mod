@@ -19,7 +19,7 @@ JASM_TestRunner.register("player_actions_context_menu_uses_walkToContainer", "cl
     end
 
     -- 2. Mock objects
-    local DoShopContextMenu = require("jasm/shop_context_menu")
+    local DoShopContextMenu = require("just_another_shop_mod/shop_context_menu")
     local playerIndex = 0
     local context = {
         options = {},
