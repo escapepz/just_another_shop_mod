@@ -102,7 +102,7 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
     if isShop then
         -- Open Customer View
         context:addOption("Open Shop UI", worldObjects, function()
-            luautils.walkAdj(playerObj, containerObj:getSquare())
+            luautils.walkToContainer(containerObj:getContainer(), playerIndex)
             JASM_ShopView_Customer.open(playerIndex, nil, containerObj)
         end)
     end
@@ -119,7 +119,7 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
         ---@diagnostic disable-next-line: unnecessary-if
         if isOwner or isAdmin then
             jMenu:addOption("Manage Shop", worldObjects, function()
-                luautils.walkAdj(playerObj, containerObj:getSquare())
+                luautils.walkToContainer(containerObj:getContainer(), playerIndex)
                 JASM_ShopView_Owner.open(playerIndex, nil, containerObj)
             end)
         end

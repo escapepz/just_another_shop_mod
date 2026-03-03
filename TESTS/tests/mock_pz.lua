@@ -1,0 +1,484 @@
+---@diagnostic disable: global-in-non-module
+--[[
+    Project Zomboid API Mocks
+    
+    Provides stubs for PZ classes and globals used in tests.
+    Mocks: ItemContainer, IsoPlayer, IsoObject, modData, etc.
+]]
+
+local MockPZ = {}
+
+-- Global stubs
+_G.print = _G.print or function(...) end
+
+---Mock ItemContainer
+function MockPZ.createItemContainer()
+    return {
+        items = {},
+        parent = nil,
+        type = "container",
+
+        getParent = function(self)
+            return self.parent
+        end,
+
+        setParent = function(self, parent)
+            self.parent = parent
+        end,
+
+        getType = function(self)
+            return self.type
+        end,
+
+        getItemCount = function(self, itemType)
+            if not self.items[itemType] then
+                return 0
+            end
+            return #self.items[itemType]
+        end,
+
+        contains = function(self, item)
+            if not self.items[item] then
+                return false
+            end
+            return #self.items[item] > 0
+        end,
+
+        addItem = function(self, itemType)
+            self.items[itemType] = self.items[itemType] or {}
+            table.insert(self.items[itemType], { type = itemType })
+        end,
+
+        removeItem = function(self, itemType)
+            if self.items[itemType] and #self.items[itemType] > 0 then
+                table.remove(self.items[itemType], 1)
+            end
+        end,
+
+        getContainer = function(self)
+            return self
+        end,
+    }
+end
+
+---Mock IsoObject (furniture, appliances, etc.)
+function MockPZ.createIsoObject()
+    return {
+        modData = {},
+        square = nil,
+        sprite = "test_object",
+
+        getModData = function(self)
+            return self.modData
+        end,
+
+        getSquare = function(self)
+            return self.square
+        end,
+
+        setSquare = function(self, square)
+            self.square = square
+        end,
+
+        getSprite = function(self)
+            return self.sprite
+        end,
+
+        getContainer = function(self)
+            return nil -- Not all objects have containers
+        end,
+    }
+end
+
+---Mock IsoPlayer
+function MockPZ.createIsoPlayer(username, isAdmin)
+    return {
+        username = username or "TestPlayer",
+        admin = isAdmin or false,
+        inventory = MockPZ.createItemContainer(),
+        playerNum = 0,
+
+        getUsername = function(self)
+            return self.username
+        end,
+
+        isAdmin = function(self)
+            return self.admin
+        end,
+
+        getInventory = function(self)
+            return self.inventory
+        end,
+
+        getPlayerNum = function(self)
+            return self.playerNum
+        end,
+    }
+end
+
+---Mock Square (grid position)
+function MockPZ.createSquare(x, y, z)
+    return {
+        x = x or 0,
+        y = y or 0,
+        z = z or 0,
+        objects = {},
+
+        getObjects = function(self)
+            return self.objects
+        end,
+
+        addObject = function(self, obj)
+            table.insert(self.objects, obj)
+        end,
+
+        getX = function(self)
+            return self.x
+        end,
+        getY = function(self)
+            return self.y
+        end,
+        getZ = function(self)
+            return self.z
+        end,
+    }
+end
+
+---Mock InventoryItem
+function MockPZ.createInventoryItem(itemType, count)
+    return {
+        type = itemType or "Base.Item",
+        count = count or 1,
+
+        getFullType = function(self)
+            return self.type
+        end,
+
+        getCount = function(self)
+            return self.count
+        end,
+    }
+end
+
+---Mock global utilities
+function MockPZ.setupGlobals()
+    -- Mock middleclass for OOP
+    if not _G.middleclass then
+        _G.middleclass = function(name)
+            local class = {
+                __name = name,
+            }
+            class.__index = class
+
+            function class.new(...)
+                local instance = setmetatable({}, class)
+                if instance.initialize then
+                    instance:initialize(...)
+                end
+                return instance
+            end
+
+            -- Allow direct call syntax: MyClass()
+            setmetatable(class, {
+                __call = function(cls, ...)
+                    return cls.new(...)
+                end,
+            })
+
+            return class
+        end
+    end
+
+    -- Mock getSquare function
+    if not _G.getSquare then
+        _G.getSquare = function(x, y, z)
+            return MockPZ.createSquare(x, y, z)
+        end
+    end
+
+    -- Mock getSpecificPlayer
+    if not _G.getSpecificPlayer then
+        _G.getSpecificPlayer = function(id)
+            local p = MockPZ.createIsoPlayer("TestPlayer_" .. tostring(id), false)
+            p.playerNum = id
+            return p
+        end
+    end
+
+    -- Mock luautils
+    if not _G.luautils then
+        _G.luautils = {
+            walkAdj = function(player, square, isWalk) end,
+            walkToContainer = function(container, playerNum) end,
+            okModal = function(text, centerX, centerY, target, onOk) end,
+        }
+    end
+
+    -- Mock ISContextMenu
+    if not _G.ISContextMenu then
+        _G.ISContextMenu = {
+            getNew = function(self, parent)
+                return {
+                    addOption = function(self, name, target, onSelect, ...) end,
+                    addSubMenu = function(self, option, menu) end,
+                }
+            end,
+        }
+    end
+
+    -- Mock ISTimedActionQueue
+    if not _G.ISTimedActionQueue then
+        _G.ISTimedActionQueue = {
+            add = function(action) end,
+        }
+    end
+
+    -- Mock JASM_AcceptTradeAction and JASM_PublishTradeAction
+    _G.JASM_AcceptTradeAction = {
+        new = function(self, player, entity, payload)
+            return {}
+        end,
+    }
+    _G.JASM_PublishTradeAction = {
+        new = function(self, player, entity, payload)
+            return {}
+        end,
+    }
+
+    -- Mock required mod/PZ modules via package.preload
+    package.preload["pz_utils_shared"] = function()
+        return {
+            konijima = {
+                Utilities = {
+                    IsPlayerAdmin = function(player)
+                        return false
+                    end,
+                    SendClientCommand = function(...) end,
+                    SendServerCommandTo = function(...) end,
+                    SquareToString = function(square)
+                        return "0,0,0"
+                    end,
+                },
+            },
+            escape = {
+                SandboxVarsModule = {
+                    Create = function(name, defaults)
+                        return {
+                            Get = function(key, default)
+                                return defaults[key] or default
+                            end,
+                        }
+                    end,
+                },
+            },
+        }
+    end
+
+    package.preload["pz_lua_commons_shared"] = function()
+        return {
+            kikito = {
+                middleclass = _G.middleclass,
+            },
+        }
+    end
+
+    package.preload["zul"] = function()
+        local ZUL = {}
+        ZUL.new = function(name)
+            return {
+                info = function(...) end,
+                error = function(...) end,
+                debug = function(...) end,
+                trace = function(...) end,
+                warn = function(...) end,
+                setLevel = function(...) end,
+            }
+        end
+        return ZUL
+    end
+
+    package.preload["Entity/ISUI/Windows/ISEntityWindow"] = function()
+        _G.ISEntityWindow = {
+            derive = function(self, name)
+                return {
+                    initialise = function() end,
+                    createChildren = function() end,
+                }
+            end,
+            initialise = function(self) end,
+            createChildren = function(self) end,
+            prerender = function(self) end,
+            new = function(self, x, y, width, height, player, entity, style)
+                return {}
+            end,
+        }
+        return _G.ISEntityWindow
+    end
+
+    package.preload["Entity/ISUI/Controls/ISTableLayout"] = function()
+        _G.ISTableLayout = {
+            new = function(self)
+                return {
+                    initialise = function() end,
+                    instantiate = function() end,
+                }
+            end,
+            addColumn = function(self)
+                return {}
+            end,
+            addColumnFill = function(self)
+                return {}
+            end,
+            addRow = function(self)
+                return {
+                    index = function()
+                        return 0
+                    end,
+                }
+            end,
+            addRowFill = function(self)
+                return {}
+            end,
+            setElement = function(self) end,
+        }
+        return _G.ISTableLayout
+    end
+
+    package.preload["ISUI/ISPanel"] = function()
+        _G.ISPanel = {
+            derive = function(self, name)
+                local derived = { __name = name }
+                setmetatable(derived, { __index = self })
+                return derived
+            end,
+            new = function(self, x, y, width, height)
+                local o = {}
+                setmetatable(o, { __index = self })
+                o.x = x
+                o.y = y
+                o.width = width
+                o.height = height
+                return o
+            end,
+            initialise = function(self) end,
+            instantiate = function(self) end,
+            createChildren = function(self) end,
+            setVisible = function(self, visible) end,
+            addToUIManager = function(self) end,
+        }
+        return _G.ISPanel
+    end
+
+    package.preload["ISUI/ISButton"] = function()
+        _G.ISButton = ISPanel:derive("ISButton")
+        return _G.ISButton
+    end
+
+    package.preload["ISUI/ISScrollingListBox"] = function()
+        _G.ISScrollingListBox = ISPanel:derive("ISScrollingListBox")
+        return _G.ISScrollingListBox
+    end
+
+    package.preload["ISUI/ISImage"] = function()
+        _G.ISImage = ISPanel:derive("ISImage")
+        return _G.ISImage
+    end
+
+    package.preload["Entity/ISUI/Controls/ISTableLayout"] = function()
+        _G.ISTableLayout = ISPanel:derive("ISTableLayout")
+        _G.ISTableLayout.calculateLayout = function() end
+        return _G.ISTableLayout
+    end
+
+    package.preload["Entity/ISUI/Windows/ISEntityWindow"] = function()
+        _G.ISEntityWindow = ISPanel:derive("ISEntityWindow")
+        return _G.ISEntityWindow
+    end
+
+    package.preload["ISUI/ISLabel"] = function()
+        _G.ISLabel = ISPanel:derive("ISLabel")
+        return _G.ISLabel
+    end
+
+    -- Timed Actions
+    _G.ISBaseTimedAction = {
+        derive = function(self, name)
+            local derived = { __name = name }
+            setmetatable(derived, { __index = self })
+            return derived
+        end,
+        new = function(self, character)
+            local o = {}
+            setmetatable(o, { __index = self })
+            o.character = character
+            return o
+        end,
+    }
+
+    package.preload["TimedActions/ISBaseTimedAction"] = function()
+        return _G.ISBaseTimedAction
+    end
+
+    package.preload["TimedActions/ISWalkToTimedAction"] = function()
+        _G.ISWalkToTimedAction = ISBaseTimedAction:derive("ISWalkToTimedAction")
+        return _G.ISWalkToTimedAction
+    end
+    package.preload["ISUI/ISTextEntryBox"] = function()
+        _G.ISTextEntryBox = ISPanel:derive("ISTextEntryBox")
+        return _G.ISTextEntryBox
+    end
+
+    package.preload["TimedActions/ISTimedActionQueue"] = function()
+        return _G.ISTimedActionQueue
+    end
+
+    -- Also mock the mod's internal dependencies to avoid recursive issues or missing files
+    package.preload["jasm/entity_ui/customer_view_window"] = function()
+        return { open = function() end }
+    end
+    package.preload["jasm/entity_ui/owner_view_window"] = function()
+        return { open = function() end }
+    end
+    package.preload["jasm/entity_ui/models/shop_data_manager"] = function()
+        return {}
+    end
+    package.preload["jasm/entity_ui/components/shop/shared/shop_search_filter_panel"] = function()
+        return {}
+    end
+    package.preload["jasm/entity_ui/components/product/product_list_panel"] = function()
+        return {}
+    end
+    -- package.preload["jasm/entity_ui/components/shop/customer/shop_item_details_panel"] is omitted to load the real file
+    package.preload["jasm/entity_ui/components/shop/customer/shop_item_header"] = function()
+        return {}
+    end
+    package.preload["jasm/entity_ui/components/shop/customer/shop_item_gives_panel"] = function()
+        return {}
+    end
+    package.preload["jasm/entity_ui/components/shop/customer/shop_item_requirements_panel"] = function()
+        return {}
+    end
+    package.preload["jasm/entity_ui/components/shop/customer/shop_item_action_footer"] = function()
+        return {}
+    end
+    package.preload["jasm/entity_ui/components/shop/owner/shop_trade_offer_panel"] = function()
+        return {}
+    end
+    package.preload["jasm/entity_ui/components/shop/owner/shop_requirement_panel"] = function()
+        return {}
+    end
+    package.preload["jasm/entity_ui/components/shop/owner/shop_footer_panel"] = function()
+        return {}
+    end
+
+    -- Mock debug info
+    if not _G.debug then
+        _G.debug = {
+            getinfo = function()
+                return { source = "@./TESTS/tests/" }
+            end,
+        }
+    end
+end
+
+return MockPZ

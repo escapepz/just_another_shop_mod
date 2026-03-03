@@ -153,7 +153,7 @@ function ShopItemDetailsPanel:onDebugForceGive()
         return
     end
 
-    if luautils.walkAdj(self.player, sq, true) then
+    if luautils.walkToContainer(entity:getContainer(), self.player:getPlayerNum()) then
         ISTimedActionQueue.add(JASM_AcceptTradeAction:new(self.player, entity, {
             itemType = self.product.type,
             offerQty = self.product.offerQty or 1,
@@ -313,7 +313,7 @@ function ShopItemDetailsPanel:onAcceptTrade()
         return
     end
 
-    if luautils.walkAdj(self.player, sq, true) then
+    if luautils.walkToContainer(entity:getContainer(), self.player:getPlayerNum()) then
         ISTimedActionQueue.add(JASM_AcceptTradeAction:new(self.player, entity, {
             itemType = self.product.type,
             offerQty = self.product.offerQty or 1,
@@ -364,6 +364,7 @@ function ShopItemDetailsPanel:calculateLayout(_preferredWidth, _preferredHeight)
 end
 
 --- Create a new instance of ShopItemDetailsPanel.
+---@return ShopItemDetailsPanel
 function ShopItemDetailsPanel:new(x, y, width, height, player, xuiSkin)
     logger:debug("ShopItemDetailsPanel:new() called")
     ---@type ShopItemDetailsPanel

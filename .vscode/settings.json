@@ -6,7 +6,9 @@
     "[lua]": {
         "editor.defaultFormatter": "JohnnyMorganz.stylua"
     },
+    "prettier.tabWidth": 4,
     "cSpell.words": [
+        "actboy",
         "behaviour",
         "deserialised",
         "escapepz",
@@ -19,11 +21,15 @@
         "konijima",
         "luautils",
         "middleclass",
+        "moddata",
+        "modversion",
         "mouseoverselected",
         "npcshop",
+        "pcall",
         "playershop",
         "prerender",
         "serialised",
-        "Thumpable"
+        "Thumpable",
+        "Zomboid"
     ]
 }
