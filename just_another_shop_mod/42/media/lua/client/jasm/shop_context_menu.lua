@@ -142,14 +142,19 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
                 "PLAYER"
             )
         else
-            pMenu:addOption(
-                "UnRegister Shop [" .. entityDisplayName .. "]",
-                worldObjects,
-                onShopAction,
-                playerObj,
-                "UNREGISTER",
-                "PLAYER"
-            )
+            -- Check permissions for UnRegister
+            local isOwner = modData.shopOwnerID == playerObj:getUsername()
+            ---@diagnostic disable-next-line: unnecessary-if
+            if isOwner or isAdmin then
+                pMenu:addOption(
+                    "UnRegister Shop [" .. entityDisplayName .. "]",
+                    worldObjects,
+                    onShopAction,
+                    playerObj,
+                    "UNREGISTER",
+                    "PLAYER"
+                )
+            end
         end
     end
 
