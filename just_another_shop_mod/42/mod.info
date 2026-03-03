@@ -10,4 +10,4 @@ icon=icon.png
 modversion=1.0.0
 versionMin=42.13.1
 
-require=\zul,\pz_lua_commons,\container_authority_framework
+require=\zul,\pz_lua_commons,\container_authority_framework,\manipulation_authority_framework

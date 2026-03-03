@@ -2,6 +2,7 @@ local ZUL = require("zul")
 local pz_utils = require("pz_utils_shared")
 
 local logger = ZUL.new("just_another_shop_mod")
+-- logger:setLevel("TRACE")
 
 local SandboxVarsModule = pz_utils.escape.SandboxVarsModule
 local KUtilities = pz_utils.konijima.Utilities
@@ -16,6 +17,8 @@ local RuleShopProtection = function(ctx)
 
     -- 1. Check if the source is a Shop
     local parent = srcContainer:getParent()
+
+    logger:debug("here", parent)
 
     local modData = parent and parent:getModData() or nil
     if modData and modData.isShop then

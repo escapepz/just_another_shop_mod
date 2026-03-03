@@ -14,7 +14,10 @@
             "name": "Just Another Shop Mod",
             "description": "A lightweight shop system based on the Container Authority Framework.",
             "require": ["\\zul","\\pz_lua_commons","\\container_authority_framework"],
-            "versionMin": "42.13.1"
+            "versionMin": "42.13.1",
+            "build": {
+                "modInfo": "skip"
+            }
         }
     }
 }

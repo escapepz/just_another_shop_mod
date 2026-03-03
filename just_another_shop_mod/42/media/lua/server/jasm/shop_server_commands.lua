@@ -45,6 +45,10 @@ local function OnClientCommand(module, command, player, args)
                 modData.shopType = args.shopType
                 modData.shopOwnerID = player:getUsername()
 
+                -- Prevent sledgehammer and dismantle
+                modData.indestructible = true
+                modData.immovable = true
+
                 ---@diagnostic disable-next-line: unnecessary-if
                 if thumpable then
                     thumpable:setIsThumpable(false)
@@ -75,6 +79,10 @@ local function OnClientCommand(module, command, player, args)
                 modData.isShop = nil
                 modData.shopType = nil
                 modData.shopOwnerID = nil
+
+                -- Remove sledgehammer and dismantle protection
+                modData.indestructible = nil
+                modData.immovable = nil
 
                 ---@diagnostic disable-next-line: unnecessary-if
                 if thumpable then

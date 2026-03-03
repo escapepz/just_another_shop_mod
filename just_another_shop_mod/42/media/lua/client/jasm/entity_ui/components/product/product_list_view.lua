@@ -142,15 +142,8 @@ function ProductListView:createChildren()
     ISPanel.createChildren(self)
 
     ---@type ISScrollingListBox
-    self.listPanel = ISXuiSkin.build(
-        self.xuiSkin,
-        nil,
-        ISScrollingListBox,
-        0,
-        0,
-        self.width,
-        self.height
-    )
+    self.listPanel =
+        ISXuiSkin.build(self.xuiSkin, nil, ISScrollingListBox, 0, 0, self.width, self.height)
     ---@diagnostic disable-next-line: unnecessary-if
     if self.listPanel then
         self.listPanel:initialise()
@@ -262,4 +255,3 @@ function ProductListView:new(x, y, w, h, player, xuiSkin)
 end
 
 return ProductListView
-
