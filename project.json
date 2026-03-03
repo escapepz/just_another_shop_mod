@@ -4,17 +4,27 @@
     "authors": ["escapepz", "eScape"],
     "workshop": {
         "visibility": "unlisted",
-        "tags": [
-            "Build 42"
-        ],
+        "tags": ["Build 42"],
         "excludes": []
     },
     "mods": {
         "just_another_shop_mod": {
             "name": "Just Another Shop Mod",
             "description": "A lightweight shop system based on the Container Authority Framework.",
-            "require": ["\\zul","\\pz_lua_commons","\\container_authority_framework"],
+            "require": [
+                "\\zul",
+                "\\pz_lua_commons",
+                "\\container_authority_framework"
+            ],
             "versionMin": "42.13.1",
+            "build": {
+                "modInfo": "skip"
+            }
+        },
+        "jasm_test": {
+            "name": "jasm_test",
+            "description": "",
+            "require": "\\just_another_shop_mod",
             "build": {
                 "modInfo": "skip"
             }

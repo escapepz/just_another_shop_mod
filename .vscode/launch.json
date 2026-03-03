@@ -1,0 +1,50 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug ShopManager Tests",
+            "type": "lua",
+            "request": "launch",
+            "program": "${workspaceFolder}/TESTS/tests/test_shop_manager.lua",
+            "cwd": "${workspaceFolder}/TESTS/tests",
+            "stopOnEntry": false,
+            "luaVersion": "lua51"
+        },
+        {
+            "name": "Debug ShopServerCommands Tests",
+            "type": "lua",
+            "request": "launch",
+            "program": "${workspaceFolder}/TESTS/tests/test_shop_server_commands.lua",
+            "cwd": "${workspaceFolder}/TESTS/tests",
+            "stopOnEntry": false,
+            "luaVersion": "lua51"
+        },
+        {
+            "name": "Debug MAF Rules Tests",
+            "type": "lua",
+            "request": "launch",
+            "program": "${workspaceFolder}/TESTS/tests/test_maf_rules.lua",
+            "cwd": "${workspaceFolder}/TESTS/tests",
+            "stopOnEntry": false,
+            "luaVersion": "lua51"
+        },
+        {
+            "name": "Debug CAF Rules Tests",
+            "type": "lua",
+            "request": "launch",
+            "program": "${workspaceFolder}/TESTS/tests/test_caf_rules.lua",
+            "cwd": "${workspaceFolder}/TESTS/tests",
+            "stopOnEntry": false,
+            "luaVersion": "lua51"
+        },
+        {
+            "name": "Debug All Tests",
+            "type": "lua",
+            "request": "launch",
+            "program": "${workspaceFolder}/TESTS/tests/test_all.lua",
+            "cwd": "${workspaceFolder}/TESTS/tests",
+            "stopOnEntry": false,
+            "luaVersion": "lua51"
+        }
+    ]
+}

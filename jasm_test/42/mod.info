@@ -1,0 +1,13 @@
+author=escapepz
+
+id=jasm_test
+name=Just Another Shop Mod Test
+description=Test mod for Just Another Shop Mod.
+
+poster=poster.png
+icon=icon.png
+
+modversion=1.0.0
+versionMin=42.13.1
+
+require=\just_another_shop_mod
