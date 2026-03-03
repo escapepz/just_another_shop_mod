@@ -8,6 +8,7 @@ local JASM_TestRunner = require("jasm_test_shared")
 
 -- Load all client-side test modules
 require("jasm_test/test_caf_rules")
+require("jasm_test/test_player_actions")
 
 -- Expose the test runner globally for access from UI
 _G.JASM_TestRunner = JASM_TestRunner

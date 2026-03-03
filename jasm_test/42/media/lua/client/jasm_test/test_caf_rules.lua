@@ -23,10 +23,16 @@ local function createMockCAFContext(options)
             getParent = function()
                 return options.srcParent
             end,
+            getType = function()
+                return "container"
+            end,
         }),
         dest = (options.dest or {
             getParent = function()
                 return options.destParent
+            end,
+            getType = function()
+                return "container"
             end,
         }),
         character = (options.character or {
