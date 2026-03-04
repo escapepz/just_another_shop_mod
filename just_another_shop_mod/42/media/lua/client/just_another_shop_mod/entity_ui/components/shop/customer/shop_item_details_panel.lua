@@ -155,14 +155,33 @@ function ShopItemDetailsPanel:onDebugForceGive()
         return
     end
 
+    -- ── VALIDATE PAYLOAD ON ACTION CREATE ──
+    local payload = {
+        itemType = self.product.type,
+        offerQty = self.product.offerQty or 1,
+        requestItem = selectedTrade.requestItem,
+        requestQty = selectedTrade.requestQty,
+        isForceGive = true,
+    }
+
+    if not payload.itemType or not payload.requestItem or not payload.requestQty then
+        logger:error("ShopItemDetailsPanel:onDebugForceGive() - Invalid payload")
+        return
+    end
+    -- ──────────────────────────────────────────
+
     if luautils.walkToContainer(entity:getContainer(), self.player:getPlayerNum()) then
-        ISTimedActionQueue.add(JASM_AcceptTradeAction:new(self.player, entity, {
-            itemType = self.product.type,
-            offerQty = self.product.offerQty or 1,
-            requestItem = selectedTrade.requestItem,
-            requestQty = selectedTrade.requestQty,
-            isForceGive = true,
-        }))
+        ISTimedActionQueue.add(
+            JASM_AcceptTradeAction:new(
+                self.player,
+                entity,
+                payload.itemType,
+                payload.requestItem,
+                payload.requestQty,
+                payload.offerQty,
+                payload.isForceGive
+            )
+        )
     end
 end
 
@@ -315,14 +334,33 @@ function ShopItemDetailsPanel:onAcceptTrade()
         return
     end
 
+    -- ── VALIDATE PAYLOAD ON ACTION CREATE ──
+    local payload = {
+        itemType = self.product.type,
+        offerQty = self.product.offerQty or 1,
+        requestItem = selectedTrade.requestItem,
+        requestQty = selectedTrade.requestQty,
+        isForceGive = false,
+    }
+
+    if not payload.itemType or not payload.requestItem or not payload.requestQty then
+        logger:error("ShopItemDetailsPanel:onAcceptTrade() - Invalid payload")
+        return
+    end
+    -- ──────────────────────────────────────────
+
     if luautils.walkToContainer(entity:getContainer(), self.player:getPlayerNum()) then
-        ISTimedActionQueue.add(JASM_AcceptTradeAction:new(self.player, entity, {
-            itemType = self.product.type,
-            offerQty = self.product.offerQty or 1,
-            requestItem = selectedTrade.requestItem,
-            requestQty = selectedTrade.requestQty,
-            isForceGive = false,
-        }))
+        ISTimedActionQueue.add(
+            JASM_AcceptTradeAction:new(
+                self.player,
+                entity,
+                payload.itemType,
+                payload.requestItem,
+                payload.requestQty,
+                payload.offerQty,
+                payload.isForceGive
+            )
+        )
     end
 end
 

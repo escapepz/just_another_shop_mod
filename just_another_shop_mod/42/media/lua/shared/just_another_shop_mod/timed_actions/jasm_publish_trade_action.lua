@@ -29,6 +29,7 @@ local JASM_SandboxVars = require("just_another_shop_mod/jasm_sandbox_vars")
 ---@field index      integer     Object index on the square
 ---@field itemType   string      Full item type string (e.g. "Base.Axe")
 ---@field tradeCount integer     Number of trade paths (flat-serialized)
+---@field tradesBlob  string     Serialized trades: "Item|Qty|Name;Item|Qty|Name..."
 ---@field offerQty   integer
 JASM_PublishTradeAction = ISBaseTimedAction:derive("JASM_PublishTradeAction")
 JASM_PublishTradeAction.Type = "JASM_PublishTradeAction"
@@ -37,31 +38,38 @@ JASM_PublishTradeAction.Type = "JASM_PublishTradeAction"
 -- CONSTRUCTOR
 -- ============================================================
 
----@param character  IsoPlayer
----@param entity     IsoObject     The shop IsoObject
----@param payload    table         { x, y, z, index, itemType, trades, offerQty }
+---@param character   IsoPlayer
+---@param entity      IsoObject   The shop IsoObject
+---@param x           number
+---@param y           number
+---@param z           number
+---@param index       integer
+---@param itemType    string
+---@param offerQty    integer
+---@param tradesBlob  string      Serialized trades: "Item|Qty|Name;Item|Qty|Name..."
 ---@return JASM_PublishTradeAction
-function JASM_PublishTradeAction:new(character, entity, payload)
+function JASM_PublishTradeAction:new(
+    character,
+    entity,
+    x,
+    y,
+    z,
+    index,
+    itemType,
+    offerQty,
+    tradesBlob
+)
+    ---@type JASM_PublishTradeAction
     local o = ISBaseTimedAction.new(self, character)
-    ---@cast o JASM_PublishTradeAction
 
     o.entity = entity
-    o.x = payload.x
-    o.y = payload.y
-    o.z = payload.z
-    o.index = payload.index
-    o.itemType = payload.itemType
-    o.offerQty = math.floor(tonumber(payload.offerQty) or 1)
-
-    -- Flatten trades into numbered primitive fields so PZ's TimedAction
-    -- serializer can transmit them (nested tables are not reliably sent).
-    local trades = payload.trades or {}
-    o.tradeCount = #trades
-    for i, t in ipairs(trades) do
-        o["trade" .. i .. "_requestItem"] = t.requestItem
-        o["trade" .. i .. "_requestQty"] = math.floor(tonumber(t.requestQty) or 1)
-        o["trade" .. i .. "_name"] = t.name or ""
-    end
+    o.x = x
+    o.y = y
+    o.z = z
+    o.index = index
+    o.itemType = itemType
+    o.offerQty = math.floor(tonumber(offerQty) or 1)
+    o.tradesBlob = tradesBlob or ""
 
     -- Progress bar behaviour
     o.maxTime = 30 -- ~3 s at 10 ticks/s; server can override via getDuration()
@@ -233,26 +241,32 @@ function JASM_PublishTradeAction:complete()
         return false
     end
 
-    -- Enforce max 5 paths per shopTrades entry
-    local pathCount = self.tradeCount or 0
-    ---@diagnostic disable-next-line: unnecessary-if
-    if pathCount > 5 then
-        logger:error(
-            "JASM_PublishTradeAction:complete() - exceeding max 5 paths ("
-                .. tostring(pathCount)
-                .. ")"
-        )
-        return false
+    -- Reconstruct trades from the tradesBlob string
+    -- Format: "Item|Qty|Name;Item|Qty|Name"
+    local cleanPaths = {}
+
+    local function split(str, sep)
+        local result = {}
+        for match in (str .. sep):gmatch("(.-)" .. sep) do
+            table.insert(result, match)
+        end
+        return result
     end
 
-    -- Reconstruct trades from flat serialized fields
-    local cleanPaths = {}
-    for i = 1, (self.tradeCount or 0) do
-        table.insert(cleanPaths, {
-            requestItem = self["trade" .. i .. "_requestItem"],
-            requestQty = math.floor(tonumber(self["trade" .. i .. "_requestQty"]) or 1),
-            name = self["trade" .. i .. "_name"] or "",
-        })
+    if self.tradesBlob and self.tradesBlob ~= "" then
+        local entries = split(self.tradesBlob, ";")
+        for _, entry in ipairs(entries) do
+            if entry ~= "" then
+                local parts = split(entry, "|")
+                if #parts >= 2 then
+                    table.insert(cleanPaths, {
+                        requestItem = parts[1],
+                        requestQty = math.floor(tonumber(parts[2]) or 1),
+                        name = parts[3] or "",
+                    })
+                end
+            end
+        end
     end
 
     -- Write trade data server-side (authoritative write)
@@ -269,7 +283,7 @@ function JASM_PublishTradeAction:complete()
         shop = modData.shopName,
         item = self.itemType,
         offerQty = self.offerQty,
-        paths = pathCount,
+        paths = #cleanPaths,
     })
 
     return true

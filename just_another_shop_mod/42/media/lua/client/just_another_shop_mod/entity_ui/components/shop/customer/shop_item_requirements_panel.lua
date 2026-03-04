@@ -109,8 +109,13 @@ function ShopItemRequirementsPanel.doDrawReqItem(listbox, y, item, _alt)
     end
 
     -- Name Logic: ScriptManager > req.name fallback
-    local scriptItem = ScriptManager.instance:getItem(req.requestItem)
-    local name = scriptItem and scriptItem:getDisplayName() or req.name or "Unknown Item"
+    local name = "Unknown Item"
+    if req.requestItem then
+        local scriptItem = ScriptManager.instance:getItem(req.requestItem)
+        name = scriptItem and scriptItem:getDisplayName() or req.name or "Unknown Item"
+    else
+        name = req.name or "Unknown Item"
+    end
 
     -- Specific fallback for money
     -- if req.requestItem == "Base.Money" then
