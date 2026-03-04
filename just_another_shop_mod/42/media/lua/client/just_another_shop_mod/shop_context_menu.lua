@@ -97,8 +97,15 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
         return
     end
 
+    local isOwner = isShop and (playerObj:getUsername() == modData.shopOwnerID)
+
+    -- Permission/Visibility Flags (Easily extensible)
+    local canManage = isShop and (isOwner or isAdmin)
+    local canAccessPlayerMenu = not isShop or (shopType == "PLAYER" and (isOwner or isAdmin))
+    local canAccessNPCMenu = isAdmin and (not isShop or shopType == "SYSTEM")
+
     ---@diagnostic disable-next-line: unnecessary-if
-    -- Top Level Shop Access
+    -- Top Level Shop Access (General Public)
     if isShop then
         -- Open Customer View
         context:addOption("Open Shop UI", worldObjects, function()
@@ -108,44 +115,38 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
     end
 
     -- JASM Management Submenu (Registration/NPC/Management)
-    local jOption = context:addOption("JASM Shop", worldObjects, nil)
-    local jMenu = ISContextMenu:getNew(context)
-    context:addSubMenu(jOption, jMenu)
+    -- Only show if there's actually something to do
+    if canManage or canAccessPlayerMenu or canAccessNPCMenu then
+        local jOption = context:addOption("JASM Shop", worldObjects, nil)
+        local jMenu = ISContextMenu:getNew(context)
+        context:addSubMenu(jOption, jMenu)
 
-    ---@diagnostic disable-next-line: unnecessary-if
-    if isShop then
-        -- Open Owner View (if owner or admin)
-        local isOwner = modData.shopOwnerID == playerObj:getUsername()
         ---@diagnostic disable-next-line: unnecessary-if
-        if isOwner or isAdmin then
+        -- 1. Shop Management
+        if canManage then
             jMenu:addOption("Manage Shop", worldObjects, function()
                 luautils.walkToContainer(containerObj:getContainer(), playerIndex)
                 JASM_ShopView_Owner.open(playerIndex, nil, containerObj)
             end)
         end
-    end
 
-    ---@diagnostic disable-next-line: unnecessary-if
-    -- Player Shop Submenu
-    if not isShop or shopType == "PLAYER" then
-        local pOption = jMenu:addOption("Player Shop", worldObjects, nil)
-        local pMenu = ISContextMenu:getNew(jMenu)
-        jMenu:addSubMenu(pOption, pMenu)
+        -- 2. Player Shop Submenu
+        if canAccessPlayerMenu then
+            local pOption = jMenu:addOption("Player Shop", worldObjects, nil)
+            local pMenu = ISContextMenu:getNew(jMenu)
+            jMenu:addSubMenu(pOption, pMenu)
 
-        if not isShop then
-            pMenu:addOption(
-                "Register Shop [" .. entityDisplayName .. "]",
-                worldObjects,
-                onShopAction,
-                playerObj,
-                "REGISTER",
-                "PLAYER"
-            )
-        else
-            -- Check permissions for UnRegister
-            local isOwner = modData.shopOwnerID == playerObj:getUsername()
-            ---@diagnostic disable-next-line: unnecessary-if
-            if isOwner or isAdmin then
+            if not isShop then
+                pMenu:addOption(
+                    "Register Shop [" .. entityDisplayName .. "]",
+                    worldObjects,
+                    onShopAction,
+                    playerObj,
+                    "REGISTER",
+                    "PLAYER"
+                )
+            else
+                -- Must be owner or admin to unregister (guaranteed by canAccessPlayerMenu)
                 pMenu:addOption(
                     "UnRegister Shop [" .. entityDisplayName .. "]",
                     worldObjects,
@@ -156,11 +157,9 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
                 )
             end
         end
-    end
 
-    -- NPC Shop Submenu (Admin Only)
-    if isAdmin then
-        if not isShop or shopType == "SYSTEM" then
+        -- 3. NPC Shop Submenu (Admin Only)
+        if canAccessNPCMenu then
             local nOption = jMenu:addOption("NPC Shop", worldObjects, nil)
             local nMenu = ISContextMenu:getNew(jMenu)
             jMenu:addSubMenu(nOption, nMenu)
@@ -175,6 +174,7 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
                     "SYSTEM"
                 )
             else
+                -- Must be admin to unregister (guaranteed by canAccessNPCMenu)
                 nMenu:addOption(
                     "UnRegister Shop [" .. entityDisplayName .. "]",
                     worldObjects,
