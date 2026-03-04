@@ -253,7 +253,9 @@ function JASM_AcceptTradeAction:complete()
             ---@diagnostic disable-next-line: unnecessary-if
             if item then
                 shopContainer:Remove(item)
+                sendRemoveItemFromContainer(shopContainer, item)
                 playerInv:AddItem(item)
+                sendAddItemToContainer(playerInv, item)
             end
         end
         logger:info(
@@ -273,8 +275,14 @@ function JASM_AcceptTradeAction:complete()
 
         -- Move currency from player to shop
         for i = 1, self.requestQty do
-            playerInv:RemoveOneOf(self.requestItem)
-            shopContainer:AddItem(self.requestItem)
+            local item = playerInv:getFirstType(self.requestItem)
+            ---@diagnostic disable-next-line: unnecessary-if
+            if item then
+                playerInv:Remove(item)
+                sendRemoveItemFromContainer(playerInv, item)
+                shopContainer:AddItem(item)
+                sendAddItemToContainer(shopContainer, item)
+            end
         end
 
         -- Move product from shop to player
@@ -283,7 +291,9 @@ function JASM_AcceptTradeAction:complete()
             ---@diagnostic disable-next-line: unnecessary-if
             if item then
                 shopContainer:Remove(item)
+                sendRemoveItemFromContainer(shopContainer, item)
                 playerInv:AddItem(item)
+                sendAddItemToContainer(playerInv, item)
             end
         end
 
