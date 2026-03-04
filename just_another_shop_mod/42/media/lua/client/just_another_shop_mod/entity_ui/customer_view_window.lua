@@ -493,13 +493,32 @@ end
 -- Track open windows by entity to prevent cross-closing
 local _openWindowsByEntity = {}
 
----@param playerIndex integer
----@param _context any
----@param entity IsoObject
+--- Helper: Find existing CustomerViewWindow for entity by querying UIManager
+local function findExistingCustomerWindow(entity)
+    local uiManager = UIManager.getUI()
+    if not uiManager then
+        return nil
+    end
+
+    for _, child in ipairs(uiManager:getChildren()) do
+        if child:instanceof(CustomerViewWindow) and child.entity == entity then
+            return child
+        end
+    end
+    return nil
+end
+
 ---@param playerIndex integer
 ---@param _context any
 ---@param entity IsoObject
 function CustomerViewWindow.open(playerIndex, _context, entity)
+    -- Check if window already open for this entity
+    local existingWindow = findExistingCustomerWindow(entity)
+    if existingWindow and existingWindow:isVisible() then
+        existingWindow:bringToTop()
+        return existingWindow
+    end
+
     local screenWidth = getCore():getScreenWidth()
     local screenHeight = getCore():getScreenHeight()
 
@@ -513,11 +532,6 @@ function CustomerViewWindow.open(playerIndex, _context, entity)
         CustomerViewWindow:new(windowX, windowY, windowWidth, windowHeight, player, entity)
     window:initialise()
     window:addToUIManager()
-
-    -- Track this window
-    local entityID = entity:getObjectIndex()
-    _openWindowsByEntity[entityID] = _openWindowsByEntity[entityID] or {}
-    _openWindowsByEntity[entityID].customer = window
 
     return window
 end
