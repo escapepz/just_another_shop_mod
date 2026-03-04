@@ -3,6 +3,7 @@ local KUtilities = pz_utils.konijima.Utilities
 
 local JASM_ShopView_Customer = require("just_another_shop_mod/entity_ui/customer_view_window")
 local JASM_ShopView_Owner = require("just_another_shop_mod/entity_ui/owner_view_window")
+local JASM_SandboxVars = require("just_another_shop_mod/jasm_sandbox_vars")
 
 -- guard again non crate objects
 local allowedCrates = { ["Base.Wood_Crate"] = true, ["Base.Metal_Crate"] = true }
@@ -98,10 +99,13 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
     end
 
     local isOwner = isShop and (playerObj:getUsername() == modData.shopOwnerID)
+    local adminBypass = JASM_SandboxVars.Get("AdminBypass")
+    local effectivelyAdmin = isAdmin and adminBypass
 
-    -- Permission/Visibility Flags (Easily extensible)
-    local canManage = isShop and (isOwner or isAdmin)
-    local canAccessPlayerMenu = not isShop or (shopType == "PLAYER" and (isOwner or isAdmin))
+    -- Permission/Visibility Flags
+    local canManage = isShop and (isOwner or effectivelyAdmin)
+    local canAccessPlayerMenu = not isShop
+        or (shopType == "PLAYER" and (isOwner or effectivelyAdmin))
     local canAccessNPCMenu = isAdmin and (not isShop or shopType == "SYSTEM")
 
     ---@diagnostic disable-next-line: unnecessary-if

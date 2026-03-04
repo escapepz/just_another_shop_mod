@@ -1,5 +1,8 @@
 local ZUL = require("zul")
 local logger = ZUL.new("just_another_shop_mod")
+local pz_utils = require("pz_utils_shared")
+local JASM_SandboxVars = require("just_another_shop_mod/jasm_sandbox_vars")
+local KUtilities = pz_utils.konijima.Utilities
 
 local RuleMoveables = {}
 
@@ -14,7 +17,13 @@ function RuleMoveables.validateMoveables(context)
     if _object then
         local modData = _object:getModData()
         if modData.immovable then
-            context.flags.rejected = true
+            local player = ctx.character
+            local isAdmin = KUtilities.IsPlayerAdmin(player)
+            local adminBypass = JASM_SandboxVars.Get("AdminBypass")
+
+            if not (isAdmin and adminBypass) then
+                context.flags.rejected = true
+            end
         end
     end
 
@@ -32,7 +41,13 @@ function RuleMoveables.preActionMoveables(context)
     if _object then
         local modData = _object:getModData()
         if modData.immovable then
-            context.flags.rejected = true
+            local player = ctx.character
+            local isAdmin = KUtilities.IsPlayerAdmin(player)
+            local adminBypass = JASM_SandboxVars.Get("AdminBypass")
+
+            if not (isAdmin and adminBypass) then
+                context.flags.rejected = true
+            end
         end
     end
 

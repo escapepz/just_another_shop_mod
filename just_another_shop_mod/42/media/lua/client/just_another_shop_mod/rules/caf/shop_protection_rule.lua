@@ -4,10 +4,8 @@ local pz_utils = require("pz_utils_shared")
 local logger = ZUL.new("just_another_shop_mod")
 -- logger:setLevel("TRACE")
 
-local SandboxVarsModule = pz_utils.escape.SandboxVarsModule
 local KUtilities = pz_utils.konijima.Utilities
-
-local SSandboxVars = SandboxVarsModule.Create("JASM", { AdminBypass = false })
+local JASM_SandboxVars = require("just_another_shop_mod/jasm_sandbox_vars")
 
 ---@param ctx CAF.Context
 local RuleShopProtection = function(ctx)
@@ -35,7 +33,7 @@ local RuleShopProtection = function(ctx)
         end
 
         -- Rule: Admin bypass (check sandbox option)
-        local adminBypass = SSandboxVars.Get("AdminBypass", false)
+        local adminBypass = JASM_SandboxVars.Get("AdminBypass")
         if adminBypass and KUtilities.IsPlayerAdmin(player) then
             logger:info("Admin bypass access (Source)", {
                 player = player:getUsername(),
@@ -80,7 +78,7 @@ local RuleShopProtection = function(ctx)
         end
 
         -- Rule: Admin bypass
-        local adminBypass = SSandboxVars.Get("AdminBypass", false)
+        local adminBypass = JASM_SandboxVars.Get("AdminBypass")
         if adminBypass and KUtilities.IsPlayerAdmin(player) then
             logger:info("Admin bypass access (Destination)", {
                 player = player:getUsername(),

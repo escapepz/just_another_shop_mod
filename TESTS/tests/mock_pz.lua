@@ -266,15 +266,45 @@ function MockPZ.setupGlobals()
                 },
             },
             escape = {
-                SandboxVarsModule = {
-                    Create = function(name, defaults)
-                        return {
-                            Get = function(key, default)
-                                return defaults[key] or default
-                            end,
-                        }
-                    end,
-                },
+                SandboxVarsModule = (function()
+                    local _store = {}
+                    return {
+                        Init = function(namespace, defaults)
+                            _store[namespace] = _store[namespace] or {}
+                            for k, v in pairs(defaults) do
+                                if _store[namespace][k] == nil then
+                                    _store[namespace][k] = v
+                                end
+                            end
+                        end,
+                        Create = function(name, defaults)
+                            _store[name] = _store[name] or {}
+                            for k, v in pairs(defaults) do
+                                if _store[name][k] == nil then
+                                    _store[name][k] = v
+                                end
+                            end
+                            local ns = name
+                            return {
+                                Get = function(key, default)
+                                    if _store[ns][key] ~= nil then
+                                        return _store[ns][key]
+                                    end
+                                    return default
+                                end,
+                            }
+                        end,
+                        Get = function(namespace, key, default)
+                            if _store[namespace] and _store[namespace][key] ~= nil then
+                                return _store[namespace][key]
+                            end
+                            return default
+                        end,
+                        GetAll = function(namespace)
+                            return _store[namespace] or {}
+                        end,
+                    }
+                end)(),
             },
         }
     end
