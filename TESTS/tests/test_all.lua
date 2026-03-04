@@ -1,6 +1,6 @@
 --[[
     JASM Offline Test Suite - Main Entry Point
-    
+
     Configures package.path and runs all test modules.
     Usage: lua TESTS/tests/test_all.lua
 ]]
@@ -55,11 +55,11 @@ local JASM_TestRunner = require("jasm_test_shared")
 _G.JASM_TestRunner = JASM_TestRunner
 
 -- Load all test modules from jasm_test
-require("jasm_test/test_shop_manager")
-require("jasm_test/test_shop_server_commands")
-require("jasm_test/test_maf_rules")
-require("jasm_test/test_caf_rules")
-require("jasm_test/test_player_actions")
+require("jasm_test/test_shop_manager")()
+require("jasm_test/test_shop_server_commands")()
+require("jasm_test/test_maf_rules")()
+require("jasm_test/test_caf_rules")()
+require("jasm_test/test_player_actions")()
 
 print("")
 print("=== All Test Modules Loaded ===")

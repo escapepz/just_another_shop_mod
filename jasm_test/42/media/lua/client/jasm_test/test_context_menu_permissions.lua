@@ -5,6 +5,7 @@ local DoShopContextMenu = require("just_another_shop_mod/shop_context_menu")
 -- Helper to mock the context menu
 local function createMockContext()
     local context = {
+        player = 0, -- Default player index
         options = {},
         addOption = function(self, name, target, onSelect, ...)
             local opt =
@@ -17,6 +18,7 @@ local function createMockContext()
         end,
         getNew = function(self)
             return {
+                player = self.player,
                 options = {},
                 addOption = self.addOption,
                 addSubMenu = self.addSubMenu,
@@ -64,13 +66,11 @@ local function createMockShopCrate(isShop, shopType, ownerID)
     }
 end
 
--- ============================================================
--- TEST: Non-owner cannot see UnRegister
--- ============================================================
-JASM_TestRunner.register(
-    "non_owner_cannot_unregister_player_shop",
-    "context_menu_permissions",
-    function()
+local function init()
+    -- ============================================================
+    -- TEST: Non-owner cannot see UnRegister
+    -- ============================================================
+    JASM_TestRunner.register("non_owner_cannot_unregister_player_shop", "client", function()
         -- 1. Setup mocks
         local playerObj = {
             getUsername = function()
@@ -96,7 +96,14 @@ JASM_TestRunner.register(
         local worldObjects = { crate }
 
         -- 2. Run logic
+        local originalGetNew = ISContextMenu.getNew
+        ISContextMenu.getNew = function(self, ctx)
+            return context
+        end
+
         DoShopContextMenu(0, context, worldObjects, false)
+
+        ISContextMenu.getNew = originalGetNew
 
         -- 3. Verify
         local jasmOption = nil
@@ -146,77 +153,86 @@ JASM_TestRunner.register(
             unregisterOption,
             "Non-owner should NOT see UnRegister Shop option"
         )
-    end
-)
+    end)
 
--- ============================================================
--- TEST: Owner CAN see UnRegister
--- ============================================================
-JASM_TestRunner.register("owner_can_unregister_player_shop", "context_menu_permissions", function()
-    -- 1. Setup mocks
-    local playerObj = {
-        getUsername = function()
-            return "PlayerA"
-        end,
-    }
+    -- ============================================================
+    -- TEST: Owner CAN see UnRegister
+    -- ============================================================
+    JASM_TestRunner.register("owner_can_unregister_player_shop", "client", function()
+        -- 1. Setup mocks
+        local playerObj = {
+            getUsername = function()
+                return "PlayerA"
+            end,
+        }
 
-    local original_getSpecificPlayer = _G.getSpecificPlayer
-    local original_IsPlayerAdmin = require("pz_utils_shared").konijima.Utilities.IsPlayerAdmin
+        local original_getSpecificPlayer = _G.getSpecificPlayer
+        local original_IsPlayerAdmin = require("pz_utils_shared").konijima.Utilities.IsPlayerAdmin
 
-    _G.getSpecificPlayer = function()
-        return playerObj
-    end
-    require("pz_utils_shared").konijima.Utilities.IsPlayerAdmin = function()
-        return false
-    end
-
-    ---@type ISContextMenu
-    local context = createMockContext()
-    ---@type IsoObject
-    local crate = createMockShopCrate(true, "PLAYER", "PlayerA")
-    local worldObjects = { crate }
-
-    -- 2. Run logic
-    DoShopContextMenu(0, context, worldObjects, false)
-
-    -- 3. Verify
-    local jasmOption = nil
-    for _, opt in ipairs(context.options) do
-        if opt.name == "JASM Shop" then
-            jasmOption = opt
-            break
+        _G.getSpecificPlayer = function()
+            return playerObj
         end
-    end
+        require("pz_utils_shared").konijima.Utilities.IsPlayerAdmin = function()
+            return false
+        end
 
-    local playerShopOption = nil
-    ---@diagnostic disable-next-line: unnecessary-if
-    if jasmOption then
-        local jMenu = jasmOption.subMenu
-        for _, opt in ipairs(jMenu.options) do
-            if opt.name == "Player Shop" then
-                playerShopOption = opt
+        ---@type ISContextMenu
+        local context = createMockContext()
+        ---@type IsoObject
+        local crate = createMockShopCrate(true, "PLAYER", "PlayerA")
+        local worldObjects = { crate }
+
+        -- 2. Run logic
+        local originalGetNew = ISContextMenu.getNew
+        ISContextMenu.getNew = function(self, ctx)
+            return context
+        end
+
+        DoShopContextMenu(0, context, worldObjects, false)
+
+        ISContextMenu.getNew = originalGetNew
+
+        -- 3. Verify
+        local jasmOption = nil
+        for _, opt in ipairs(context.options) do
+            if opt.name == "JASM Shop" then
+                jasmOption = opt
                 break
             end
         end
-    end
 
-    local unregisterOption = nil
-    ---@diagnostic disable-next-line: unnecessary-if
-    if playerShopOption then
-        local pMenu = playerShopOption.subMenu
-        for _, opt in ipairs(pMenu.options) do
-            if string.find(opt.name, "UnRegister Shop") then
-                unregisterOption = opt
-                break
+        local playerShopOption = nil
+        ---@diagnostic disable-next-line: unnecessary-if
+        if jasmOption then
+            local jMenu = jasmOption.subMenu
+            for _, opt in ipairs(jMenu.options) do
+                if opt.name == "Player Shop" then
+                    playerShopOption = opt
+                    break
+                end
             end
         end
-    end
 
-    -- Cleanup
-    _G.getSpecificPlayer = original_getSpecificPlayer
-    require("pz_utils_shared").konijima.Utilities.IsPlayerAdmin = original_IsPlayerAdmin
+        local unregisterOption = nil
+        ---@diagnostic disable-next-line: unnecessary-if
+        if playerShopOption then
+            local pMenu = playerShopOption.subMenu
+            for _, opt in ipairs(pMenu.options) do
+                if string.find(opt.name, "UnRegister Shop") then
+                    unregisterOption = opt
+                    break
+                end
+            end
+        end
 
-    JASM_TestRunner.assert_not_nil(unregisterOption, "Owner SHOULD see UnRegister Shop option")
-end)
+        -- Cleanup
+        _G.getSpecificPlayer = original_getSpecificPlayer
+        require("pz_utils_shared").konijima.Utilities.IsPlayerAdmin = original_IsPlayerAdmin
 
-print("[JASM_TEST] Context Menu Permissions tests registered")
+        JASM_TestRunner.assert_not_nil(unregisterOption, "Owner SHOULD see UnRegister Shop option")
+    end)
+
+    print("[JASM_TEST] Context Menu Permissions tests registered")
+end
+
+return init
