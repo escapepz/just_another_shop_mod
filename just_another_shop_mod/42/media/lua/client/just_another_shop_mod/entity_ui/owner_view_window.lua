@@ -944,8 +944,9 @@ function OwnerViewWindow.open(playerIndex, _context, entity)
 
     local windowWidth = 800
     local windowHeight = 600
-    local windowX = (screenWidth / 2 - windowWidth - 69)
-    local windowY = (screenHeight - windowHeight) / 2
+    -- Position left side, keeps center visible (player view/zombie danger zone)
+    local windowX = math.max(0, screenWidth / 2 - windowWidth - 69)
+    local windowY = math.max(0, (screenHeight - windowHeight) / 2)
 
     local player = getSpecificPlayer(playerIndex)
     local window = OwnerViewWindow:new(windowX, windowY, windowWidth, windowHeight, player, entity)

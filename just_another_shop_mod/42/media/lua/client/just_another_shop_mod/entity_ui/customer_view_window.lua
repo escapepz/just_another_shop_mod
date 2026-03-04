@@ -524,8 +524,9 @@ function CustomerViewWindow.open(playerIndex, _context, entity)
 
     local windowWidth = 800
     local windowHeight = 600
-    local windowX = (screenWidth - windowWidth - 90)
-    local windowY = (screenHeight - windowHeight) / 2
+    -- Position right side, keeps center visible (player view/zombie danger zone)
+    local windowX = math.max(0, screenWidth - windowWidth - 90)
+    local windowY = math.max(0, (screenHeight - windowHeight) / 2)
 
     local player = getSpecificPlayer(playerIndex)
     local window =
