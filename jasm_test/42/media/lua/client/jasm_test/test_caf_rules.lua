@@ -72,170 +72,218 @@ local function createMockParent(isShop, shopOwnerID, shopPrices)
     }
 end
 
--- Test: Trade rule rejects insufficient funds
-JASM_TestRunner.register("caf_trade_insufficient_funds", "client", function()
-    local ShopTrade = require("shop_trade_rule")
+local function init()
+    -- Test: Trade rule rejects insufficient funds
+    JASM_TestRunner.register("caf_trade_insufficient_funds", "client", function()
+        local ShopTrade = require("just_another_shop_mod/rules/caf/shop_trade_rule")
 
-    local srcParent = createMockParent(true, "ShopOwner", {
-        ["Base.Item"] = { type = "Base.Money", count = 100 },
-    })
+        local srcParent = createMockParent(true, "ShopOwner", {
+            ["Base.Item"] = { type = "Base.Money", count = 100 },
+        })
 
-    local inventory = {
-        getItemCount = function()
-            return 50
-        end,
-    } -- Only has 50, needs 100
+        local inventory = {
+            getItemCount = function()
+                return 50
+            end,
+        } -- Only has 50, needs 100
 
-    local ctx = createMockCAFContext({
-        srcParent = srcParent,
-        username = "Buyer",
-        inventory = inventory,
-        itemType = "Base.Item",
-    })
+        local ctx = createMockCAFContext({
+            srcParent = srcParent,
+            username = "Buyer",
+            inventory = inventory,
+            itemType = "Base.Item",
+        })
 
-    ShopTrade.Validation(ctx)
+        ShopTrade.Validation(ctx)
 
-    JASM_TestRunner.assert_true(ctx.flags.rejected, "Should reject trade with insufficient funds")
-end)
+        JASM_TestRunner.assert_true(
+            ctx.flags.rejected,
+            "Should reject trade with insufficient funds"
+        )
+    end)
 
--- Test: Trade rule allows sufficient funds
-JASM_TestRunner.register("caf_trade_sufficient_funds", "client", function()
-    local ShopTrade = require("shop_trade_rule")
+    -- Test: Trade rule allows sufficient funds
+    JASM_TestRunner.register("caf_trade_sufficient_funds", "client", function()
+        local ShopTrade = require("just_another_shop_mod/rules/caf/shop_trade_rule")
 
-    local srcParent = createMockParent(true, "ShopOwner", {
-        ["Base.Item"] = { type = "Base.Money", count = 100 },
-    })
+        local srcParent = createMockParent(true, "ShopOwner", {
+            ["Base.Item"] = { type = "Base.Money", count = 100 },
+        })
 
-    local inventory = {
-        getItemCount = function()
-            return 150
-        end,
-    } -- Has 150, needs 100
+        local inventory = {
+            getItemCount = function()
+                return 150
+            end,
+        } -- Has 150, needs 100
 
-    local ctx = createMockCAFContext({
-        srcParent = srcParent,
-        username = "Buyer",
-        inventory = inventory,
-        itemType = "Base.Item",
-    })
+        local ctx = createMockCAFContext({
+            srcParent = srcParent,
+            username = "Buyer",
+            inventory = inventory,
+            itemType = "Base.Item",
+        })
 
-    ShopTrade.Validation(ctx)
+        ShopTrade.Validation(ctx)
 
-    JASM_TestRunner.assert_true(
-        ctx.flags.tradeAuthorized,
-        "Should authorize trade with sufficient funds"
-    )
-    JASM_TestRunner.assert_false(
-        ctx.flags.rejected,
-        "Should not reject trade with sufficient funds"
-    )
-end)
+        JASM_TestRunner.assert_true(
+            ctx.flags.tradeAuthorized,
+            "Should authorize trade with sufficient funds"
+        )
+        JASM_TestRunner.assert_false(
+            ctx.flags.rejected,
+            "Should not reject trade with sufficient funds"
+        )
+    end)
 
--- Test: Trade rule allows shop owner
-JASM_TestRunner.register("caf_trade_owner_bypass", "client", function()
-    local ShopTrade = require("shop_trade_rule")
+    -- Test: Trade rule allows shop owner
+    JASM_TestRunner.register("caf_trade_owner_bypass", "client", function()
+        local ShopTrade = require("just_another_shop_mod/rules/caf/shop_trade_rule")
 
-    local srcParent = createMockParent(true, "ShopOwner", {})
+        local srcParent = createMockParent(true, "ShopOwner", {})
 
-    local ctx = createMockCAFContext({
-        srcParent = srcParent,
-        username = "ShopOwner",
-        itemType = "Base.Item",
-    })
+        local ctx = createMockCAFContext({
+            srcParent = srcParent,
+            username = "ShopOwner",
+            itemType = "Base.Item",
+        })
 
-    ShopTrade.Validation(ctx)
+        ShopTrade.Validation(ctx)
 
-    JASM_TestRunner.assert_false(ctx.flags.rejected, "Shop owner should be able to access items")
-end)
+        JASM_TestRunner.assert_false(
+            ctx.flags.rejected,
+            "Shop owner should be able to access items"
+        )
+    end)
 
--- Test: Protection rule rejects non-owner
-JASM_TestRunner.register("caf_protection_non_owner", "client", function()
-    local RuleShopProtection = require("shop_protection_rule")
+    -- Test: Protection rule rejects non-owner
+    JASM_TestRunner.register("caf_protection_non_owner", "client", function()
+        local RuleShopProtection = require("just_another_shop_mod/rules/caf/shop_protection_rule")
 
-    local srcParent = createMockParent(true, "ShopOwner", {})
+        local srcParent = createMockParent(true, "ShopOwner", {})
 
-    local ctx = createMockCAFContext({
-        srcParent = srcParent,
-        username = "Buyer",
-    })
+        local ctx = createMockCAFContext({
+            srcParent = srcParent,
+            username = "Buyer",
+        })
 
-    RuleShopProtection(ctx)
+        RuleShopProtection(ctx)
 
-    JASM_TestRunner.assert_true(
-        ctx.flags.rejected,
-        "Non-owner should be rejected without trade authorization"
-    )
-end)
+        JASM_TestRunner.assert_true(
+            ctx.flags.rejected,
+            "Non-owner should be rejected without trade authorization"
+        )
+    end)
 
--- Test: Protection rule allows owner
-JASM_TestRunner.register("caf_protection_owner", "client", function()
-    local RuleShopProtection = require("shop_protection_rule")
+    -- Test: Protection rule allows owner
+    JASM_TestRunner.register("caf_protection_owner", "client", function()
+        local RuleShopProtection = require("just_another_shop_mod/rules/caf/shop_protection_rule")
 
-    local srcParent = createMockParent(true, "ShopOwner", {})
+        local srcParent = createMockParent(true, "ShopOwner", {})
 
-    local ctx = createMockCAFContext({
-        srcParent = srcParent,
-        username = "ShopOwner",
-    })
+        local ctx = createMockCAFContext({
+            srcParent = srcParent,
+            username = "ShopOwner",
+        })
 
-    RuleShopProtection(ctx)
+        RuleShopProtection(ctx)
 
-    JASM_TestRunner.assert_false(ctx.flags.rejected, "Owner should always have access")
-end)
+        JASM_TestRunner.assert_false(ctx.flags.rejected, "Owner should always have access")
+    end)
 
--- Test: Protection rule allows authorized trade
-JASM_TestRunner.register("caf_protection_authorized_trade", "client", function()
-    local RuleShopProtection = require("shop_protection_rule")
+    -- Test: Protection rule allows authorized trade
+    JASM_TestRunner.register("caf_protection_authorized_trade", "client", function()
+        local RuleShopProtection = require("just_another_shop_mod/rules/caf/shop_protection_rule")
 
-    local srcParent = createMockParent(true, "ShopOwner", {})
+        local srcParent = createMockParent(true, "ShopOwner", {})
 
-    local ctx = createMockCAFContext({
-        srcParent = srcParent,
-        username = "Buyer",
-        flags = { rejected = false, tradeAuthorized = true },
-    })
+        local ctx = createMockCAFContext({
+            srcParent = srcParent,
+            username = "Buyer",
+            flags = { rejected = false, tradeAuthorized = true },
+        })
 
-    RuleShopProtection(ctx)
+        RuleShopProtection(ctx)
 
-    JASM_TestRunner.assert_false(ctx.flags.rejected, "Authorized trade should be allowed")
-end)
+        JASM_TestRunner.assert_false(ctx.flags.rejected, "Authorized trade should be allowed")
+    end)
 
--- Test: Audit rule logs shop transfers
-JASM_TestRunner.register("caf_audit_shop_transfer", "client", function()
-    local RuleShopAudit = require("shop_audit_rule")
+    -- Test: Audit rule logs shop transfers
+    JASM_TestRunner.register("caf_audit_shop_transfer", "client", function()
+        local RuleShopAudit = require("just_another_shop_mod/rules/caf/shop_audit_rule")
 
-    local srcParent = createMockParent(true, "ShopOwner", {})
+        local srcParent = createMockParent(true, "ShopOwner", {})
 
-    local ctx = createMockCAFContext({
-        srcParent = srcParent,
-        username = "Buyer",
-        itemType = "Base.Item",
-    })
+        local ctx = createMockCAFContext({
+            srcParent = srcParent,
+            username = "Buyer",
+            itemType = "Base.Item",
+        })
 
-    -- Audit rule doesn't reject, just logs
-    RuleShopAudit(ctx)
+        -- Audit rule doesn't reject, just logs
+        RuleShopAudit(ctx)
 
-    JASM_TestRunner.assert_false(ctx.flags.rejected, "Audit rule should not reject")
-end)
+        JASM_TestRunner.assert_false(ctx.flags.rejected, "Audit rule should not reject")
+    end)
 
--- Test: Audit rule ignores non-shop transfers
-JASM_TestRunner.register("caf_audit_non_shop_transfer", "client", function()
-    local RuleShopAudit = require("shop_audit_rule")
+    -- Test: Audit rule ignores non-shop transfers
+    JASM_TestRunner.register("caf_audit_non_shop_transfer", "client", function()
+        local RuleShopAudit = require("just_another_shop_mod/rules/caf/shop_audit_rule")
 
-    local srcParent = createMockParent(false, nil, {}) -- Not a shop
+        local srcParent = createMockParent(false, nil, {}) -- Not a shop
 
-    local ctx = createMockCAFContext({
-        srcParent = srcParent,
-        username = "Player",
-    })
+        local ctx = createMockCAFContext({
+            srcParent = srcParent,
+            username = "Player",
+        })
 
-    -- Audit rule should just pass through without logging
-    RuleShopAudit(ctx)
+        -- Audit rule should just pass through without logging
+        RuleShopAudit(ctx)
 
-    JASM_TestRunner.assert_false(
-        ctx.flags.rejected,
-        "Audit rule should not affect non-shop transfers"
-    )
-end)
+        JASM_TestRunner.assert_false(
+            ctx.flags.rejected,
+            "Audit rule should not affect non-shop transfers"
+        )
+    end)
 
-print("[JASM_TEST] CAF Rules tests registered")
+    -- Test: Protection rule rejects deposition by non-owner
+    JASM_TestRunner.register("caf_protection_deposit_non_owner", "client", function()
+        local RuleShopProtection = require("just_another_shop_mod/rules/caf/shop_protection_rule")
+
+        local destParent = createMockParent(true, "ShopOwner", {})
+
+        local ctx = createMockCAFContext({
+            destParent = destParent,
+            username = "Buyer",
+        })
+
+        RuleShopProtection(ctx)
+
+        JASM_TestRunner.assert_true(
+            ctx.flags.rejected,
+            "Non-owner should be rejected from depositing into a shop"
+        )
+    end)
+
+    -- Test: Protection rule allows deposition by owner
+    JASM_TestRunner.register("caf_protection_deposit_owner", "client", function()
+        local RuleShopProtection = require("just_another_shop_mod/rules/caf/shop_protection_rule")
+
+        local destParent = createMockParent(true, "ShopOwner", {})
+
+        local ctx = createMockCAFContext({
+            destParent = destParent,
+            username = "ShopOwner",
+        })
+
+        RuleShopProtection(ctx)
+
+        JASM_TestRunner.assert_false(
+            ctx.flags.rejected,
+            "Owner should be allowed to deposit into their own shop"
+        )
+    end)
+
+    print("[JASM_TEST] CAF Rules tests registered")
+end
+
+return init

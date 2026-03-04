@@ -2,13 +2,13 @@ local ZUL = require("zul")
 local MAF = require("manipulation_authority_framework")
 
 -- Initialize Shop Manager
-local ShopManager = require("jasm/shop_manager")
+local ShopManager = require("just_another_shop_mod/shop_manager")
 
 -- JASM MAF Rules
-local RuleDestroyStuff = require("jasm/rules/maf/shop_destroy_stuff_rule")
-local RuleMoveables = require("jasm/rules/maf/shop_moveables_rule")
+local RuleDestroyStuff = require("just_another_shop_mod/rules/maf/shop_destroy_stuff_rule")
+local RuleMoveables = require("just_another_shop_mod/rules/maf/shop_moveables_rule")
 
-local ServerCommand = require("jasm/shop_server_commands")
+local ServerCommand = require("just_another_shop_mod/shop_server_commands")
 
 local logger = ZUL.new("just_another_shop_mod")
 

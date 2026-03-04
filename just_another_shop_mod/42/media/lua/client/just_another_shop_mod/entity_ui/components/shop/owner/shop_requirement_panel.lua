@@ -4,10 +4,12 @@ require("ISUI/ISButton")
 require("ISUI/ISTextEntryBox")
 require("Entity/ISUI/Controls/ISTableLayout")
 
-local ShopSectionHeader = require("jasm/entity_ui/components/shop/shared/shop_section_header")
-local CustomerOptionItem = require("jasm/entity_ui/components/shop/owner/shop_customer_option_item")
+local ShopSectionHeader =
+    require("just_another_shop_mod/entity_ui/components/shop/shared/shop_section_header")
+local CustomerOptionItem =
+    require("just_another_shop_mod/entity_ui/components/shop/owner/shop_customer_option_item")
 local ShopAddRequirementRow =
-    require("jasm/entity_ui/components/shop/owner/shop_add_requirement_row")
+    require("just_another_shop_mod/entity_ui/components/shop/owner/shop_add_requirement_row")
 
 --- A panel that manages requirement paths (CUSTOMER OPTIONS).
 ---@class ShopRequirementPanel : ISPanel

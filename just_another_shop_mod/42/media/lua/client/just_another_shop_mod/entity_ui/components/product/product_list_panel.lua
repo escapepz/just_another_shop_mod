@@ -5,7 +5,8 @@ require("Entity/ISUI/CraftRecipe/ISTiledIconListBox")
 local ZUL = require("zul")
 local logger = ZUL.new("just_another_shop_mod")
 
-local ProductListView = require("jasm/entity_ui/components/product/product_list_view")
+local ProductListView =
+    require("just_another_shop_mod/entity_ui/components/product/product_list_view")
 
 --- Panel that displays a list of products, either as a grid or a list.
 ---@class ProductListPanel : ISPanel

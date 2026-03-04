@@ -4,7 +4,8 @@ require("ISUI/ISTextEntryBox")
 require("ISUI/ISImage")
 require("Entity/ISUI/Controls/ISTableLayout")
 
-local ShopSectionHeader = require("jasm/entity_ui/components/shop/shared/shop_section_header")
+local ShopSectionHeader =
+    require("just_another_shop_mod/entity_ui/components/shop/shared/shop_section_header")
 
 ---@class ShopTradeOfferPanel : ISPanel
 ---@field target any

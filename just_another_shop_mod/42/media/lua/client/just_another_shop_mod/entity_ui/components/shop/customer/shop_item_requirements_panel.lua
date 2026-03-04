@@ -1,7 +1,8 @@
 require("Entity/ISUI/Controls/ISTableLayout")
 
-local ShopSectionHeader = require("jasm/entity_ui/components/shop/shared/shop_section_header")
-local TextureUtils = require("jasm/entity_ui/utils/texture_utils")
+local ShopSectionHeader =
+    require("just_another_shop_mod/entity_ui/components/shop/shared/shop_section_header")
+local TextureUtils = require("just_another_shop_mod/entity_ui/utils/texture_utils")
 
 ---@class ShopItemRequirementsPanel : ISPanel
 ---@field headerPanel ShopSectionHeader

@@ -3,10 +3,13 @@ require("Entity/ISUI/Controls/ISTableLayout")
 require("ISUI/ISLabel")
 require("ISUI/ISButton")
 
-local SearchFilterPanel = require("jasm/entity_ui/components/shop/shared/shop_search_filter_panel")
-local ProductListPanel = require("jasm/entity_ui/components/product/product_list_panel")
-local ItemDetailsPanel = require("jasm/entity_ui/components/shop/customer/shop_item_details_panel")
-local ShopDataManager = require("jasm/entity_ui/models/shop_data_manager")
+local SearchFilterPanel =
+    require("just_another_shop_mod/entity_ui/components/shop/shared/shop_search_filter_panel")
+local ProductListPanel =
+    require("just_another_shop_mod/entity_ui/components/product/product_list_panel")
+local ItemDetailsPanel =
+    require("just_another_shop_mod/entity_ui/components/shop/customer/shop_item_details_panel")
+local ShopDataManager = require("just_another_shop_mod/entity_ui/models/shop_data_manager")
 
 local ZUL = require("zul")
 local logger = ZUL.new("just_another_shop_mod")

@@ -1,6 +1,6 @@
 --[[
     ShopManager Unit Tests
-    
+
     Tests basic ShopManager functionality: registration, locking, unlocking.
 ]]
 
@@ -30,66 +30,73 @@ local function createMockContainer()
     }
 end
 
--- Test: Shop registration
-JASM_TestRunner.register("shop_register", "server", function()
-    local ShopManager = require("shop_manager")
-    local manager = ShopManager()
-    local container = createMockContainer()
+local function init()
+    -- Test: Shop registration
+    JASM_TestRunner.register("shop_register", "server", function()
+        local ShopManager = require("just_another_shop_mod/shop_manager")
+        local manager = ShopManager()
+        local container = createMockContainer()
 
-    manager:registerShop(container, "TestPlayer", "Test Shop")
+        manager:registerShop(container, "TestPlayer", "Test Shop")
 
-    local modData = container:getParent():getModData()
-    JASM_TestRunner.assert_true(modData.isShop, "isShop should be true")
-    JASM_TestRunner.assert_equals("TestPlayer", modData.shopOwnerID, "shopOwnerID mismatch")
-    JASM_TestRunner.assert_equals("Test Shop", modData.shopName, "shopName mismatch")
-end)
+        local modData = container:getParent():getModData()
+        JASM_TestRunner.assert_true(modData.isShop, "isShop should be true")
+        JASM_TestRunner.assert_equals("TestPlayer", modData.shopOwnerID, "shopOwnerID mismatch")
+        JASM_TestRunner.assert_equals("Test Shop", modData.shopName, "shopName mismatch")
+    end)
 
--- Test: Shop unregistration
-JASM_TestRunner.register("shop_unregister", "server", function()
-    local ShopManager = require("shop_manager")
-    local manager = ShopManager()
-    local container = createMockContainer()
+    -- Test: Shop unregistration
+    JASM_TestRunner.register("shop_unregister", "server", function()
+        local ShopManager = require("just_another_shop_mod/shop_manager")
+        local manager = ShopManager()
+        local container = createMockContainer()
 
-    manager:registerShop(container, "TestPlayer", "Test Shop")
-    manager:unregisterShop(container)
+        manager:registerShop(container, "TestPlayer", "Test Shop")
+        manager:unregisterShop(container)
 
-    local modData = container:getParent():getModData()
-    JASM_TestRunner.assert_nil(modData.isShop, "isShop should be nil after unregister")
-    JASM_TestRunner.assert_nil(modData.shopOwnerID, "shopOwnerID should be nil after unregister")
-end)
+        local modData = container:getParent():getModData()
+        JASM_TestRunner.assert_nil(modData.isShop, "isShop should be nil after unregister")
+        JASM_TestRunner.assert_nil(
+            modData.shopOwnerID,
+            "shopOwnerID should be nil after unregister"
+        )
+    end)
 
--- Test: Shop locking
-JASM_TestRunner.register("shop_lock", "server", function()
-    local ShopManager = require("shop_manager")
-    local manager = ShopManager()
+    -- Test: Shop locking
+    JASM_TestRunner.register("shop_lock", "server", function()
+        local ShopManager = require("just_another_shop_mod/shop_manager")
+        local manager = ShopManager()
 
-    local success = manager:lockShop("square_123", "Player1")
-    JASM_TestRunner.assert_true(success, "First lock should succeed")
+        local success = manager:lockShop("square_123", "Player1")
+        JASM_TestRunner.assert_true(success, "First lock should succeed")
 
-    local lock = manager:getShopLock("square_123")
-    JASM_TestRunner.assert_equals("Player1", lock, "Lock holder mismatch")
-end)
+        local lock = manager:getShopLock("square_123")
+        JASM_TestRunner.assert_equals("Player1", lock, "Lock holder mismatch")
+    end)
 
--- Test: Shop lock conflict
-JASM_TestRunner.register("shop_lock_conflict", "server", function()
-    local ShopManager = require("shop_manager")
-    local manager = ShopManager()
+    -- Test: Shop lock conflict
+    JASM_TestRunner.register("shop_lock_conflict", "server", function()
+        local ShopManager = require("just_another_shop_mod/shop_manager")
+        local manager = ShopManager()
 
-    manager:lockShop("square_456", "Player1")
-    local success = manager:lockShop("square_456", "Player2")
-    JASM_TestRunner.assert_false(success, "Second lock from different player should fail")
-end)
+        manager:lockShop("square_456", "Player1")
+        local success = manager:lockShop("square_456", "Player2")
+        JASM_TestRunner.assert_false(success, "Second lock from different player should fail")
+    end)
 
--- Test: Shop unlock
-JASM_TestRunner.register("shop_unlock", "server", function()
-    local ShopManager = require("shop_manager")
-    local manager = ShopManager()
+    -- Test: Shop unlock
+    JASM_TestRunner.register("shop_unlock", "server", function()
+        local ShopManager = require("just_another_shop_mod/shop_manager")
+        local manager = ShopManager()
 
-    manager:lockShop("square_789", "Player1")
-    manager:unlockShop("square_789", "Player1")
+        manager:lockShop("square_789", "Player1")
+        manager:unlockShop("square_789", "Player1")
 
-    local lock = manager:getShopLock("square_789")
-    JASM_TestRunner.assert_nil(lock, "Lock should be cleared after unlock")
-end)
+        local lock = manager:getShopLock("square_789")
+        JASM_TestRunner.assert_nil(lock, "Lock should be cleared after unlock")
+    end)
 
-print("[JASM_TEST] ShopManager tests registered")
+    print("[JASM_TEST] ShopManager tests registered")
+end
+
+return init

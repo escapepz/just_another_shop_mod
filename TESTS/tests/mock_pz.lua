@@ -217,11 +217,16 @@ function MockPZ.setupGlobals()
     -- Mock ISContextMenu
     if not _G.ISContextMenu then
         _G.ISContextMenu = {
-            getNew = function(self, parent)
-                return {
+            getNew = function(self, playerOrParent)
+                local o = {
+                    player = (type(playerOrParent) == "table" and playerOrParent.player)
+                        or playerOrParent
+                        or 0,
                     addOption = function(self, name, target, onSelect, ...) end,
                     addSubMenu = function(self, option, menu) end,
                 }
+                o.getNew = self.getNew
+                return o
             end,
         }
     end
@@ -344,60 +349,72 @@ function MockPZ.setupGlobals()
         return _G.ISTableLayout
     end
 
+    -- Move ISPanel definition outside of preload so it exists when other classes derive from it
+    _G.ISPanel = {
+        derive = function(self, name)
+            local derived = { __name = name }
+            setmetatable(derived, { __index = self })
+            return derived
+        end,
+        new = function(self, x, y, width, height)
+            local o = {}
+            setmetatable(o, { __index = self })
+            o.x = x
+            o.y = y
+            o.width = width
+            o.height = height
+            return o
+        end,
+        initialise = function(self) end,
+        instantiate = function(self) end,
+        createChildren = function(self) end,
+        setVisible = function(self, visible) end,
+        addToUIManager = function(self) end,
+    }
+
     package.preload["ISUI/ISPanel"] = function()
-        _G.ISPanel = {
-            derive = function(self, name)
-                local derived = { __name = name }
-                setmetatable(derived, { __index = self })
-                return derived
-            end,
-            new = function(self, x, y, width, height)
-                local o = {}
-                setmetatable(o, { __index = self })
-                o.x = x
-                o.y = y
-                o.width = width
-                o.height = height
-                return o
-            end,
-            initialise = function(self) end,
-            instantiate = function(self) end,
-            createChildren = function(self) end,
-            setVisible = function(self, visible) end,
-            addToUIManager = function(self) end,
-        }
         return _G.ISPanel
     end
 
+    _G.ISButton = ISPanel:derive("ISButton")
     package.preload["ISUI/ISButton"] = function()
-        _G.ISButton = ISPanel:derive("ISButton")
         return _G.ISButton
     end
 
+    _G.ISScrollingListBox = ISPanel:derive("ISScrollingListBox")
     package.preload["ISUI/ISScrollingListBox"] = function()
-        _G.ISScrollingListBox = ISPanel:derive("ISScrollingListBox")
         return _G.ISScrollingListBox
     end
 
+    _G.ISImage = ISPanel:derive("ISImage")
     package.preload["ISUI/ISImage"] = function()
-        _G.ISImage = ISPanel:derive("ISImage")
         return _G.ISImage
     end
 
+    _G.ISTableLayout = ISPanel:derive("ISTableLayout")
+    _G.ISTableLayout.calculateLayout = function() end
     package.preload["Entity/ISUI/Controls/ISTableLayout"] = function()
-        _G.ISTableLayout = ISPanel:derive("ISTableLayout")
-        _G.ISTableLayout.calculateLayout = function() end
         return _G.ISTableLayout
     end
 
+    _G.ISEntityWindow = ISPanel:derive("ISEntityWindow")
     package.preload["Entity/ISUI/Windows/ISEntityWindow"] = function()
-        _G.ISEntityWindow = ISPanel:derive("ISEntityWindow")
         return _G.ISEntityWindow
     end
 
+    _G.ISLabel = ISPanel:derive("ISLabel")
     package.preload["ISUI/ISLabel"] = function()
-        _G.ISLabel = ISPanel:derive("ISLabel")
         return _G.ISLabel
+    end
+
+    _G.ISComboBox = ISPanel:derive("ISComboBox")
+    package.preload["ISUI/ISComboBox"] = function()
+        return _G.ISComboBox
+    end
+
+    _G.ISTiledIconListBox = ISPanel:derive("ISTiledIconListBox")
+    package.preload["Entity/ISUI/CraftRecipe/ISTiledIconListBox"] = function()
+        return _G.ISTiledIconListBox
     end
 
     -- Timed Actions
@@ -423,8 +440,8 @@ function MockPZ.setupGlobals()
         _G.ISWalkToTimedAction = ISBaseTimedAction:derive("ISWalkToTimedAction")
         return _G.ISWalkToTimedAction
     end
+    _G.ISTextEntryBox = ISPanel:derive("ISTextEntryBox")
     package.preload["ISUI/ISTextEntryBox"] = function()
-        _G.ISTextEntryBox = ISPanel:derive("ISTextEntryBox")
         return _G.ISTextEntryBox
     end
 
@@ -433,41 +450,41 @@ function MockPZ.setupGlobals()
     end
 
     -- Also mock the mod's internal dependencies to avoid recursive issues or missing files
-    package.preload["jasm/entity_ui/customer_view_window"] = function()
+    package.preload["just_another_shop_mod/entity_ui/customer_view_window"] = function()
         return { open = function() end }
     end
-    package.preload["jasm/entity_ui/owner_view_window"] = function()
+    package.preload["just_another_shop_mod/entity_ui/owner_view_window"] = function()
         return { open = function() end }
     end
-    package.preload["jasm/entity_ui/models/shop_data_manager"] = function()
+    package.preload["just_another_shop_mod/entity_ui/models/shop_data_manager"] = function()
         return {}
     end
-    package.preload["jasm/entity_ui/components/shop/shared/shop_search_filter_panel"] = function()
+    package.preload["just_another_shop_mod/entity_ui/components/shop/shared/shop_search_filter_panel"] = function()
         return {}
     end
-    package.preload["jasm/entity_ui/components/product/product_list_panel"] = function()
+    package.preload["just_another_shop_mod/entity_ui/components/product/product_list_panel"] = function()
         return {}
     end
-    -- package.preload["jasm/entity_ui/components/shop/customer/shop_item_details_panel"] is omitted to load the real file
-    package.preload["jasm/entity_ui/components/shop/customer/shop_item_header"] = function()
+    -- package.preload["just_another_shop_mod/entity_ui/components/shop/customer/shop_item_details_panel"] is omitted to load the real file
+    package.preload["just_another_shop_mod/entity_ui/components/shop/customer/shop_item_header"] = function()
         return {}
     end
-    package.preload["jasm/entity_ui/components/shop/customer/shop_item_gives_panel"] = function()
+    package.preload["just_another_shop_mod/entity_ui/components/shop/customer/shop_item_gives_panel"] = function()
         return {}
     end
-    package.preload["jasm/entity_ui/components/shop/customer/shop_item_requirements_panel"] = function()
+    package.preload["just_another_shop_mod/entity_ui/components/shop/customer/shop_item_requirements_panel"] = function()
         return {}
     end
-    package.preload["jasm/entity_ui/components/shop/customer/shop_item_action_footer"] = function()
+    package.preload["just_another_shop_mod/entity_ui/components/shop/customer/shop_item_action_footer"] = function()
         return {}
     end
-    package.preload["jasm/entity_ui/components/shop/owner/shop_trade_offer_panel"] = function()
+    package.preload["just_another_shop_mod/entity_ui/components/shop/owner/shop_trade_offer_panel"] = function()
         return {}
     end
-    package.preload["jasm/entity_ui/components/shop/owner/shop_requirement_panel"] = function()
+    package.preload["just_another_shop_mod/entity_ui/components/shop/owner/shop_requirement_panel"] = function()
         return {}
     end
-    package.preload["jasm/entity_ui/components/shop/owner/shop_footer_panel"] = function()
+    package.preload["just_another_shop_mod/entity_ui/components/shop/owner/shop_footer_panel"] = function()
         return {}
     end
 

@@ -27,7 +27,7 @@ local RuleShopProtection = function(ctx)
 
         -- Rule: Owners can take anything
         if playerUsername == ownerID then
-            logger:debug("Owner access granted", {
+            logger:debug("Owner access granted (Source)", {
                 player = player:getUsername(),
                 shop = modData.shopName,
             })
@@ -37,7 +37,7 @@ local RuleShopProtection = function(ctx)
         -- Rule: Admin bypass (check sandbox option)
         local adminBypass = SSandboxVars.Get("AdminBypass", false)
         if adminBypass and KUtilities.IsPlayerAdmin(player) then
-            logger:info("Admin bypass access", {
+            logger:info("Admin bypass access (Source)", {
                 player = player:getUsername(),
                 item = item:getFullType(),
             })
@@ -57,6 +57,46 @@ local RuleShopProtection = function(ctx)
             player = player:getUsername(),
             item = item:getFullType(),
             shop = modData.shopName,
+        })
+        return
+    end
+
+    -- 2. Check if the destination is a Shop (Deposit)
+    local destContainer = ctx.dest
+    local destParent = destContainer and destContainer:getParent() or nil
+    local destModData = destParent and destParent:getModData() or nil
+
+    if destModData and destModData.isShop then
+        local ownerID = destModData.shopOwnerID
+        local playerUsername = player:getUsername()
+
+        -- Rule: Owners can deposit anything
+        if playerUsername == ownerID then
+            logger:debug("Owner access granted (Destination)", {
+                player = player:getUsername(),
+                shop = destModData.shopName,
+            })
+            return -- No rejection
+        end
+
+        -- Rule: Admin bypass
+        local adminBypass = SSandboxVars.Get("AdminBypass", false)
+        if adminBypass and KUtilities.IsPlayerAdmin(player) then
+            logger:info("Admin bypass access (Destination)", {
+                player = player:getUsername(),
+                item = item:getFullType(),
+            })
+            return -- No rejection
+        end
+
+        -- Rule: Non-owners cannot deposit items
+        ctx.flags.rejected = true
+        ctx.flags.reason = "Only the shop owner can deposit items."
+
+        logger:info("Deposit rejected: non-owner", {
+            player = player:getUsername(),
+            item = item:getFullType(),
+            shop = destModData.shopName,
         })
     end
 end
