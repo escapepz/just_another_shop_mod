@@ -903,9 +903,18 @@ function OwnerViewWindow:new(x, y, w, h, player, entity)
     return o
 end
 
+--- Override close to prevent closing sibling windows
+function OwnerViewWindow:close()
+    logger:debug("OwnerViewWindow:close() - closing owner view only")
+    ISEntityWindow.close(self)
+end
+
 -- ============================================================
 -- REGISTRATION / CONTEXT MENU
 -- ============================================================
+
+-- Track open windows by entity to prevent cross-closing
+local _openWindowsByEntity = {}
 
 ---@param playerIndex integer
 ---@param _context any
@@ -926,6 +935,12 @@ function OwnerViewWindow.open(playerIndex, _context, entity)
     local window = OwnerViewWindow:new(windowX, windowY, windowWidth, windowHeight, player, entity)
     window:initialise()
     window:addToUIManager()
+
+    -- Track this window
+    local entityID = entity:getObjectIndex()
+    _openWindowsByEntity[entityID] = _openWindowsByEntity[entityID] or {}
+    _openWindowsByEntity[entityID].owner = window
+
     return window
 end
 

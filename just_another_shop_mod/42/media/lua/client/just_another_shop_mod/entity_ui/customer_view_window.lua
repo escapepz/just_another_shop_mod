@@ -109,6 +109,12 @@ function CustomerViewWindow:so_override_the_entity_header()
     self.entityHeader:calculateLayout(self.width, 0)
 end
 
+--- Override close to prevent closing sibling windows
+function CustomerViewWindow:close()
+    logger:debug("CustomerViewWindow:close() - closing customer view only")
+    ISEntityWindow.close(self)
+end
+
 --- Create child components and set up the layout.
 function CustomerViewWindow:createChildren()
     logger:debug("CustomerViewWindow:createChildren() called")
@@ -484,6 +490,9 @@ function CustomerViewWindow:new(x, y, w, h, player, entity)
     return o
 end
 
+-- Track open windows by entity to prevent cross-closing
+local _openWindowsByEntity = {}
+
 ---@param playerIndex integer
 ---@param _context any
 ---@param entity IsoObject
@@ -504,6 +513,12 @@ function CustomerViewWindow.open(playerIndex, _context, entity)
         CustomerViewWindow:new(windowX, windowY, windowWidth, windowHeight, player, entity)
     window:initialise()
     window:addToUIManager()
+
+    -- Track this window
+    local entityID = entity:getObjectIndex()
+    _openWindowsByEntity[entityID] = _openWindowsByEntity[entityID] or {}
+    _openWindowsByEntity[entityID].customer = window
+
     return window
 end
 
