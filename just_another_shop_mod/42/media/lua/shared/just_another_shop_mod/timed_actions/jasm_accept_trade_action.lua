@@ -42,26 +42,43 @@ JASM_AcceptTradeAction.Type = "JASM_AcceptTradeAction"
 
 ---@param character    IsoPlayer
 ---@param containerObj IsoObject
----@param payload      table       { itemType, requestItem, requestQty, isForceGive, [time] }
+---@param itemType     string
+---@param requestItem  string
+---@param requestQty   number
+---@param offerQty     number
+---@param isForceGive  boolean
+---@param time         number|nil
 ---@return JASM_AcceptTradeAction
-function JASM_AcceptTradeAction:new(character, containerObj, payload)
+function JASM_AcceptTradeAction:new(
+    character,
+    containerObj,
+    itemType,
+    requestItem,
+    requestQty,
+    offerQty,
+    isForceGive,
+    time
+)
     local o = ISBaseTimedAction.new(self, character)
     ---@cast o JASM_AcceptTradeAction
 
     o.character = character
     o.containerObj = containerObj
-    o.x = containerObj:getX()
-    o.y = containerObj:getY()
-    o.z = containerObj:getZ()
-    o.index = containerObj:getObjectIndex()
+    ---@diagnostic disable-next-line: unnecessary-if
+    if containerObj then
+        o.x = containerObj:getX()
+        o.y = containerObj:getY()
+        o.z = containerObj:getZ()
+        o.index = containerObj:getObjectIndex()
+    end
 
-    o.itemType = payload.itemType
-    o.requestItem = payload.requestItem
-    o.requestQty = payload.requestQty or 1
-    o.offerQty = payload.offerQty or 1
-    o.isForceGive = payload.isForceGive or false
+    o.itemType = itemType
+    o.requestItem = requestItem
+    o.requestQty = requestQty or 1
+    o.offerQty = offerQty or 1
+    o.isForceGive = isForceGive or false
 
-    o.maxTime = payload.time or 30
+    o.maxTime = time or 30
 
     -- Standard properties from B42 TimedAction Guide
     o.stopOnWalk = true

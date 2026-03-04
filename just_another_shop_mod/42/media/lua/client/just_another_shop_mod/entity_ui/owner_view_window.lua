@@ -731,6 +731,7 @@ function OwnerViewWindow:onPublishClicked()
     self.hasUnsavedChanges = false
 
     -- ── Queue the TimedAction (progress bar + server-authoritative write) ───
+    -- ── VALIDATE PAYLOAD ON ACTION CREATE ──
     local payload = {
         x = self.entity:getX(),
         y = self.entity:getY(),
@@ -741,7 +742,37 @@ function OwnerViewWindow:onPublishClicked()
         offerQty = qty,
     }
 
-    local action = JASM_PublishTradeAction:new(self.player, self.entity, payload)
+    if not payload.itemType or not payload.trades or #payload.trades == 0 then
+        logger:error(
+            "OwnerViewWindow:onPublishClicked() - Invalid payload for JASM_PublishTradeAction"
+        )
+        self:showError("Error: Internal error - invalid trade data")
+        return
+    end
+
+    -- Serialize trades into a blob string for reliable networking
+    -- Format: "Item|Qty|Name;Item|Qty|Name"
+    local blobParts = {}
+    for _, t in ipairs(payload.trades) do
+        table.insert(
+            blobParts,
+            string.format("%s|%d|%s", t.requestItem, t.requestQty, t.name or "")
+        )
+    end
+    local tradesBlob = table.concat(blobParts, ";")
+    -- ──────────────────────────────────────────
+
+    local action = JASM_PublishTradeAction:new(
+        self.player,
+        self.entity,
+        payload.x,
+        payload.y,
+        payload.z,
+        payload.index,
+        payload.itemType,
+        payload.offerQty,
+        tradesBlob
+    )
 
     -- Track publish state
     self.isPublishing = true

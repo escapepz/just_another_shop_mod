@@ -113,8 +113,9 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
     if isShop then
         -- Open Customer View
         context:addOption("Open Shop UI", worldObjects, function()
-            luautils.walkToContainer(containerObj:getContainer(), playerIndex)
-            JASM_ShopView_Customer.open(playerIndex, nil, containerObj)
+            if luautils.walkToContainer(containerObj:getContainer(), playerIndex) then
+                JASM_ShopView_Customer.open(playerIndex, nil, containerObj)
+            end
         end)
     end
 
@@ -129,8 +130,9 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
         -- 1. Shop Management
         if canManage then
             jMenu:addOption("Manage Shop", worldObjects, function()
-                luautils.walkToContainer(containerObj:getContainer(), playerIndex)
-                JASM_ShopView_Owner.open(playerIndex, nil, containerObj)
+                if luautils.walkToContainer(containerObj:getContainer(), playerIndex) then
+                    JASM_ShopView_Owner.open(playerIndex, nil, containerObj)
+                end
             end)
         end
 
