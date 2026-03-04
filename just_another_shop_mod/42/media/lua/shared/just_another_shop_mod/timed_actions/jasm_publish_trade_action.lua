@@ -2,6 +2,8 @@ require("TimedActions/ISBaseTimedAction")
 
 local ZUL = require("zul")
 local logger = ZUL.new("just_another_shop_mod")
+local pz_utils = require("pz_utils_shared")
+local JASM_SandboxVars = require("just_another_shop_mod/jasm_sandbox_vars")
 
 -- ============================================================
 -- JASM_PublishTradeAction
@@ -217,7 +219,11 @@ function JASM_PublishTradeAction:complete()
 
     -- Ownership check: only the registered shop owner may publish
     local modData = containerObj:getModData()
-    if modData.shopOwnerID and modData.shopOwnerID ~= self.character:getUsername() then
+    local isOwner = modData.shopOwnerID == self.character:getUsername()
+    local isAdmin = pz_utils.konijima.Utilities.IsPlayerAdmin(self.character)
+    local adminBypass = JASM_SandboxVars.Get("AdminBypass")
+
+    if not isOwner and not (isAdmin and adminBypass) then
         logger:error(
             "JASM_PublishTradeAction:complete() - ownership mismatch: "
                 .. tostring(self.character:getUsername())

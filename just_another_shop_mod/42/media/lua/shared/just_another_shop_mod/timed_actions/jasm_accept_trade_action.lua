@@ -4,6 +4,7 @@ local ZUL = require("zul")
 local logger = ZUL.new("just_another_shop_mod")
 
 local pz_utils = require("pz_utils_shared")
+local JASM_SandboxVars = require("just_another_shop_mod/jasm_sandbox_vars")
 
 -- ============================================================
 -- JASM_AcceptTradeAction
@@ -222,7 +223,10 @@ function JASM_AcceptTradeAction:complete()
     -- 2. Process logic based on mode
     if self.isForceGive then
         -- Admin check (secondary safety)
-        if not pz_utils.konijima.Utilities.IsPlayerAdmin(self.character) then
+        local isAdmin = pz_utils.konijima.Utilities.IsPlayerAdmin(self.character)
+        local adminBypass = JASM_SandboxVars.Get("AdminBypass")
+
+        if not (isAdmin and adminBypass) then
             logger:error("JASM_AcceptTradeAction:complete() - unauthorized force give attempt")
             return false
         end

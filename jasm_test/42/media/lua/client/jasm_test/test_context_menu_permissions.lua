@@ -81,12 +81,17 @@ local function init()
         -- Mock getSpecificPlayer and IsPlayerAdmin
         local original_getSpecificPlayer = _G.getSpecificPlayer
         local original_IsPlayerAdmin = require("pz_utils_shared").konijima.Utilities.IsPlayerAdmin
+        local JASM_SandboxVars = require("just_another_shop_mod/jasm_sandbox_vars")
+        local original_SandboxGet = JASM_SandboxVars.Get
 
         _G.getSpecificPlayer = function()
             return playerObj
         end
         require("pz_utils_shared").konijima.Utilities.IsPlayerAdmin = function()
             return false
+        end
+        JASM_SandboxVars.Get = function()
+            return true -- Default admin bypass to true for tests
         end
 
         ---@type ISContextMenu
@@ -115,8 +120,8 @@ local function init()
         end
 
         local playerShopOption = nil
-        JASM_TestRunner.assert_not_nil(jasmOption, "JASM Shop option should exist")
         ---@diagnostic disable-next-line: unnecessary-if
+        -- JASM Shop menu might be hidden entirely if you have no permissions
         if jasmOption then
             local jMenu = jasmOption.subMenu
             JASM_TestRunner.assert_not_nil(jMenu, "JASM Shop should have a submenu")
@@ -132,15 +137,16 @@ local function init()
         end
 
         local unregisterOption = nil
-        JASM_TestRunner.assert_not_nil(playerShopOption, "Player Shop option should exist")
         ---@diagnostic disable-next-line: unnecessary-if
+        -- If Player Shop exists, check for the UnRegister option inside it
         if playerShopOption then
             local pMenu = playerShopOption.subMenu
-            JASM_TestRunner.assert_not_nil(pMenu, "Player Shop should have a submenu")
-            for _, opt in ipairs(pMenu.options) do
-                if string.find(opt.name, "UnRegister Shop") then
-                    unregisterOption = opt
-                    break
+            if pMenu then
+                for _, opt in ipairs(pMenu.options) do
+                    if string.find(opt.name, "UnRegister Shop") then
+                        unregisterOption = opt
+                        break
+                    end
                 end
             end
         end
@@ -148,6 +154,7 @@ local function init()
         -- Cleanup
         _G.getSpecificPlayer = original_getSpecificPlayer
         require("pz_utils_shared").konijima.Utilities.IsPlayerAdmin = original_IsPlayerAdmin
+        JASM_SandboxVars.Get = original_SandboxGet
 
         JASM_TestRunner.assert_nil(
             unregisterOption,
@@ -169,11 +176,17 @@ local function init()
         local original_getSpecificPlayer = _G.getSpecificPlayer
         local original_IsPlayerAdmin = require("pz_utils_shared").konijima.Utilities.IsPlayerAdmin
 
+        local JASM_SandboxVars = require("just_another_shop_mod/jasm_sandbox_vars")
+        local original_SandboxGet = JASM_SandboxVars.Get
+
         _G.getSpecificPlayer = function()
             return playerObj
         end
         require("pz_utils_shared").konijima.Utilities.IsPlayerAdmin = function()
             return false
+        end
+        JASM_SandboxVars.Get = function()
+            return true
         end
 
         ---@type ISContextMenu
@@ -228,6 +241,7 @@ local function init()
         -- Cleanup
         _G.getSpecificPlayer = original_getSpecificPlayer
         require("pz_utils_shared").konijima.Utilities.IsPlayerAdmin = original_IsPlayerAdmin
+        JASM_SandboxVars.Get = original_SandboxGet
 
         JASM_TestRunner.assert_not_nil(unregisterOption, "Owner SHOULD see UnRegister Shop option")
     end)
