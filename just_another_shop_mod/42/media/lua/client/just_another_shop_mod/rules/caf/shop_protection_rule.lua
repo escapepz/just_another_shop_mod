@@ -31,11 +31,15 @@ local RuleShopProtection = function(ctx)
             local lockHolder = _G.JASM_ShopManager:getShopLock(squareID)
 
             if lockHolder and lockHolder ~= playerUsername then
-                -- Check action type (assuming 'give' for depositing, 'take' for removing)
-                -- If it's a "take" action (source is shop), it's rejected
+                -- STRICT LOCK: If locked by someone else, NOBODY can remove items (Source check).
+                -- This prevents the owner from stealing items while a customer is browsing (Issue 1).
                 ctx.flags.rejected = true
                 ctx.flags.reason = "Shop is locked by " .. tostring(lockHolder) .. "."
-                logger:info("Shop locked - access denied", {
+                ctx.callbacks = ctx.callbacks or {}
+                ctx.callbacks.onRejected = function()
+                    HaloTextHelper.addBadText(getSpecificPlayer(0), ctx.flags.reason)
+                end
+                logger:info("Shop locked - removal denied", {
                     player = playerUsername,
                     lockedBy = lockHolder,
                     shop = modData.shopName,
@@ -71,6 +75,10 @@ local RuleShopProtection = function(ctx)
         -- Rule: Customers are blocked
         ctx.flags.rejected = true
         ctx.flags.reason = "This item must be purchased."
+        ctx.callbacks = ctx.callbacks or {}
+        ctx.callbacks.onRejected = function()
+            HaloTextHelper.addBadText(getSpecificPlayer(0), ctx.flags.reason)
+        end
 
         logger:info("Purchase required", {
             player = player:getUsername(),
@@ -105,6 +113,10 @@ local RuleShopProtection = function(ctx)
                 if not (isOwner or isAdmin) then
                     ctx.flags.rejected = true
                     ctx.flags.reason = "Shop is locked by " .. tostring(lockHolder) .. "."
+                    ctx.callbacks = ctx.callbacks or {}
+                    ctx.callbacks.onRejected = function()
+                        HaloTextHelper.addBadText(getSpecificPlayer(0), ctx.flags.reason)
+                    end
                     return
                 end
             end
@@ -132,6 +144,10 @@ local RuleShopProtection = function(ctx)
         -- Rule: Non-owners cannot deposit items
         ctx.flags.rejected = true
         ctx.flags.reason = "Only the shop owner can deposit items."
+        ctx.callbacks = ctx.callbacks or {}
+        ctx.callbacks.onRejected = function()
+            HaloTextHelper.addBadText(getSpecificPlayer(0), ctx.flags.reason)
+        end
 
         logger:info("Deposit rejected: non-owner", {
             player = player:getUsername(),
