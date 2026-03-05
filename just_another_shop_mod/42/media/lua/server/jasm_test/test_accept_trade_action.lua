@@ -131,7 +131,9 @@ local function init()
         end
 
         local action = JASM_AcceptTradeAction:new(
+            ---@diagnostic disable-next-line: param-type-mismatch
             mockPlayer,
+            ---@diagnostic disable-next-line: param-type-mismatch
             mockContainerObj,
             "Base.Axe",
             "Base.Money",

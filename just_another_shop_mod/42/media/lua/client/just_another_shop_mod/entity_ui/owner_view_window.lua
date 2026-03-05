@@ -798,6 +798,17 @@ function OwnerViewWindow:onPublishClicked()
         end
         -- Clear the optimistic pending marker now that server confirmed
         clientModData.pendingTrade = nil
+
+        -- Rescan container and refresh product list
+        if window.dataManager then
+            local updatedInventory = window.dataManager:scanContainer(self.entity:getContainer())
+            window.inventory = updatedInventory
+
+            -- Update displayed products
+            if window.productPanel then
+                window.productPanel:setProducts(updatedInventory.list)
+            end
+        end
     end, nil)
 
     -- Cancel callback: clear pending marker if player aborts
@@ -905,7 +916,8 @@ end
 -- ============================================================
 
 --- Helper: Find existing OwnerViewWindow for entity by querying UIManager
----@return UIElement?
+---@param entity IsoObject
+---@return CustomerViewWindow|UIElement?
 local function findExistingOwnerWindow(entity)
     local uiList = UIManager.getUI()
     if not uiList then
@@ -913,6 +925,7 @@ local function findExistingOwnerWindow(entity)
     end
 
     for i = 0, uiList:size() - 1 do
+        ---@type CustomerViewWindow|UIElement
         local child = uiList:get(i)
         if instanceof(child, "OwnerViewWindow") and child.entity == entity then
             return child
