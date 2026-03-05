@@ -227,17 +227,36 @@ function JASM_AcceptTradeAction:complete()
     local shopContainer = containerObj:getContainer()
     local playerInv = self.character:getInventory()
 
-    -- 1. Check shop stock
-    local product = shopContainer:getFirstType(self.itemType)
-    if not product then
-        logger:error(
-            "JASM_AcceptTradeAction:complete() - item out of stock",
-            { item = self.itemType }
-        )
+    -- 1. ALL-OR-NOTHING PRE-VALIDATION
+
+    -- Validate shop stock count (B42 uses getItemCount for ItemContainer)
+    local shopStock = shopContainer:getItemCount(self.itemType)
+    if shopStock < self.offerQty then
+        logger:error("Shop has insufficient stock", {
+            shop = containerObj:getName(),
+            required = self.offerQty,
+            available = shopStock,
+            item = self.itemType,
+        })
         return false
     end
 
-    -- 2. Process logic based on mode
+    -- Validate player currency if not force-giving
+    if not self.isForceGive then
+        local playerFunds = playerInv:getItemCount(self.requestItem)
+        if playerFunds < self.requestQty then
+            logger:error("Player has insufficient funds", {
+                player = self.character:getUsername(),
+                required = self.requestQty,
+                available = playerFunds,
+                item = self.requestItem,
+            })
+            return false
+        end
+    end
+
+    -- 2. PROCESS TRANSFER
+
     if self.isForceGive then
         -- Admin check (secondary safety)
         local isAdmin = pz_utils.konijima.Utilities.IsPlayerAdmin(self.character)
@@ -248,61 +267,57 @@ function JASM_AcceptTradeAction:complete()
             return false
         end
 
-        for i = 1, self.offerQty do
-            local item = shopContainer:getFirstType(self.itemType)
-
-            if item then
-                shopContainer:Remove(item)
-                sendRemoveItemFromContainer(shopContainer, item)
-                playerInv:AddItem(item)
-                sendAddItemToContainer(playerInv, item)
-            end
-        end
         logger:info(
-            "JASM_AcceptTradeAction:complete() - Force Give Success",
+            "JASM_AcceptTradeAction:complete() - EXECUTE Force Give",
             { qty = self.offerQty }
         )
     else
-        -- 3. Trade logic
-        local playerFunds = playerInv:getItemCount(self.requestItem)
-        if playerFunds < self.requestQty then
-            logger:error("JASM_AcceptTradeAction:complete() - insufficient funds", {
-                has = playerFunds,
-                needs = self.requestQty,
-            })
-            return false
-        end
-
-        -- Move currency from player to shop
+        -- Transfer currency from player to shop (ATOMIC - all or nothing)
         for i = 1, self.requestQty do
             local item = playerInv:getFirstType(self.requestItem)
 
-            if item then
-                playerInv:Remove(item)
-                sendRemoveItemFromContainer(playerInv, item)
-                shopContainer:AddItem(item)
-                sendAddItemToContainer(shopContainer, item)
+            if not item then
+                logger:error("Currency item disappeared mid-transfer", {
+                    player = self.character:getUsername(),
+                    completed = i - 1,
+                    expected = self.requestQty,
+                })
+                return false -- ABORT - don't proceed to product transfer
             end
+
+            playerInv:Remove(item)
+            sendRemoveItemFromContainer(playerInv, item)
+            shopContainer:AddItem(item)
+            sendAddItemToContainer(shopContainer, item)
         end
-
-        -- Move product from shop to player
-        for i = 1, self.offerQty do
-            local item = shopContainer:getFirstType(self.itemType)
-
-            if item then
-                shopContainer:Remove(item)
-                sendRemoveItemFromContainer(shopContainer, item)
-                playerInv:AddItem(item)
-                sendAddItemToContainer(playerInv, item)
-            end
-        end
-
-        logger:info("JASM_AcceptTradeAction:complete() - Trade Success", {
-            item = self.itemType,
-            qty = self.offerQty,
-            price = self.requestQty .. "x " .. self.requestItem,
-        })
     end
+
+    -- Transfer product from shop to player (ATOMIC - all or nothing)
+    -- This runs for BOTH normal trade and Force Give (if it reached here)
+    for i = 1, self.offerQty do
+        local item = shopContainer:getFirstType(self.itemType)
+
+        if not item then
+            logger:error("Product item disappeared mid-transfer", {
+                shop = containerObj:getName(),
+                completed = i - 1,
+                expected = self.offerQty,
+            })
+            return false -- ABORT
+        end
+
+        shopContainer:Remove(item)
+        sendRemoveItemFromContainer(shopContainer, item)
+        playerInv:AddItem(item)
+        sendAddItemToContainer(playerInv, item)
+    end
+
+    logger:info("JASM_AcceptTradeAction:complete() - Success", {
+        item = self.itemType,
+        qty = self.offerQty,
+        price = (not self.isForceGive) and (self.requestQty .. "x " .. self.requestItem)
+            or "FORCED",
+    })
 
     return true
 end

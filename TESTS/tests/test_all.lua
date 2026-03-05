@@ -61,8 +61,11 @@ _G.JASM_TestRunner = JASM_TestRunner
 require("jasm_test/test_shop_manager")()
 require("jasm_test/test_shop_server_commands")()
 require("jasm_test/test_maf_rules")()
+require("jasm_test/test_accept_trade_action")()
+
 require("jasm_test/test_caf_rules")()
 require("jasm_test/test_player_actions")()
+require("jasm_test/test_context_menu_permissions")()
 
 print("")
 print("=== All Test Modules Loaded ===")
