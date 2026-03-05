@@ -109,10 +109,27 @@ function CustomerViewWindow:so_override_the_entity_header()
     self.entityHeader:calculateLayout(self.width, 0)
 end
 
---- Override close to prevent closing sibling windows
+--- Override close to release shop lock and prevent closing sibling windows
 function CustomerViewWindow:close()
     logger:debug("CustomerViewWindow:close() - closing customer view only")
-    ISEntityWindow.close(self)
+
+    -- Release shop lock when window closes (Issue 8)
+    if self.entity then
+        local square = self.entity:getSquare()
+        if square then
+            local KUtilities = require("pz_utils_shared").konijima.Utilities
+            local squareID = KUtilities.SquareToString(square)
+            KUtilities.SendServerCommand("JASM_ShopManager", "UnlockShop", {
+                x = square:getX(),
+                y = square:getY(),
+                z = square:getZ(),
+            })
+            logger:debug("CustomerViewWindow:close() - unlock sent", { squareID = squareID })
+        end
+    end
+
+    -- Close only this window, not siblings (Issue 8)
+    ISBaseEntityWindow.close(self)
 end
 
 --- Create child components and set up the layout.
@@ -488,23 +505,34 @@ local _openWindowsByEntity = {}
 local function findExistingCustomerWindow(entity)
     local uiList = UIManager.getUI()
     if not uiList then
+        logger:debug("findExistingCustomerWindow() - No UI list found")
         return nil
     end
 
     local uiSize = uiList:size()
-
-    -- Early return if the UI list doesn't exist or is empty
-    if not uiList or uiSize == 0 then
-        return nil
-    end
+    logger:debug(
+        "findExistingCustomerWindow() - Searching through " .. tostring(uiSize) .. " UI elements"
+    )
 
     for i = 0, uiSize - 1 do
         ---@type CustomerViewWindow|UIElement
         local child = uiList:get(i)
-        if instanceof(child, "CustomerViewWindow") and child.entity == entity then
-            return child
+        if instanceof(child, "CustomerViewWindow") then
+            local sameEntity = child.entity == entity
+            logger:debug(
+                string.format(
+                    "findExistingCustomerWindow() - Found CustomerViewWindow [index=%d]. Entity match: %s",
+                    i,
+                    tostring(sameEntity)
+                )
+            )
+            if sameEntity then
+                return child
+            end
         end
     end
+
+    logger:debug("findExistingCustomerWindow() - No existing window found for entity")
     return nil
 end
 
@@ -512,10 +540,22 @@ end
 ---@param _context any
 ---@param entity IsoObject
 function CustomerViewWindow.open(playerIndex, _context, entity)
+    logger:debug("CustomerViewWindow.open() - request for entity", {
+        x = entity:getX(),
+        y = entity:getY(),
+        z = entity:getZ(),
+    })
+
     -- Check if window already open for this entity
     local existingWindow = findExistingCustomerWindow(entity)
-    if existingWindow and existingWindow:isVisible() then
-        existingWindow:bringToTop()
+    if existingWindow then
+        logger:debug("CustomerViewWindow.open() - Reusing existing window")
+        if existingWindow:isVisible() then
+            existingWindow:bringToTop()
+        else
+            existingWindow:setVisible(true)
+            existingWindow:bringToTop()
+        end
         return existingWindow
     end
 

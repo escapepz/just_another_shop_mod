@@ -905,10 +905,27 @@ function OwnerViewWindow:new(x, y, w, h, player, entity)
     return o
 end
 
---- Override close to prevent closing sibling windows
+--- Override close to release shop lock and prevent closing sibling windows
 function OwnerViewWindow:close()
     logger:debug("OwnerViewWindow:close() - closing owner view only")
-    ISEntityWindow.close(self)
+
+    -- Release shop lock if owner holds it (Issue 8)
+    if self.entity then
+        local square = self.entity:getSquare()
+        if square then
+            local KUtilities = require("pz_utils_shared").konijima.Utilities
+            local squareID = KUtilities.SquareToString(square)
+            KUtilities.SendServerCommand("JASM_ShopManager", "UnlockShop", {
+                x = square:getX(),
+                y = square:getY(),
+                z = square:getZ(),
+            })
+            logger:debug("OwnerViewWindow:close() - unlock sent", { squareID = squareID })
+        end
+    end
+
+    -- Close only this window, not siblings (Issue 8)
+    ISBaseEntityWindow.close(self)
 end
 
 -- ============================================================
@@ -921,16 +938,34 @@ end
 local function findExistingOwnerWindow(entity)
     local uiList = UIManager.getUI()
     if not uiList then
+        logger:debug("findExistingOwnerWindow() - No UI list found")
         return nil
     end
 
-    for i = 0, uiList:size() - 1 do
+    local uiSize = uiList:size()
+    logger:debug(
+        "findExistingOwnerWindow() - Searching through " .. tostring(uiSize) .. " UI elements"
+    )
+
+    for i = 0, uiSize - 1 do
         ---@type CustomerViewWindow|UIElement
         local child = uiList:get(i)
-        if instanceof(child, "OwnerViewWindow") and child.entity == entity then
-            return child
+        if instanceof(child, "OwnerViewWindow") then
+            local sameEntity = child.entity == entity
+            logger:debug(
+                string.format(
+                    "findExistingOwnerWindow() - Found OwnerViewWindow [index=%d]. Entity match: %s",
+                    i,
+                    tostring(sameEntity)
+                )
+            )
+            if sameEntity then
+                return child
+            end
         end
     end
+
+    logger:debug("findExistingOwnerWindow() - No existing window found for entity")
     return nil
 end
 
@@ -938,10 +973,22 @@ end
 ---@param _context any
 ---@param entity IsoObject
 function OwnerViewWindow.open(playerIndex, _context, entity)
+    logger:debug("OwnerViewWindow.open() - request for entity", {
+        x = entity:getX(),
+        y = entity:getY(),
+        z = entity:getZ(),
+    })
+
     -- Check if window already open for this entity
     local existingWindow = findExistingOwnerWindow(entity)
-    if existingWindow and existingWindow:isVisible() then
-        existingWindow:bringToTop()
+    if existingWindow then
+        logger:debug("OwnerViewWindow.open() - Reusing existing window")
+        if existingWindow:isVisible() then
+            existingWindow:bringToTop()
+        else
+            existingWindow:setVisible(true)
+            existingWindow:bringToTop()
+        end
         return existingWindow
     end
 
