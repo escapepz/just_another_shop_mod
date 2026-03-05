@@ -238,6 +238,30 @@ function MockPZ.setupGlobals()
         }
     end
 
+    -- Mock Events system
+    if not _G.Events then
+        _G.Events = setmetatable({}, {
+            __index = function(t, k)
+                t[k] = {
+                    Add = function(fn) end,
+                    Remove = function(fn) end,
+                }
+                return t[k]
+            end,
+        })
+    end
+
+    -- Mock getCore
+    if not _G.getCore then
+        _G.getCore = function()
+            return {
+                getGameVersion = function()
+                    return "v42"
+                end,
+            }
+        end
+    end
+
     -- Mock JASM_AcceptTradeAction and JASM_PublishTradeAction
     _G.JASM_AcceptTradeAction = {
         new = function(self, player, entity, payload)

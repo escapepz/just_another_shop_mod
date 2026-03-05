@@ -125,6 +125,19 @@ local function init()
                 getZ = function()
                     return 0
                 end,
+                getSquare = function()
+                    return {
+                        getX = function()
+                            return 0
+                        end,
+                        getY = function()
+                            return 0
+                        end,
+                        getZ = function()
+                            return 0
+                        end,
+                    }
+                end,
             }
 
             local worldObjects = { containerObj }

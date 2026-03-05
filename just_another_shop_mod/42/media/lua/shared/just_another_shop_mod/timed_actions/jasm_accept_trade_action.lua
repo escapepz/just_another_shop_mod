@@ -236,7 +236,7 @@ function JASM_AcceptTradeAction:complete()
     local shopItems = shopContainer:getItems()
     for i = 0, shopItems:size() - 1 do
         local item = shopItems:get(i)
-        if item:getFullType() == self.itemType then
+        if item and item:getFullType() == self.itemType then
             table.insert(productItems, item)
             if #productItems >= self.offerQty then
                 break
@@ -259,7 +259,7 @@ function JASM_AcceptTradeAction:complete()
         local pItems = playerInv:getItems()
         for i = 0, pItems:size() - 1 do
             local item = pItems:get(i)
-            if item:getFullType() == self.requestItem then
+            if item and item:getFullType() == self.requestItem then
                 table.insert(currencyItems, item)
                 if #currencyItems >= self.requestQty then
                     break

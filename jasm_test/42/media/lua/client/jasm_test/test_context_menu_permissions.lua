@@ -63,8 +63,28 @@ local function createMockShopCrate(isShop, shopType, ownerID)
         getZ = function()
             return 0
         end,
+        getSquare = function()
+            return {
+                getX = function()
+                    return 0
+                end,
+                getY = function()
+                    return 0
+                end,
+                getZ = function()
+                    return 0
+                end,
+            }
+        end,
     }
 end
+
+-- Mock JASM_ShopManager for lock checks
+_G.JASM_ShopManager = {
+    getShopLock = function()
+        return nil
+    end,
+}
 
 local function init()
     -- ============================================================
