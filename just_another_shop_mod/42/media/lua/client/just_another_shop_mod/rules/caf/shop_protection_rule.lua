@@ -16,7 +16,7 @@ local RuleShopProtection = function(ctx)
     -- 1. Check if the source is a Shop
     local parent = srcContainer:getParent()
 
-    logger:debug("here", parent)
+    logger:debug("parent=", parent)
 
     local modData = parent and parent:getModData() or nil
     if modData and modData.isShop then

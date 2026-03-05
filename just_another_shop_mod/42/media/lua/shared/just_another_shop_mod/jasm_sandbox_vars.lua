@@ -8,6 +8,7 @@
 ---
 ---@class JASM_SandboxVars
 
+local ZUL = require("zul")
 local pz_utils = require("pz_utils_shared")
 
 local SandboxVarsModule = pz_utils.escape.SandboxVarsModule
@@ -21,11 +22,14 @@ local DEFAULTS = {
 }
 
 local NAMESPACE = "JASM"
+local logger = ZUL.new("just_another_shop_mod")
 
---- Initialize sandbox vars (safe to call multiple times; second call is a no-op
---- because SandboxVarsModule.Init would overwrite — use a guard).
 if not _G.__JASM_SandboxVarsInitialized then
-    SandboxVarsModule.Init(NAMESPACE, DEFAULTS)
+    Events.OnGameStart.Add(function()
+        --- Initialize sandbox vars (safe to call multiple times; second call is a no-op
+        --- because SandboxVarsModule.Init would overwrite — use a guard).
+        SandboxVarsModule.Init(NAMESPACE, DEFAULTS)
+    end)
     _G.__JASM_SandboxVarsInitialized = true
 end
 
@@ -35,7 +39,17 @@ local JASM_SandboxVars = {
     ---@param defaultValue any
     ---@return any
     Get = function(key, defaultValue)
-        return SandboxVarsModule.Get(NAMESPACE, key, defaultValue)
+        local fallback = defaultValue or DEFAULTS[key]
+        local val = SandboxVarsModule.Get(NAMESPACE, key, fallback)
+        logger:debug(
+            "JASM_SandboxVars.Get key="
+                .. key
+                .. " fallback="
+                .. tostring(fallback)
+                .. " result="
+                .. tostring(val)
+        )
+        return val
     end,
 
     ---@return table
