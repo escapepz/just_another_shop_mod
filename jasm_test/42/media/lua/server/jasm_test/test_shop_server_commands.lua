@@ -279,7 +279,7 @@ local function init()
     -- NEW: Issue 1 – Admin bypass sandbox var test
     -- ------------------------------------------------------------------
 
-    -- When AdminBypassShopRestrictions = false, admin is subject to ownership check
+    -- When AdminBypass = false, admin is subject to ownership check
     JASM_TestRunner.register("shop_unregister_admin_bypass_disabled", "server", function()
         local mockObj = createMockShopObject(0)
         local admin = createMockPlayer("Admin1", true)
@@ -292,7 +292,7 @@ local function init()
         local canUnregister = isOwnerOrAdmin(modData, admin, adminBypass)
         JASM_TestRunner.assert_false(
             canUnregister,
-            "Admin should NOT bypass ownership check when AdminBypassShopRestrictions = false"
+            "Admin should NOT bypass ownership check when AdminBypass = false"
         )
     end)
 
