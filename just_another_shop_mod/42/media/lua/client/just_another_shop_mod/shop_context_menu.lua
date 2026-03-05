@@ -108,12 +108,29 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
 
     -- Top Level Shop Access (General Public)
     if isShop then
+        -- Shop Lock Check (Anti-griefing / Race condition protection)
+        local square = containerObj:getSquare()
+        local squareID = square and KUtilities.SquareToString(square)
+        local lockHolder = squareID and _G.JASM_ShopManager:getShopLock(squareID)
+        local isLockedByOther = lockHolder and lockHolder ~= playerObj:getUsername()
+
         -- Open Customer View
-        context:addOption("Open Shop UI", worldObjects, function()
+        local shopOption = context:addOption("Open Shop UI", worldObjects, function()
             if luautils.walkToContainer(containerObj:getContainer(), playerIndex) then
                 JASM_ShopView_Customer.open(playerIndex, nil, containerObj)
             end
         end)
+
+        -- If locked by someone else, only allow Owner or Admin to bypass
+        if isLockedByOther and not (isOwner or effectivelyAdmin) then
+            shopOption.notAvailable = true
+            local tooltip = ISWorldObjectContextMenu.addToolTip()
+            tooltip:setName("Shop Occupied")
+            tooltip.description = "This shop is currently being used by "
+                .. tostring(lockHolder)
+                .. "."
+            shopOption.toolTip = tooltip
+        end
     end
 
     -- JASM Management Submenu (Registration/NPC/Management)
