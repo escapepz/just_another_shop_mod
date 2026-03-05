@@ -32,6 +32,7 @@ local ShopItemActionFooter =
 ---@field footerPanel ShopItemActionFooter
 ---@field inventory any
 ---@field entity GameEntity
+---@field parent CustomerViewWindow
 ---@field dirtyLayout boolean
 ---@field xuiPreferredResizeWidth number
 ---@field xuiPreferredResizeHeight number
@@ -346,17 +347,31 @@ function ShopItemDetailsPanel:onAcceptTrade()
     -- ──────────────────────────────────────────
 
     if luautils.walkToContainer(entity:getContainer(), self.player:getPlayerNum()) then
-        ISTimedActionQueue.add(
-            JASM_AcceptTradeAction:new(
-                self.player,
-                entity,
-                payload.itemType,
-                payload.requestItem,
-                payload.requestQty,
-                payload.offerQty,
-                payload.isForceGive
-            )
+        local action = JASM_AcceptTradeAction:new(
+            self.player,
+            entity,
+            payload.itemType,
+            payload.requestItem,
+            payload.requestQty,
+            payload.offerQty,
+            payload.isForceGive
         )
+
+        -- Add callback to refresh UI after trade completes
+        action:setOnComplete(function()
+            -- Rescan container to get fresh inventory
+            if self.parent and self.parent.dataManager then
+                local newInventory = self.parent.dataManager:scanContainer(entity:getContainer())
+                self.parent.inventory = newInventory
+
+                -- Refresh product list display
+                if self.parent.productPanel then
+                    self.parent.productPanel:setProducts(newInventory.list)
+                end
+            end
+        end, nil)
+
+        ISTimedActionQueue.add(action)
     end
 end
 

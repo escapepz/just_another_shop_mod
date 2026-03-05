@@ -483,14 +483,23 @@ end
 local _openWindowsByEntity = {}
 
 --- Helper: Find existing CustomerViewWindow for entity by querying UIManager
----@return UIElement?
+---@param entity IsoObject
+---@return UIElement|CustomerViewWindow?
 local function findExistingCustomerWindow(entity)
     local uiList = UIManager.getUI()
     if not uiList then
         return nil
     end
 
-    for i = 0, uiList:size() - 1 do
+    local uiSize = uiList:size()
+
+    -- Early return if the UI list doesn't exist or is empty
+    if not uiList or uiSize == 0 then
+        return nil
+    end
+
+    for i = 0, uiSize - 1 do
+        ---@type CustomerViewWindow|UIElement
         local child = uiList:get(i)
         if instanceof(child, "CustomerViewWindow") and child.entity == entity then
             return child

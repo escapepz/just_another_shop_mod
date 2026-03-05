@@ -57,6 +57,16 @@ MockPZ.setupGlobals()
 local JASM_TestRunner = require("jasm_test_shared")
 _G.JASM_TestRunner = JASM_TestRunner
 
+-- Force real UI and Action classes instead of mocks from mock_pz.lua
+package.loaded["just_another_shop_mod/entity_ui/components/shop/customer/shop_item_details_panel"] =
+    nil
+package.preload["just_another_shop_mod/entity_ui/components/shop/customer/shop_item_details_panel"] =
+    nil
+package.loaded["just_another_shop_mod/entity_ui/owner_view_window"] = nil
+package.preload["just_another_shop_mod/entity_ui/owner_view_window"] = nil
+package.loaded["just_another_shop_mod/timed_actions/jasm_accept_trade_action"] = nil
+package.preload["just_another_shop_mod/timed_actions/jasm_accept_trade_action"] = nil
+
 -- Load all test modules from jasm_test
 require("jasm_test/test_shop_manager")()
 require("jasm_test/test_shop_server_commands")()
@@ -66,6 +76,7 @@ require("jasm_test/test_accept_trade_action")()
 require("jasm_test/test_caf_rules")()
 require("jasm_test/test_player_actions")()
 require("jasm_test/test_context_menu_permissions")()
+require("jasm_test/test_ui_refresh")()
 
 print("")
 print("=== All Test Modules Loaded ===")
