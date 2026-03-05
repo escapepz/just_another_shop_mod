@@ -87,7 +87,7 @@ function ProductListView:onListItemClicked(item)
     if type(item) == "table" and item.item and item.itemindex then
         product = item.item
     end
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.onSelectProduct then
         self.onSelectProduct(self.target, product)
     end
@@ -100,7 +100,6 @@ end
 --- Populate the list with a product list/inventory object.
 ---@param products CustomerViewInventory|CustomerViewInventoryItem[]
 function ProductListView:setProducts(products)
-    ---@diagnostic disable-next-line: unnecessary-if
     if self.listPanel then
         self.listPanel:clear()
     end
@@ -111,7 +110,6 @@ function ProductListView:setProducts(products)
     end
 
     for _, product in ipairs(list or {}) do
-        ---@diagnostic disable-next-line: unnecessary-if
         if self.listPanel then
             self.listPanel:addItem(product.name, product)
         end
@@ -122,7 +120,7 @@ end
 ---@param product any
 function ProductListView:setSelectedProduct(product)
     self.selectedProduct = product
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.listPanel then
         self.listPanel.selected = -1
         for i, listItem in ipairs(self.listPanel.items) do
@@ -144,7 +142,7 @@ function ProductListView:createChildren()
     ---@type ISScrollingListBox
     self.listPanel =
         ISXuiSkin.build(self.xuiSkin, nil, ISScrollingListBox, 0, 0, self.width, self.height)
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.listPanel then
         self.listPanel:initialise()
         self.listPanel:instantiate()
@@ -165,7 +163,7 @@ end
 function ProductListView:calculateLayout(width, height)
     self:setWidth(width)
     self:setHeight(height)
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.listPanel then
         self.listPanel:setX(0)
         self.listPanel:setY(0)
@@ -194,12 +192,10 @@ function ProductListView:xuiRecalculateLayout(
 end
 
 function ProductListView:prerender()
-    ---@diagnostic disable-next-line: unnecessary-if
     if self.dirtyLayout then
         self:calculateLayout(self.width, self.height)
     end
 
-    ---@diagnostic disable-next-line: unnecessary-if
     -- Force stencil clipping to prevent items drawing outside our area (e.g. over window borders)
     if self.listPanel then
         self.listPanel:setStencilRect(0, 0, self.width, self.height)
@@ -215,7 +211,7 @@ end
 
 function ProductListView:render()
     ISPanel.render(self)
-    ---@diagnostic disable-next-line: unnecessary-if
+
     -- Clean up stencil so it doesn't affect other components
     if self.listPanel then
         self.listPanel:clearStencilRect()

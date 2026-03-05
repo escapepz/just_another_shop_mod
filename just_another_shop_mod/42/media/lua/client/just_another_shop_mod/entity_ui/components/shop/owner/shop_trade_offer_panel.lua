@@ -48,7 +48,7 @@ function ShopTradeOfferPanel:createChildren()
     -- Section label "ITEM TO GIVE (OFFER)"
     self.sectionHeader =
         ShopSectionHeader:new(0, 0, self.width, 40, "ITEM TO GIVE (OFFER)", self.xuiSkin)
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.sectionHeader and self.tableLayout then
         self.sectionHeader:initialise()
         self.sectionHeader:instantiate()
@@ -82,7 +82,7 @@ function ShopTradeOfferPanel:createChildren()
             if obRow then
                 ---@type ISImage|nil
                 self.offerIcon = self:xuiBuild(nil, ISImage, 0, 0, 40, 40, nil)
-                ---@diagnostic disable-next-line: unnecessary-if
+
                 if self.offerIcon then
                     offerBox:setElement(0, obRow:index(), self.offerIcon)
                 end
@@ -107,7 +107,7 @@ function ShopTradeOfferPanel:createChildren()
                         false
                     )
                     local rName = infoStack:addRowFill()
-                    ---@diagnostic disable-next-line: unnecessary-if
+
                     if self.offerName and rName then
                         ---@diagnostic disable-next-line: inject-field
                         self.offerName.calculateLayout = function(_slf, _w, _h)
@@ -132,7 +132,7 @@ function ShopTradeOfferPanel:createChildren()
                         false
                     )
                     local rDbg = infoStack:addRowFill()
-                    ---@diagnostic disable-next-line: unnecessary-if
+
                     if self.offerDebug and rDbg then
                         ---@diagnostic disable-next-line: inject-field
                         self.offerDebug.calculateLayout = function(_slf, _w, _h)
@@ -157,7 +157,7 @@ function ShopTradeOfferPanel:createChildren()
                         false
                     )
                     local rStock = infoStack:addRowFill()
-                    ---@diagnostic disable-next-line: unnecessary-if
+
                     if self.offerStock and rStock then
                         ---@diagnostic disable-next-line: inject-field
                         self.offerStock.calculateLayout = function(_slf, _w, _h)
@@ -171,7 +171,7 @@ function ShopTradeOfferPanel:createChildren()
 
                 ---@type ISTextEntryBox|nil
                 self.offerQtyInput = self:xuiBuild(nil, ISTextEntryBox, "1", 0, 0, 60, INPUT_H)
-                ---@diagnostic disable-next-line: unnecessary-if
+
                 if self.offerQtyInput then
                     self.offerQtyInput.onTextChange = function()
                         if self.onQtyChanged and self.target then
@@ -207,7 +207,7 @@ function ShopTradeOfferPanel:createChildren()
             UIFont.Small,
             false
         )
-        ---@diagnostic disable-next-line: unnecessary-if
+
         if self.yieldInfo then
             ---@diagnostic disable-next-line: inject-field
             self.yieldInfo.calculateLayout = function(_slf, _w, _h)
@@ -219,7 +219,6 @@ function ShopTradeOfferPanel:createChildren()
 end
 
 function ShopTradeOfferPanel:setYieldInfo(text)
-    ---@diagnostic disable-next-line: unnecessary-if
     if self.yieldInfo then
         ---@diagnostic disable-next-line: undefined-field
         self.yieldInfo:setName(text)
@@ -227,23 +226,21 @@ function ShopTradeOfferPanel:setYieldInfo(text)
 end
 
 function ShopTradeOfferPanel:setOfferItem(name, itemType, stock, tex)
-    ---@diagnostic disable-next-line: unnecessary-if
     if self.offerName then
         ---@diagnostic disable-next-line: undefined-field
         self.offerName:setName(name)
     end
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.offerDebug then
         ---@diagnostic disable-next-line: undefined-field
         self.offerDebug:setName(itemType)
     end
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.offerStock then
         ---@diagnostic disable-next-line: undefined-field
         self.offerStock:setName("Stock: " .. tostring(stock) .. " units")
     end
 
-    ---@diagnostic disable-next-line: unnecessary-if
     if self.offerIcon then
         local iconTex = tex
         if iconTex and type(iconTex) == "string" then
@@ -254,14 +251,12 @@ function ShopTradeOfferPanel:setOfferItem(name, itemType, stock, tex)
 end
 
 function ShopTradeOfferPanel:setQty(qty)
-    ---@diagnostic disable-next-line: unnecessary-if
     if self.offerQtyInput then
         self.offerQtyInput:setText(tostring(qty or 1))
     end
 end
 
 function ShopTradeOfferPanel:getQty()
-    ---@diagnostic disable-next-line: unnecessary-if
     if self.offerQtyInput then
         local text = self.offerQtyInput:getText()
         local qty = toInt(tonumber(text) or 0)
@@ -273,14 +268,12 @@ function ShopTradeOfferPanel:getQty()
 end
 
 function ShopTradeOfferPanel:clearQtyBackground()
-    ---@diagnostic disable-next-line: unnecessary-if
     if self.offerQtyInput then
         self.offerQtyInput.backgroundColor = { r = 0, g = 0, b = 0, a = 1 }
     end
 end
 
 function ShopTradeOfferPanel:errorQtyBackground()
-    ---@diagnostic disable-next-line: unnecessary-if
     if self.offerQtyInput then
         self.offerQtyInput.backgroundColor = { r = 0.5, g = 0, b = 0, a = 1 }
     end
@@ -288,12 +281,12 @@ end
 
 function ShopTradeOfferPanel:calculateLayout(width, height)
     self:setWidth(width)
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.tableLayout then
         self.tableLayout:calculateLayout(width, height)
         self:setHeight(self.tableLayout:getHeight())
     end
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.sectionHeader then
         self.sectionHeader:calculateLayout(width, self.sectionHeader:getHeight())
     end

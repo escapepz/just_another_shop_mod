@@ -64,7 +64,7 @@ function JASM_AcceptTradeAction:new(
 
     o.character = character
     o.containerObj = containerObj
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if containerObj then
         o.x = containerObj:getX()
         o.y = containerObj:getY()
@@ -250,7 +250,7 @@ function JASM_AcceptTradeAction:complete()
 
         for i = 1, self.offerQty do
             local item = shopContainer:getFirstType(self.itemType)
-            ---@diagnostic disable-next-line: unnecessary-if
+
             if item then
                 shopContainer:Remove(item)
                 sendRemoveItemFromContainer(shopContainer, item)
@@ -276,7 +276,7 @@ function JASM_AcceptTradeAction:complete()
         -- Move currency from player to shop
         for i = 1, self.requestQty do
             local item = playerInv:getFirstType(self.requestItem)
-            ---@diagnostic disable-next-line: unnecessary-if
+
             if item then
                 playerInv:Remove(item)
                 sendRemoveItemFromContainer(playerInv, item)
@@ -288,7 +288,7 @@ function JASM_AcceptTradeAction:complete()
         -- Move product from shop to player
         for i = 1, self.offerQty do
             local item = shopContainer:getFirstType(self.itemType)
-            ---@diagnostic disable-next-line: unnecessary-if
+
             if item then
                 shopContainer:Remove(item)
                 sendRemoveItemFromContainer(shopContainer, item)

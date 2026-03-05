@@ -151,7 +151,7 @@ local function init()
             end
 
             JASM_TestRunner.assert_not_nil(openShopOpt, "Should have 'Open Shop UI' option")
-            ---@diagnostic disable-next-line: unnecessary-if
+
             if openShopOpt then
                 openShopOpt.onSelect()
             end

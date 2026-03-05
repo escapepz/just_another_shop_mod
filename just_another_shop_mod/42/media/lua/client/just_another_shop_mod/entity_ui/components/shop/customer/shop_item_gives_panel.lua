@@ -74,6 +74,7 @@ function ShopItemGivesPanel:createChildren()
                     local _rName = metaTable:addRow()
                     self.receiveName =
                         self:xuiBuild(nil, ISLabel, 0, 0, 20, "", 1, 1, 1, 1, UIFont.Small, false)
+
                     if self.receiveName then
                         ---@diagnostic disable-next-line: inject-field
                         self.receiveName.calculateLayout = function(_slf, _w, _h)
@@ -97,6 +98,7 @@ function ShopItemGivesPanel:createChildren()
                         UIFont.Small,
                         false
                     )
+
                     if self.receiveQty then
                         ---@diagnostic disable-next-line: inject-field
                         self.receiveQty.calculateLayout = function(_slf, _w, _h)

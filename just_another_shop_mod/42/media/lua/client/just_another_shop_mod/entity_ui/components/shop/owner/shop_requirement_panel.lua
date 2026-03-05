@@ -59,7 +59,7 @@ function ShopRequirementPanel:createChildren()
             "CUSTOMER OPTIONS (REQUIRE ONE OF)",
             self.xuiSkin
         )
-        ---@diagnostic disable-next-line: unnecessary-if
+
         if self.header then
             self.header:initialise()
             self.header:instantiate()
@@ -100,7 +100,6 @@ end
 
 function ShopRequirementPanel:onAddPathClicked(requestQty, itemType)
     if not itemType or itemType == "" then
-        ---@diagnostic disable-next-line: unnecessary-if
         if self.onError then
             self.onError(self.target, "Type cannot be empty")
         end
@@ -109,7 +108,6 @@ function ShopRequirementPanel:onAddPathClicked(requestQty, itemType)
 
     local itemScript = ScriptManager.instance:getItem(itemType)
     if not itemScript then
-        ---@diagnostic disable-next-line: unnecessary-if
         if self.onError then
             self.onError(self.target, "Invalid item type: " .. itemType)
         end
@@ -119,7 +117,6 @@ function ShopRequirementPanel:onAddPathClicked(requestQty, itemType)
     requestQty = math.max(1, math.floor(tonumber(requestQty) or 1))
 
     if #self.requirementPaths >= self.maxPaths then
-        ---@diagnostic disable-next-line: unnecessary-if
         if self.onError then
             self.onError(self.target, "Maximum " .. self.maxPaths .. " requirement paths allowed")
         end
@@ -133,7 +130,7 @@ function ShopRequirementPanel:onAddPathClicked(requestQty, itemType)
         icon = itemScript:getIcon(),
     }
     table.insert(self.requirementPaths, path)
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.onUnsavedChanges then
         self.onUnsavedChanges(self.target)
     end
@@ -141,7 +138,7 @@ function ShopRequirementPanel:onAddPathClicked(requestQty, itemType)
     if self.addComp then
         self.addComp:clearInputs()
     end
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.onClearError then
         self.onClearError(self.target)
     end
@@ -155,11 +152,11 @@ function ShopRequirementPanel:onRemovePath(path)
             break
         end
     end
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.onUnsavedChanges then
         self.onUnsavedChanges(self.target)
     end
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.onClearError then
         self.onClearError(self.target)
     end
@@ -187,7 +184,7 @@ function ShopRequirementPanel:refreshList()
             self.onRemovePath,
             self.xuiSkin
         )
-        ---@diagnostic disable-next-line: unnecessary-if
+
         if item then
             item:initialise()
             item:instantiate()
@@ -210,7 +207,7 @@ function ShopRequirementPanel:refreshList()
     end
 
     -- Visibility update for "Add" row logic if needed
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.tableLayout then
         self.tableLayout:calculateLayout(self.width, self.height)
     end

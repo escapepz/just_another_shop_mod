@@ -120,7 +120,7 @@ local function init()
         end
 
         local playerShopOption = nil
-        ---@diagnostic disable-next-line: unnecessary-if
+
         -- JASM Shop menu might be hidden entirely if you have no permissions
         if jasmOption then
             local jMenu = jasmOption.subMenu
@@ -137,7 +137,7 @@ local function init()
         end
 
         local unregisterOption = nil
-        ---@diagnostic disable-next-line: unnecessary-if
+
         -- If Player Shop exists, check for the UnRegister option inside it
         if playerShopOption then
             local pMenu = playerShopOption.subMenu
@@ -215,7 +215,7 @@ local function init()
         end
 
         local playerShopOption = nil
-        ---@diagnostic disable-next-line: unnecessary-if
+
         if jasmOption then
             local jMenu = jasmOption.subMenu
             for _, opt in ipairs(jMenu.options) do
@@ -227,7 +227,7 @@ local function init()
         end
 
         local unregisterOption = nil
-        ---@diagnostic disable-next-line: unnecessary-if
+
         if playerShopOption then
             local pMenu = playerShopOption.subMenu
             for _, opt in ipairs(pMenu.options) do

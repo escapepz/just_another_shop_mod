@@ -37,7 +37,7 @@ function ShopItemActionFooter:createChildren()
         UIFont.Small,
         true
     )
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.errorLabel then
         self.errorLabel:initialise()
         self.errorLabel:instantiate()
@@ -58,7 +58,7 @@ function ShopItemActionFooter:createChildren()
         self.target,
         self.onAccept
     )
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.acceptButton then
         self.acceptButton:initialise()
         self.acceptButton:instantiate()
@@ -79,7 +79,7 @@ function ShopItemActionFooter:createChildren()
         self.target,
         self.onDebug
     )
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.debugButton and isDebugEnabled() then
         self.debugButton:initialise()
         self.debugButton:instantiate()
@@ -91,7 +91,6 @@ function ShopItemActionFooter:createChildren()
 end
 
 function ShopItemActionFooter:setError(msg)
-    ---@diagnostic disable-next-line: unnecessary-if
     if self.errorLabel then
         self.errorLabel:setName(msg or "")
     end
@@ -114,19 +113,19 @@ end
 function ShopItemActionFooter:calculateLayout(width, height)
     self:setWidth(width)
     self:setHeight(height)
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.errorLabel then
         self.errorLabel:setX(0)
         self.errorLabel:setWidth(width)
     end
 
     local btnW = math.min(200, width - UI_BORDER_SPACING * 2)
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.acceptButton then
         self.acceptButton:setWidth(btnW)
         self.acceptButton:setX((width - btnW) / 2)
     end
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.debugButton then
         self.debugButton:setWidth(btnW)
         self.debugButton:setX((width - btnW) / 2)

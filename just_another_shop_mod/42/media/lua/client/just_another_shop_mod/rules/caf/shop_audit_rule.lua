@@ -17,17 +17,16 @@ local RuleShopAudit = function(ctx)
     local destType = destContainer:getType()
 
     local srcShop = false
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if srcParent then
         srcShop = srcParent:getModData().isShop
     end
     local destShop = false
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if destParent then
         destShop = destParent:getModData().isShop
     end
 
-    ---@diagnostic disable-next-line: unnecessary-if
     if srcShop or destShop then
         logger:info("Transfer recorded", {
             player = player:getUsername(),

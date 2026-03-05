@@ -27,11 +27,10 @@ local ProductListPanel = ISPanel:derive("ProductListPanel")
 function ProductListPanel:xuiBuild(style, class, ...)
     local o = ISXuiSkin.build(self.xuiSkin, style, class, ...)
     if o then
-        ---@diagnostic disable-next-line: unnecessary-if
         if o.initialise then
             o:initialise()
         end
-        ---@diagnostic disable-next-line: unnecessary-if
+
         if o.instantiate then
             o:instantiate()
         end
@@ -118,7 +117,7 @@ function ProductListPanel:onTileClicked(product)
         "ProductListPanel:onTileClicked() product: "
             .. (product and tostring(product.name) or "nil")
     )
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.onSelectProduct then
         self.onSelectProduct(self.target, product)
     end
@@ -136,13 +135,12 @@ function ProductListPanel:createChildren()
 
     ---@type ISButton
     self.gridPrevBtn = self:xuiBuild(nil, ISButton, 0, 0, btnSize, btnSize, nil, self, function()
-        ---@diagnostic disable-next-line: unnecessary-if
         if self.iconPanel then
             self.iconPanel:setCurrentPage(self.iconPanel:getCurrentPage() - 1)
             self:onGridPageChanged()
         end
     end)
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.gridPrevBtn then
         self.gridPrevBtn.image = getTexture("ArrowLeft")
         self:addChild(self.gridPrevBtn)
@@ -156,13 +154,12 @@ function ProductListPanel:createChildren()
 
     ---@type ISButton
     self.gridNextBtn = self:xuiBuild(nil, ISButton, 0, 0, btnSize, btnSize, nil, self, function()
-        ---@diagnostic disable-next-line: unnecessary-if
         if self.iconPanel then
             self.iconPanel:setCurrentPage(self.iconPanel:getCurrentPage() + 1)
             self:onGridPageChanged()
         end
     end)
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.gridNextBtn then
         self.gridNextBtn.image = getTexture("ArrowRight")
         self:addChild(self.gridNextBtn)
@@ -172,7 +169,7 @@ function ProductListPanel:createChildren()
     ---@type ISTiledIconListBox
     self.iconPanel =
         self:xuiBuild(nil, ISTiledIconListBox, 0, 0, self.width, self.height, self.dataList)
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.iconPanel then
         self.iconPanel.onRenderTile = onRenderTile
         self.iconPanel.onClickTile = function(_target, product)
@@ -188,13 +185,12 @@ function ProductListPanel:createChildren()
 
     -- 2. LIST VIEW
     self.listView = ProductListView:new(0, 0, self.width, self.height, self.player, self.xuiSkin)
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.listView then
         self.listView:initialise()
         self.listView:instantiate()
         self.listView.target = self
         self.listView.onSelectProduct = function(_target, product)
-            ---@diagnostic disable-next-line: unnecessary-if
             if self.onSelectProduct then
                 self.onSelectProduct(self.target, product)
             end
@@ -220,7 +216,6 @@ function ProductListPanel:xuiRecalculateLayout(
 end
 
 function ProductListPanel:onGridPageChanged()
-    ---@diagnostic disable-next-line: unnecessary-if
     if self.iconPanel and self.gridPageLabel then
         local pages = math.max(1, self.iconPanel:getPages())
         local cur = self.iconPanel:getCurrentPage() + 1
@@ -241,13 +236,11 @@ function ProductListPanel:calculateLayout(_preferredWidth, _preferredHeight)
     local btnSize = self.gridPrevBtn and self.gridPrevBtn:getHeight() or 0
     local barHeight = btnSize > 0 and (btnSize + 4) or 0 -- 4px gap below bar
 
-    ---@diagnostic disable-next-line: unnecessary-if
     if self.gridPrevBtn then
         self.gridPrevBtn:setX(0)
         self.gridPrevBtn:setY(0)
     end
 
-    ---@diagnostic disable-next-line: unnecessary-if
     if self.gridPageLabel then
         local lblW = getTextManager():MeasureStringX(
             UIFont.Small,
@@ -258,13 +251,11 @@ function ProductListPanel:calculateLayout(_preferredWidth, _preferredHeight)
         self.gridPageLabel:setY(0)
     end
 
-    ---@diagnostic disable-next-line: unnecessary-if
     if self.gridNextBtn then
         self.gridNextBtn:setX(width - btnSize)
         self.gridNextBtn:setY(0)
     end
 
-    ---@diagnostic disable-next-line: unnecessary-if
     if self.iconPanel then
         self.iconPanel:setX(0)
         self.iconPanel:setY(barHeight)
@@ -274,7 +265,6 @@ function ProductListPanel:calculateLayout(_preferredWidth, _preferredHeight)
         self:onGridPageChanged()
     end
 
-    ---@diagnostic disable-next-line: unnecessary-if
     if self.listView then
         self.listView:setX(0)
         self.listView:setY(0)
@@ -287,7 +277,6 @@ function ProductListPanel:calculateLayout(_preferredWidth, _preferredHeight)
 end
 
 function ProductListPanel:prerender()
-    ---@diagnostic disable-next-line: unnecessary-if
     if self.dirtyLayout and self.calculateLayout then
         self:calculateLayout(self.xuiPreferredResizeWidth, self.xuiPreferredResizeHeight)
     end
@@ -303,23 +292,23 @@ function ProductListPanel:setViewMode(mode)
     logger:debug("ProductListPanel:setViewMode() mode: " .. tostring(mode))
     self.viewMode = mode
     local isGrid = mode == "grid"
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.iconPanel then
         self.iconPanel:setVisible(isGrid)
     end
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.gridPrevBtn then
         self.gridPrevBtn:setVisible(isGrid)
     end
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.gridPageLabel then
         self.gridPageLabel:setVisible(isGrid)
     end
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.gridNextBtn then
         self.gridNextBtn:setVisible(isGrid)
     end
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.listView then
         self.listView:setVisible(not isGrid)
     end
@@ -334,14 +323,12 @@ function ProductListPanel:setSelectedProduct(product)
     )
     self.selectedProduct = product
 
-    ---@diagnostic disable-next-line: unnecessary-if
     -- Sync Grid
     if self.iconPanel then
         ---@diagnostic disable-next-line: inject-field
         self.iconPanel.selectedTileData = product
     end
 
-    ---@diagnostic disable-next-line: unnecessary-if
     -- Sync List
     if self.listView then
         self.listView:setSelectedProduct(product)
@@ -368,13 +355,11 @@ function ProductListPanel:setProducts(products)
         end
     end
 
-    ---@diagnostic disable-next-line: unnecessary-if
     -- Refresh ListView
     if self.listView then
         self.listView:setProducts(products)
     end
 
-    ---@diagnostic disable-next-line: unnecessary-if
     -- Refresh grid
     if self.iconPanel then
         self.iconPanel:calculateTiles()

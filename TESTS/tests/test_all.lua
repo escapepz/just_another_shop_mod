@@ -6,7 +6,10 @@
 ]]
 
 -- Setup relative package paths
-local testDir = debug.getinfo(1).source:match("@?(.*[/\\])")
+local testDir = debug
+    .getinfo(1)--[[@cast -?]]
+    .source
+    :match("@?(.*[/\\])")
 package.path = testDir .. "?.lua;" .. package.path
 
 -- Add mod's lua directories to package.path

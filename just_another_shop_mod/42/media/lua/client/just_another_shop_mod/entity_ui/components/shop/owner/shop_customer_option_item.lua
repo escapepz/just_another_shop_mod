@@ -66,12 +66,11 @@ function ShopCustomerOptionItem:createChildren()
     -- Remove Button
     ---@type ISButton
     self.removeBtn = self:xuiBuild(nil, ISButton, 0, 0, 50, 24, "Remove", self, function()
-        ---@diagnostic disable-next-line: unnecessary-if
         if self.onRemove then
             self.onRemove(self.target, self.path)
         end
     end)
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.removeBtn then
         self.removeBtn.textColor = { r = 1.0, g = 0.27, b = 0.27, a = 1.0 }
         self.tableLayout:setElement(3, 0, self.removeBtn)
@@ -93,7 +92,7 @@ function ShopCustomerOptionItem:updatePath(path)
     self.typeLabel:setName(path.itemType or "")
 
     -- Update Icon
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if path.itemType then
         self.iconSlot.texture = TextureUtils.getItemTexture(path.itemType)
     else
@@ -104,7 +103,7 @@ end
 function ShopCustomerOptionItem:calculateLayout(width, height)
     self:setWidth(width)
     self:setHeight(height)
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.tableLayout then
         self.tableLayout:calculateLayout(width, height)
     end
