@@ -286,5 +286,11 @@ function JASM_PublishTradeAction:complete()
         paths = #cleanPaths,
     })
 
+    -- Trigger UI refresh callback (Issue 6)
+    if self.onCompleteFunc then
+        local args = self.onCompleteArgs or {}
+        self.onCompleteFunc(args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8])
+    end
+
     return true
 end
