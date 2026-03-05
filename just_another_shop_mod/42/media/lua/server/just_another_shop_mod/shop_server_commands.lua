@@ -65,6 +65,12 @@ local function handleRegister(player, args, containerObj, thumpable, thumpableN)
     -- unregistered first before it can be re-registered.
     if modData.isShop then
         logger:error("Shop Register denied: already registered", { player = player:getUsername() })
+        KUtilities.SendServerCommandTo(
+            player,
+            "JASM_ShopManager",
+            "RegisterDenied",
+            { reason = "already_registered" }
+        )
         return
     end
 
@@ -109,6 +115,12 @@ local function handleUnregister(player, args, containerObj, thumpable, thumpable
             player = player:getUsername(),
             owner = modData.shopOwnerID,
         })
+        KUtilities.SendServerCommandTo(
+            player,
+            "JASM_ShopManager",
+            "UnregisterDenied",
+            { reason = "not_owner_or_admin" }
+        )
         return
     end
 
