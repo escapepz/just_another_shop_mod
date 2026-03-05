@@ -57,7 +57,7 @@ function ShopItemDetailsPanel:createChildren()
         nil,
         nil
     )
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.tableLayout then
         self.tableLayout:initialise()
         self.tableLayout:instantiate()
@@ -68,7 +68,7 @@ function ShopItemDetailsPanel:createChildren()
     -- 1a Header Area
     ---@type ShopItemHeader
     self.headerPanel = ShopItemHeader:new(0, 0, self.width, 76, self.xuiSkin)
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.headerPanel then
         self.headerPanel:initialise()
         self.headerPanel:instantiate()
@@ -82,7 +82,7 @@ function ShopItemDetailsPanel:createChildren()
     -- 1b "Shop Gives" Container
     ---@type ShopItemGivesPanel
     self.givesPanel = ShopItemGivesPanel:new(0, 0, self.width, 84, self.xuiSkin)
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.givesPanel then
         self.givesPanel:initialise()
         self.givesPanel:instantiate()
@@ -97,7 +97,7 @@ function ShopItemDetailsPanel:createChildren()
     ---@type ShopItemRequirementsPanel
     self.requirementsPanel =
         ShopItemRequirementsPanel:new(0, 0, self.width, 0, self, self.onSelectReq, self.xuiSkin)
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.requirementsPanel then
         self.requirementsPanel:initialise()
         self.requirementsPanel:instantiate()
@@ -206,34 +206,32 @@ function ShopItemDetailsPanel:setProduct(product)
     self.product = product
 
     if not product then
-        ---@diagnostic disable-next-line: unnecessary-if
         if self.headerPanel then
             self.headerPanel:setItem(nil, nil, nil, nil)
         end
-        ---@diagnostic disable-next-line: unnecessary-if
+
         if self.givesPanel then
             self.givesPanel:setItem(nil, 1, nil)
         end
-        ---@diagnostic disable-next-line: unnecessary-if
+
         if self.requirementsPanel then
             self.requirementsPanel:setTrades(nil)
         end
-        ---@diagnostic disable-next-line: unnecessary-if
+
         if self.footerPanel then
             self.footerPanel:setError("")
         end
-        ---@diagnostic disable-next-line: unnecessary-if
+
         if self.footerPanel then
             self.footerPanel:setTradeEnabled(false)
         end
         return
     end
 
-    ---@diagnostic disable-next-line: unnecessary-if
     if self.headerPanel then
         self.headerPanel:setItem(product.name, product.type, product.stock, product.icon)
     end
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.givesPanel then
         -- Read offerQty from the IsoObject modData (single source of trust)
         ---@diagnostic disable-next-line: undefined-field
@@ -278,7 +276,6 @@ function ShopItemDetailsPanel:setProduct(product)
         table.insert(trades, trade)
     end
 
-    ---@diagnostic disable-next-line: unnecessary-if
     if self.requirementsPanel then
         self.requirementsPanel:setTrades(trades)
     end
@@ -301,11 +298,10 @@ function ShopItemDetailsPanel:updateTradeButton()
         end
     end
 
-    ---@diagnostic disable-next-line: unnecessary-if
     if self.footerPanel then
         self.footerPanel:setTradeEnabled(canTrade)
     end
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.footerPanel then
         self.footerPanel:setError(errorTxt)
     end
@@ -385,14 +381,12 @@ function ShopItemDetailsPanel:calculateLayout(_preferredWidth, _preferredHeight)
     self:setWidth(width)
     self:setHeight(height)
 
-    ---@diagnostic disable-next-line: unnecessary-if
     -- 1. First, tell the Requirements panel to determine its own height based on current list items
     -- This ensures its :getHeight() is stable before the parent table uses it to allocate row space.
     if self.requirementsPanel then
         self.requirementsPanel:calculateLayout(width, 0)
     end
 
-    ---@diagnostic disable-next-line: unnecessary-if
     -- 2. Resize tableLayout to fill panel and re-flow rows based on new heights
     if self.tableLayout then
         self.tableLayout:setWidth(width)

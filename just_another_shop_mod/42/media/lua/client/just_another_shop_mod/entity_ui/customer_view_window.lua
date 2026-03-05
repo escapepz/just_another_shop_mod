@@ -123,7 +123,6 @@ function CustomerViewWindow:createChildren()
     self:removeDebugPanel()
     self:so_override_the_entity_header()
 
-    ---@diagnostic disable-next-line: unnecessary-if
     -- Hide default B42 panels so they don't block our custom layout
     if self.componentsPanel then
         self.componentsPanel:setVisible(false)
@@ -140,23 +139,21 @@ function CustomerViewWindow:createChildren()
     self:initPanels()
     self:populateInitialData()
 
-    ---@diagnostic disable-next-line: unnecessary-if
     -- Move the layout to the bottom of the child stack so it doesn't block
     -- the window's own area for dragging (title bar handle).
     if self.masterLayout then
         self.masterLayout:backMost()
     end
 
-    ---@diagnostic disable-next-line: unnecessary-if
     -- Interactive buttons MUST be on top of the layout to be clickable
     if self.collapseButton then
         self.collapseButton:bringToTop()
     end
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.pinButton then
         self.pinButton:bringToTop()
     end
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.closeButton then
         self.closeButton:bringToTop()
     end
@@ -206,7 +203,6 @@ function CustomerViewWindow:calculateLayout(_preferredWidth, _preferredHeight)
         y = y + self.entityHeader:getHeight()
     end
 
-    ---@diagnostic disable-next-line: unnecessary-if
     -- The master layout handles 100% of the remaining content area
     if self.masterLayout then
         self.masterLayout:setX(0)
@@ -216,12 +212,11 @@ function CustomerViewWindow:calculateLayout(_preferredWidth, _preferredHeight)
         self.masterLayout:calculateLayout(width, height - y - rh)
     end
 
-    ---@diagnostic disable-next-line: unnecessary-if
     -- Simple pin/collapse buttons positioning
     if self.pinButton then
         self.pinButton:setX(width - 3 - self.pinButton:getWidth())
     end
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.collapseButton then
         self.collapseButton:setX(width - 3 - self.collapseButton:getWidth())
     end
@@ -237,12 +232,10 @@ function CustomerViewWindow:calculateLayout(_preferredWidth, _preferredHeight)
 end
 
 function CustomerViewWindow:prerender()
-    ---@diagnostic disable-next-line: unnecessary-if
     if self.dirtyLayout then
         local oldX = self:getX()
         local oldWidth = self:getWidth()
 
-        ---@diagnostic disable-next-line: unnecessary-if
         if self.calculateLayout then
             self:calculateLayout(self.xuiPreferredResizeWidth, self.xuiPreferredResizeHeight)
         end
@@ -260,7 +253,6 @@ end
 
 --- Remove the default debug panel if it exists.
 function CustomerViewWindow:removeDebugPanel()
-    ---@diagnostic disable-next-line: unnecessary-if
     if self.entityDebug then
         self:removeChild(self.entityDebug)
         self.entityDebug = nil
@@ -373,14 +365,12 @@ end
 
 --- Populate components with initial data.
 function CustomerViewWindow:populateInitialData()
-    ---@diagnostic disable-next-line: unnecessary-if
     -- Pass player inventory map
     if self.detailsPanel and self.player then
         local pMap = ShopDataManager.ScanPlayerInventory(self.player)
         self.detailsPanel:setInventory(pMap)
     end
 
-    ---@diagnostic disable-next-line: unnecessary-if
     -- Set shop products
     if self.productPanel then
         self.productPanel:setProducts(self.inventory)
@@ -390,7 +380,6 @@ function CustomerViewWindow:populateInitialData()
     local list = self.inventory.list
     if #list > 0 then
         self:onSelectProduct(list[1])
-    ---@diagnostic disable-next-line: unnecessary-if
     elseif self.detailsPanel then
         self.detailsPanel:setProduct(nil)
     end
@@ -401,7 +390,7 @@ end
 function CustomerViewWindow:onSearch(text)
     logger:debug("CustomerViewWindow:onSearch() query: " .. tostring(text))
     local filteredInventory = self.dataManager:search(text)
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.productPanel then
         self.productPanel:setProducts(filteredInventory)
     end
@@ -412,7 +401,7 @@ end
 function CustomerViewWindow:onSort(mode)
     logger:debug("CustomerViewWindow:onSort() mode: " .. tostring(mode))
     local sortedInventory = self.dataManager:sort(mode)
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.productPanel then
         self.productPanel:setProducts(sortedInventory)
     end
@@ -422,7 +411,7 @@ end
 ---@param mode string The view mode.
 function CustomerViewWindow:onViewToggle(mode)
     logger:debug("CustomerViewWindow:onViewToggle() mode: " .. tostring(mode))
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.productPanel then
         self.productPanel:setViewMode(mode)
     end
@@ -438,11 +427,11 @@ function CustomerViewWindow:onSelectProduct(product)
     if not product then
         return
     end
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.detailsPanel then
         self.detailsPanel:setProduct(product)
     end
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.productPanel then
         self.productPanel:setSelectedProduct(product)
     end
@@ -480,7 +469,7 @@ function CustomerViewWindow:new(x, y, w, h, player, entity)
     -- Data Management
     o.dataManager = ShopDataManager()
     local container = entity:getContainer()
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if container then
         o.inventory = o.dataManager:scanContainer(container)
     else
@@ -494,14 +483,16 @@ end
 local _openWindowsByEntity = {}
 
 --- Helper: Find existing CustomerViewWindow for entity by querying UIManager
+---@return UIElement?
 local function findExistingCustomerWindow(entity)
-    local uiManager = UIManager.getUI()
-    if not uiManager then
+    local uiList = UIManager.getUI()
+    if not uiList then
         return nil
     end
 
-    for _, child in ipairs(uiManager:getChildren()) do
-        if child:instanceof(CustomerViewWindow) and child.entity == entity then
+    for i = 0, uiList:size() - 1 do
+        local child = uiList:get(i)
+        if instanceof(child, "CustomerViewWindow") and child.entity == entity then
             return child
         end
     end
@@ -541,7 +532,7 @@ local function _onFillWorldObjectContextMenu(playerIndex, context, worldObjects)
     if worldObjects and #worldObjects > 0 then
         ---@type IsoObject
         local wObj = worldObjects and worldObjects[1] or nil
-        ---@diagnostic disable-next-line: unnecessary-if
+
         if wObj and wObj:getContainer() then
             context:addOption("Open Customer Shop View", nil, function()
                 CustomerViewWindow.open(playerIndex, context, wObj)

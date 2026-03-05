@@ -1,3 +1,4 @@
+---@diagnostic disable: unnecessary-if
 local ShopSectionHeader =
     require("just_another_shop_mod/entity_ui/components/shop/shared/shop_section_header")
 require("Entity/ISUI/Controls/ISTableLayout")
@@ -126,15 +127,14 @@ function ShopItemHeader:createChildren()
 end
 
 function ShopItemHeader:setItem(name, typeName, stock, icon)
-    ---@diagnostic disable-next-line: unnecessary-if
     if self.nameLabel then
         self.nameLabel:setName(name or "Select an item")
     end
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.typeLabel then
         self.typeLabel:setName(typeName or "")
     end
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.stockLabel then
         self.stockLabel:setName(stock and ("Stock: " .. tostring(stock)) or "")
     end
@@ -142,12 +142,12 @@ end
 
 function ShopItemHeader:calculateLayout(width, height)
     self:setWidth(width)
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.tableLayout then
         self.tableLayout:calculateLayout(width, height)
         self:setHeight(self.tableLayout:getHeight())
     end
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.sectionHeader then
         self.sectionHeader:calculateLayout(width, self.sectionHeader:getHeight())
     end

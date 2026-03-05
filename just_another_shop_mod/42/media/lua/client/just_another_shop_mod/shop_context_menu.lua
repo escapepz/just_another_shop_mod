@@ -15,7 +15,6 @@ local allowedCrates = { ["Base.Wood_Crate"] = true, ["Base.Metal_Crate"] = true 
 local function onShopAction(worldObjects, _playerObj, action, shopType)
     local containerObj = nil
     for _, obj in ipairs(worldObjects) do
-        ---@diagnostic disable-next-line: unnecessary-if
         if obj:getContainer() then
             containerObj = obj
             break
@@ -55,7 +54,6 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
     ---@type IsoObject|nil
     local containerObj = nil
     for _, obj in ipairs(worldObjects) do
-        ---@diagnostic disable-next-line: unnecessary-if
         if obj:getContainer() then
             containerObj = obj
             break
@@ -108,7 +106,6 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
         or (shopType == "PLAYER" and (isOwner or effectivelyAdmin))
     local canAccessNPCMenu = isAdmin and (not isShop or shopType == "SYSTEM")
 
-    ---@diagnostic disable-next-line: unnecessary-if
     -- Top Level Shop Access (General Public)
     if isShop then
         -- Open Customer View
@@ -126,7 +123,6 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
         local jMenu = ISContextMenu:getNew(context)
         context:addSubMenu(jOption, jMenu)
 
-        ---@diagnostic disable-next-line: unnecessary-if
         -- 1. Shop Management
         if canManage then
             jMenu:addOption("Manage Shop", worldObjects, function()

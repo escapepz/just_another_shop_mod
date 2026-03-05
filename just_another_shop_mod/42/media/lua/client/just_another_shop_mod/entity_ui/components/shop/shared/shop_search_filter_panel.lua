@@ -27,11 +27,10 @@ local ShopSearchFilterPanel = ISPanel:derive("ShopSearchFilterPanel")
 function ShopSearchFilterPanel:xuiBuild(style, class, ...)
     local o = ISXuiSkin.build(self.xuiSkin, style, class, ...)
     if o then
-        ---@diagnostic disable-next-line: unnecessary-if
         if o.initialise then
             o:initialise()
         end
-        ---@diagnostic disable-next-line: unnecessary-if
+
         if o.instantiate then
             o:instantiate()
         end
@@ -73,7 +72,7 @@ function ShopSearchFilterPanel:createChildren()
     -- 2. TOP ROW: Search box
     ---@type ISTextEntryBox
     self.searchBox = self:xuiBuild(nil, ISTextEntryBox, "", 0, 0, 10, 24)
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.searchBox then
         ---@diagnostic disable-next-line: inject-field
         self.searchBox.calculateLayout = function(_self, _w, _h)
@@ -82,7 +81,6 @@ function ShopSearchFilterPanel:createChildren()
         end
         self.searchBox:setPlaceholderText("Search items...")
         self.searchBox.onTextChange = function()
-            ---@diagnostic disable-next-line: unnecessary-if
             if self.onSearch then
                 self.onSearch(self.target, self.searchBox:getText())
             end
@@ -119,7 +117,7 @@ function ShopSearchFilterPanel:createChildren()
                     self,
                     function() end
                 )
-                ---@diagnostic disable-next-line: unnecessary-if
+
                 if self.categoryCombo then
                     ---@diagnostic disable-next-line: inject-field
                     self.categoryCombo.calculateLayout = function(_self, _w, _h)
@@ -163,7 +161,7 @@ function ShopSearchFilterPanel:createChildren()
 
         ---@type ISComboBox
         self.sortCombo = self:xuiBuild(nil, ISComboBox, 0, 0, 10, 24, self, self.onSelectSort)
-        ---@diagnostic disable-next-line: unnecessary-if
+
         if self.sortCombo then
             ---@diagnostic disable-next-line: inject-field
             self.sortCombo.calculateLayout = function(_self, _w, _h)
@@ -196,7 +194,6 @@ function ShopSearchFilterPanel:onToggleMode(mode)
     logger:debug("ShopSearchFilterPanel:onToggleMode() mode: " .. tostring(mode))
     self.viewMode = mode
 
-    ---@diagnostic disable-next-line: unnecessary-if
     if self.viewBtn then
         if mode == "grid" then
             self.viewBtn:setTitle("≡")
@@ -205,7 +202,6 @@ function ShopSearchFilterPanel:onToggleMode(mode)
         end
     end
 
-    ---@diagnostic disable-next-line: unnecessary-if
     if self.onViewToggle then
         self.onViewToggle(self.target, mode)
     end
@@ -214,7 +210,7 @@ end
 --- Callback when a sort option is selected from the combo box.
 function ShopSearchFilterPanel:onSelectSort()
     logger:debug("ShopSearchFilterPanel:onSelectSort() called")
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.onSort then
         self.onSort(self.target, self.sortCombo:getOptionText(self.sortCombo.selected))
     end
@@ -223,7 +219,7 @@ end
 function ShopSearchFilterPanel:calculateLayout(width, height)
     self:setWidth(width)
     self:setHeight(height)
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.tableLayout then
         self.tableLayout:calculateLayout(width, height)
     end

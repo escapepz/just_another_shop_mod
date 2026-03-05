@@ -35,7 +35,7 @@ function ShopManager:registerShop(container, ownerID, shopName)
     modData.shopName = shopName or "A Shop"
 
     local square = parent:getSquare()
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if square then
         local id = KUtilities.SquareToString(square)
         self.shops[id] = true
@@ -65,7 +65,7 @@ function ShopManager:unregisterShop(container)
     modData.shopName = nil
 
     local square = parent:getSquare()
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if square then
         local id = KUtilities.SquareToString(square)
         self.shops[id] = nil

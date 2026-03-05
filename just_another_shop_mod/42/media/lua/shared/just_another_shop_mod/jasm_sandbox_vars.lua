@@ -22,7 +22,6 @@ local DEFAULTS = {
 
 local NAMESPACE = "JASM"
 
----@diagnostic disable-next-line: unnecessary-if
 --- Initialize sandbox vars (safe to call multiple times; second call is a no-op
 --- because SandboxVarsModule.Init would overwrite — use a guard).
 if not _G.__JASM_SandboxVarsInitialized then

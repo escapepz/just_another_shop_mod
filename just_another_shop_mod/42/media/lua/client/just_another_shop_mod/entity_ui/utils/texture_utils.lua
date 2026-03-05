@@ -1,3 +1,4 @@
+---@diagnostic disable: unnecessary-if
 local TextureUtils = {}
 
 function TextureUtils.getItemTexture(itemFullID)
@@ -5,10 +6,8 @@ function TextureUtils.getItemTexture(itemFullID)
         return nil
     end
     local script = ScriptManager.instance:getItem(itemFullID)
-    ---@diagnostic disable-next-line: unnecessary-if
     if script then
         local icon = script:getIcon()
-        ---@diagnostic disable-next-line: unnecessary-if
         if icon then
             return getTexture("Item_" .. icon)
         end

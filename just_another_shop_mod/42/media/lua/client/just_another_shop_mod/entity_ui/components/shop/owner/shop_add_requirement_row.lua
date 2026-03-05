@@ -35,7 +35,7 @@ function ShopAddRequirementRow:createChildren()
     -- Main layout: [Qty] [Type (fill)] [Add Btn]
     ---@type ISTableLayout
     self.addPathLayout = self:xuiBuild(nil, ISTableLayout, 0, 0, self.width, self.height)
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.addPathLayout then
         local cQ = self.addPathLayout:addColumn()
         cQ.minimumWidth = 55
@@ -54,10 +54,10 @@ function ShopAddRequirementRow:createChildren()
             ---@type ISTextEntryBox
             self.newPathQtyInput =
                 self:xuiBuild(nil, ISTextEntryBox, "1", 0, inputMargin, 55, inputH)
-            ---@diagnostic disable-next-line: unnecessary-if
+
             if self.newPathQtyInput then
                 self.newPathQtyInput:setPlaceholderText("Qty")
-                ---@diagnostic disable-next-line: unnecessary-if
+
                 -- Note: setOnlyNumbers might be version dependent, using standard PZ check if needed
                 if self.newPathQtyInput.setOnlyNumbers then
                     self.newPathQtyInput:setOnlyNumbers(true)
@@ -70,7 +70,7 @@ function ShopAddRequirementRow:createChildren()
             ---@type ISTextEntryBox
             self.newPathTypeInput =
                 self:xuiBuild(nil, ISTextEntryBox, "", 0, inputMargin, 200, inputH)
-            ---@diagnostic disable-next-line: unnecessary-if
+
             if self.newPathTypeInput then
                 self.newPathTypeInput:setPlaceholderText("Type e.g. Base.GoldBar")
                 self.addPathLayout:setElement(1, ar:index(), self.newPathTypeInput)
@@ -88,7 +88,7 @@ function ShopAddRequirementRow:createChildren()
                 self,
                 self.onAddClicked
             )
-            ---@diagnostic disable-next-line: unnecessary-if
+
             if self.addPathBtn then
                 self.addPathBtn.textColor = { r = 0.27, g = 0.61, b = 1.0, a = 1.0 }
                 self.addPathLayout:setElement(2, ar:index(), self.addPathBtn)

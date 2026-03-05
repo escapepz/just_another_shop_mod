@@ -172,14 +172,12 @@ end
 function ShopItemRequirementsPanel:calculateLayout(width, _height)
     self:setWidth(width)
 
-    ---@diagnostic disable-next-line: unnecessary-if
     if self.tableLayout then
         self.tableLayout:setWidth(width)
         self.tableLayout:calculateLayout(width, 0)
         self:setHeight(math.max(self.minimumHeight or 0, self.tableLayout:getHeight()))
     end
 
-    ---@diagnostic disable-next-line: unnecessary-if
     if self.headerPanel then
         self.headerPanel:calculateLayout(width, self.headerPanel:getHeight())
     end

@@ -92,11 +92,10 @@ local OwnerViewWindow = ISEntityWindow:derive("OwnerViewWindow")
 function OwnerViewWindow:xuiBuild(style, class, ...)
     local o = ISXuiSkin.build(self.xuiSkin, style, class, ...)
     if o then
-        ---@diagnostic disable-next-line: unnecessary-if
         if o.initialise then
             o:initialise()
         end
-        ---@diagnostic disable-next-line: unnecessary-if
+
         if o.instantiate then
             o:instantiate()
         end
@@ -153,7 +152,6 @@ function OwnerViewWindow:initialise()
 end
 
 function OwnerViewWindow:removeDebugPanel()
-    ---@diagnostic disable-next-line: unnecessary-if
     if self.entityDebug then
         self:removeChild(self.entityDebug)
         self.entityDebug = nil
@@ -167,7 +165,6 @@ function OwnerViewWindow:createChildren()
     self:removeDebugPanel()
     self:so_override_the_entity_header()
 
-    ---@diagnostic disable-next-line: unnecessary-if
     if self.componentsPanel then
         self.componentsPanel:setVisible(false)
     end
@@ -182,21 +179,20 @@ function OwnerViewWindow:createChildren()
     self:initLayout()
     self:populateInitialData()
 
-    ---@diagnostic disable-next-line: unnecessary-if
     if self.masterLayout then
         self.masterLayout:backMost()
     end
 
     -- Keep window chrome on top
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.collapseButton then
         self.collapseButton:bringToTop()
     end
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.pinButton then
         self.pinButton:bringToTop()
     end
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.closeButton then
         self.closeButton:bringToTop()
     end
@@ -241,7 +237,7 @@ function OwnerViewWindow:calculateLayout(_preferredWidth, _preferredHeight)
 
     -- Entity header
     local y = th
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.entityHeader then
         self.entityHeader:setX(0)
         self.entityHeader:setY(y)
@@ -271,12 +267,10 @@ function OwnerViewWindow:calculateLayout(_preferredWidth, _preferredHeight)
 end
 
 function OwnerViewWindow:prerender()
-    ---@diagnostic disable-next-line: unnecessary-if
     if self.dirtyLayout then
         local oldX = self:getX()
         local oldWidth = self:getWidth()
 
-        ---@diagnostic disable-next-line: unnecessary-if
         if self.calculateLayout then
             self:calculateLayout(self.xuiPreferredResizeWidth, self.xuiPreferredResizeHeight)
         end
@@ -364,7 +358,7 @@ function OwnerViewWindow:initLeftPanels()
     -- List view (fills remaining height)
     self.productPanel =
         self:xuiBuild(nil, ProductListPanel, 0, 0, 10, 10, self.player, self.xuiSkin)
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.productPanel then
         self.productPanel.target = self
         ---@diagnostic disable-next-line: inject-field
@@ -466,7 +460,7 @@ function OwnerViewWindow:initRightPanel()
         footerRow.marginTop = 10
         self.footerPanel =
             ShopFooterPanel:new(0, 0, rw - R_PAD * 2, 60, self, self.onPublishClicked, self.xuiSkin)
-        ---@diagnostic disable-next-line: unnecessary-if
+
         if self.footerPanel then
             self.footerPanel:initialise()
             self.footerPanel:instantiate()
@@ -482,7 +476,6 @@ end
 --- Populate the product panel with the current inventory.
 ---@param inv CustomerViewInventory
 function OwnerViewWindow:refreshInventoryList(inv)
-    ---@diagnostic disable-next-line: unnecessary-if
     if self.productPanel then
         self.productPanel:setProducts(inv)
     end
@@ -554,7 +547,7 @@ function OwnerViewWindow:onSelectInventoryItem(entry)
                 local mapped = self.inventory
                     and self.inventory.map
                     and self.inventory.map[path.itemType]
-                ---@diagnostic disable-next-line: unnecessary-if
+
                 if mapped then
                     path.icon = mapped.icon
                 end
@@ -570,7 +563,7 @@ function OwnerViewWindow:onSelectInventoryItem(entry)
     )
 
     self:updateOfferPreview(entry)
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.requirementPanel then
         ---@diagnostic disable-next-line: undefined-field
         self.requirementPanel:setRequirementPaths(self.requirementPaths)
@@ -791,7 +784,6 @@ function OwnerViewWindow:onPublishClicked()
         window.isPublishing = false
         window.currentPublishAction = nil
 
-        ---@diagnostic disable-next-line: unnecessary-if
         if window.footerPanel then
             ---@diagnostic disable-next-line: undefined-field
             window.footerPanel:setSuccess(
@@ -832,7 +824,7 @@ end
 ---@param msg string
 function OwnerViewWindow:showError(msg)
     logger:error("OwnerViewWindow:showError(): " .. tostring(msg))
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if self.footerPanel then
         ---@diagnostic disable-next-line: undefined-field
         self.footerPanel:setError(msg)
@@ -841,7 +833,6 @@ end
 
 --- Clear the error/info message.
 function OwnerViewWindow:clearError()
-    ---@diagnostic disable-next-line: unnecessary-if
     if self.footerPanel then
         ---@diagnostic disable-next-line: undefined-field
         self.footerPanel:clearError()
@@ -884,7 +875,7 @@ function OwnerViewWindow:new(x, y, w, h, player, entity)
     -- Data
     o.dataManager = ShopDataManager()
     local container = entity:getContainer()
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if container then
         o.inventory = o.dataManager:scanContainer(container)
     else
@@ -914,14 +905,16 @@ end
 -- ============================================================
 
 --- Helper: Find existing OwnerViewWindow for entity by querying UIManager
+---@return UIElement?
 local function findExistingOwnerWindow(entity)
-    local uiManager = UIManager.getUI()
-    if not uiManager then
+    local uiList = UIManager.getUI()
+    if not uiList then
         return nil
     end
 
-    for _, child in ipairs(uiManager:getChildren()) do
-        if child:instanceof(OwnerViewWindow) and child.entity == entity then
+    for i = 0, uiList:size() - 1 do
+        local child = uiList:get(i)
+        if instanceof(child, "OwnerViewWindow") and child.entity == entity then
             return child
         end
     end
@@ -960,7 +953,7 @@ local function _onFillWorldObjectContextMenu(playerIndex, context, worldObjects)
     if worldObjects and #worldObjects > 0 then
         ---@type IsoObject
         local wObj = worldObjects and worldObjects[1] or nil
-        ---@diagnostic disable-next-line: unnecessary-if
+
         if wObj and wObj:getContainer() then
             context:addOption("Open Owner Shop Config", nil, function()
                 OwnerViewWindow.open(playerIndex, context, wObj)

@@ -163,7 +163,6 @@ function TestFramework.printResults()
     print("Failed: " .. TestFramework.stats.failed)
     print("")
 
-    ---@diagnostic disable-next-line: unnecessary-if
     if TestFramework.stats.failed == 0 then
         print("OK_ ALL TESTS PASSED")
     else

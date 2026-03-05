@@ -153,7 +153,6 @@ function JASM_TestRunner.printResults()
     print("Passed: " .. JASM_TestRunner.stats.passed)
     print("Failed: " .. JASM_TestRunner.stats.failed)
 
-    ---@diagnostic disable-next-line: unnecessary-if
     if JASM_TestRunner.stats.failed == 0 then
         print("")
         print("OK_ ALL TESTS PASSED")

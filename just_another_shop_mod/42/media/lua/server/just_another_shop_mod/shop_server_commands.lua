@@ -38,11 +38,10 @@ end
 ---@param thumpableN any|nil
 ---@param state boolean
 local function setThumpable(thumpable, thumpableN, state)
-    ---@diagnostic disable-next-line: unnecessary-if
     if thumpable then
         thumpable:setIsThumpable(state)
     end
-    ---@diagnostic disable-next-line: unnecessary-if
+
     if thumpableN then
         thumpableN:setIsThumpable(state)
     end
@@ -61,7 +60,6 @@ end
 local function handleRegister(player, args, containerObj, thumpable, thumpableN)
     local modData = containerObj:getModData()
 
-    ---@diagnostic disable-next-line: unnecessary-if
     -- REGISTER is only allowed when there is no active shop.
     -- Admins are NOT exempt from this rule — an existing shop must be
     -- unregistered first before it can be re-registered.
