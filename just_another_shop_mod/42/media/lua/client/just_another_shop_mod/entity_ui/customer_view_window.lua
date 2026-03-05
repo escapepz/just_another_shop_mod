@@ -109,6 +109,12 @@ function CustomerViewWindow:so_override_the_entity_header()
     self.entityHeader:calculateLayout(self.width, 0)
 end
 
+--- Override close to prevent closing sibling windows
+function CustomerViewWindow:close()
+    logger:debug("CustomerViewWindow:close() - closing customer view only")
+    ISEntityWindow.close(self)
+end
+
 --- Create child components and set up the layout.
 function CustomerViewWindow:createChildren()
     logger:debug("CustomerViewWindow:createChildren() called")
@@ -484,26 +490,50 @@ function CustomerViewWindow:new(x, y, w, h, player, entity)
     return o
 end
 
----@param playerIndex integer
----@param _context any
----@param entity IsoObject
+-- Track open windows by entity to prevent cross-closing
+local _openWindowsByEntity = {}
+
+--- Helper: Find existing CustomerViewWindow for entity by querying UIManager
+local function findExistingCustomerWindow(entity)
+    local uiManager = UIManager.getUI()
+    if not uiManager then
+        return nil
+    end
+
+    for _, child in ipairs(uiManager:getChildren()) do
+        if child:instanceof(CustomerViewWindow) and child.entity == entity then
+            return child
+        end
+    end
+    return nil
+end
+
 ---@param playerIndex integer
 ---@param _context any
 ---@param entity IsoObject
 function CustomerViewWindow.open(playerIndex, _context, entity)
+    -- Check if window already open for this entity
+    local existingWindow = findExistingCustomerWindow(entity)
+    if existingWindow and existingWindow:isVisible() then
+        existingWindow:bringToTop()
+        return existingWindow
+    end
+
     local screenWidth = getCore():getScreenWidth()
     local screenHeight = getCore():getScreenHeight()
 
     local windowWidth = 800
     local windowHeight = 600
-    local windowX = (screenWidth - windowWidth - 90)
-    local windowY = (screenHeight - windowHeight) / 2
+    -- Position right side, keeps center visible (player view/zombie danger zone)
+    local windowX = math.max(0, screenWidth - windowWidth - 90)
+    local windowY = math.max(0, (screenHeight - windowHeight) / 2)
 
     local player = getSpecificPlayer(playerIndex)
     local window =
         CustomerViewWindow:new(windowX, windowY, windowWidth, windowHeight, player, entity)
     window:initialise()
     window:addToUIManager()
+
     return window
 end
 

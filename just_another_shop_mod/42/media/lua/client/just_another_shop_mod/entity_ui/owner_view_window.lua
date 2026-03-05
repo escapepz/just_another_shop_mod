@@ -903,29 +903,56 @@ function OwnerViewWindow:new(x, y, w, h, player, entity)
     return o
 end
 
+--- Override close to prevent closing sibling windows
+function OwnerViewWindow:close()
+    logger:debug("OwnerViewWindow:close() - closing owner view only")
+    ISEntityWindow.close(self)
+end
+
 -- ============================================================
 -- REGISTRATION / CONTEXT MENU
 -- ============================================================
 
----@param playerIndex integer
----@param _context any
----@param entity IsoObject
+--- Helper: Find existing OwnerViewWindow for entity by querying UIManager
+local function findExistingOwnerWindow(entity)
+    local uiManager = UIManager.getUI()
+    if not uiManager then
+        return nil
+    end
+
+    for _, child in ipairs(uiManager:getChildren()) do
+        if child:instanceof(OwnerViewWindow) and child.entity == entity then
+            return child
+        end
+    end
+    return nil
+end
+
 ---@param playerIndex integer
 ---@param _context any
 ---@param entity IsoObject
 function OwnerViewWindow.open(playerIndex, _context, entity)
+    -- Check if window already open for this entity
+    local existingWindow = findExistingOwnerWindow(entity)
+    if existingWindow and existingWindow:isVisible() then
+        existingWindow:bringToTop()
+        return existingWindow
+    end
+
     local screenWidth = getCore():getScreenWidth()
     local screenHeight = getCore():getScreenHeight()
 
     local windowWidth = 800
     local windowHeight = 600
-    local windowX = (screenWidth / 2 - windowWidth - 69)
-    local windowY = (screenHeight - windowHeight) / 2
+    -- Position left side, keeps center visible (player view/zombie danger zone)
+    local windowX = math.max(0, screenWidth / 2 - windowWidth - 69)
+    local windowY = math.max(0, (screenHeight - windowHeight) / 2)
 
     local player = getSpecificPlayer(playerIndex)
     local window = OwnerViewWindow:new(windowX, windowY, windowWidth, windowHeight, player, entity)
     window:initialise()
     window:addToUIManager()
+
     return window
 end
 
