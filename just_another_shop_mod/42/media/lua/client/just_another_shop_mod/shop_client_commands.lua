@@ -22,6 +22,15 @@ local function OnServerCommand(module, command, args)
         }
         local text = errorTexts[reason] or "Unregistration denied."
         HaloTextHelper.addBadText(getSpecificPlayer(0), text)
+    elseif command == "TradeDenied" then
+        local reason = args.reason or "unknown"
+        local errorTexts = {
+            insufficient_stock = "Shop doesn't have enough stock of that item.",
+            insufficient_funds = "You don't have enough funds for this trade.",
+            unauthorized = "You are not authorized to force this trade.",
+        }
+        local text = errorTexts[reason] or "Trade denied."
+        HaloTextHelper.addBadText(getSpecificPlayer(0), text)
     end
 end
 

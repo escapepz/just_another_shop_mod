@@ -6,6 +6,7 @@ local logger = ZUL.new("just_another_shop_mod")
 local pz_utils = require("pz_utils_shared")
 local JASM_SandboxVars = require("just_another_shop_mod/jasm_sandbox_vars")
 
+local KUtilities = pz_utils.konijima.Utilities
 -- ============================================================
 -- JASM_AcceptTradeAction
 -- B42 Networked TimedAction for customer "Accept Trade".
@@ -251,6 +252,13 @@ function JASM_AcceptTradeAction:complete()
             available = #productItems,
             item = self.itemType,
         })
+        -- Send halotext command to player on client
+        KUtilities.SendServerCommandTo(
+            self.character,
+            "JASM_ShopManager",
+            "TradeDenied",
+            { reason = "insufficient_stock" }
+        )
         return false
     end
 
@@ -274,6 +282,13 @@ function JASM_AcceptTradeAction:complete()
                 available = #currencyItems,
                 item = self.requestItem,
             })
+            -- Send halotext command to player on client
+            KUtilities.SendServerCommandTo(
+                self.character,
+                "JASM_ShopManager",
+                "TradeDenied",
+                { reason = "insufficient_funds" }
+            )
             return false
         end
     end
@@ -287,6 +302,12 @@ function JASM_AcceptTradeAction:complete()
 
         if not (isAdmin and adminBypass) then
             logger:error("JASM_AcceptTradeAction:complete() - unauthorized force give attempt")
+            KUtilities.SendServerCommandTo(
+                self.character,
+                "JASM_ShopManager",
+                "TradeDenied",
+                { reason = "unauthorized" }
+            )
             return false
         end
 
