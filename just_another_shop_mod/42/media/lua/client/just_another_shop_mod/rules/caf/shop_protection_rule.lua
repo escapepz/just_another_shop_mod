@@ -93,6 +93,19 @@ local RuleShopProtection = function(ctx)
     local destParent = destContainer and destContainer:getParent() or nil
     local destModData = destParent and destParent:getModData() or nil
 
+    local function restock_check(isOwner, isAdmin, lockHolder)
+        if isOwner or isAdmin then
+            return
+        end
+
+        ctx.flags.rejected = true
+        ctx.flags.reason = "Shop is locked by " .. tostring(lockHolder) .. "."
+        ctx.callbacks = ctx.callbacks or {}
+        ctx.callbacks.onRejected = function()
+            HaloTextHelper.addBadText(getSpecificPlayer(0), ctx.flags.reason)
+        end
+    end
+
     if destModData and destModData.isShop then
         local ownerID = destModData.shopOwnerID
         local playerUsername = player:getUsername()
@@ -110,15 +123,11 @@ local RuleShopProtection = function(ctx)
                 local isAdmin = adminBypass and KUtilities.IsPlayerAdmin(player)
 
                 -- Even if locked, we allow the owner/admin to "give" (restock) items.
-                if not (isOwner or isAdmin) then
-                    ctx.flags.rejected = true
-                    ctx.flags.reason = "Shop is locked by " .. tostring(lockHolder) .. "."
-                    ctx.callbacks = ctx.callbacks or {}
-                    ctx.callbacks.onRejected = function()
-                        HaloTextHelper.addBadText(getSpecificPlayer(0), ctx.flags.reason)
-                    end
-                    return
-                end
+                restock_check(isOwner, isAdmin, lockHolder)
+            end
+
+            if ctx.flags.rejected then
+                return
             end
         end
 

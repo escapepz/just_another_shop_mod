@@ -30,6 +30,8 @@ local logger = ZUL.new("just_another_shop_mod")
 ---@field inventory CustomerViewInventory
 ---@field dataManager ShopDataManager
 local CustomerViewWindow = ISEntityWindow:derive("CustomerViewWindow")
+CustomerViewWindow.instance = nil
+CustomerViewWindow.coords = nil
 
 --- Helper to build, initialise and instantiate a component in one go.
 function CustomerViewWindow:xuiBuild(style, class, ...)
@@ -119,7 +121,7 @@ function CustomerViewWindow:close()
         if square then
             local KUtilities = require("pz_utils_shared").konijima.Utilities
             local squareID = KUtilities.SquareToString(square)
-            KUtilities.SendServerCommand("JASM_ShopManager", "UnlockShop", {
+            KUtilities.SendClientCommand("JASM_ShopManager", "UnlockShop", {
                 x = square:getX(),
                 y = square:getY(),
                 z = square:getZ(),
@@ -128,7 +130,14 @@ function CustomerViewWindow:close()
         end
     end
 
-    -- Close only this window, not siblings (Issue 8)
+    -- Save position for next open (vanilla pattern)
+    CustomerViewWindow.coords = { self:getX(), self:getY(), self:getWidth(), self:getHeight() }
+
+    -- Vanilla pattern: cleanup singleton
+    CustomerViewWindow.instance = nil
+
+    -- ISBaseEntityWindow.close handles: ISCollapsableWindow.close, ISEntityUI.OnCloseWindow,
+    -- joypad cleanup, entity:setUsingPlayer(nil), and removeFromUIManager
     ISBaseEntityWindow.close(self)
 end
 
@@ -496,44 +505,14 @@ function CustomerViewWindow:new(x, y, w, h, player, entity)
     return o
 end
 
--- Track open windows by entity to prevent cross-closing
-local _openWindowsByEntity = {}
-
---- Helper: Find existing CustomerViewWindow for entity by querying UIManager
----@param entity IsoObject
----@return UIElement|CustomerViewWindow?
-local function findExistingCustomerWindow(entity)
-    local uiList = UIManager.getUI()
-    if not uiList then
-        logger:debug("findExistingCustomerWindow() - No UI list found")
-        return nil
+local function _bringToTop(window)
+    -- Bring to top if already open
+    if window.instance:isVisible() then
+        window.instance:bringToTop()
+    else
+        window.instance:setVisible(true)
+        window.instance:bringToTop()
     end
-
-    local uiSize = uiList:size()
-    logger:debug(
-        "findExistingCustomerWindow() - Searching through " .. tostring(uiSize) .. " UI elements"
-    )
-
-    for i = 0, uiSize - 1 do
-        ---@type CustomerViewWindow|UIElement
-        local child = uiList:get(i)
-        if instanceof(child, "CustomerViewWindow") then
-            local sameEntity = child.entity == entity
-            logger:debug(
-                string.format(
-                    "findExistingCustomerWindow() - Found CustomerViewWindow [index=%d]. Entity match: %s",
-                    i,
-                    tostring(sameEntity)
-                )
-            )
-            if sameEntity then
-                return child
-            end
-        end
-    end
-
-    logger:debug("findExistingCustomerWindow() - No existing window found for entity")
-    return nil
 end
 
 ---@param playerIndex integer
@@ -546,17 +525,10 @@ function CustomerViewWindow.open(playerIndex, _context, entity)
         z = entity:getZ(),
     })
 
-    -- Check if window already open for this entity
-    local existingWindow = findExistingCustomerWindow(entity)
-    if existingWindow then
-        logger:debug("CustomerViewWindow.open() - Reusing existing window")
-        if existingWindow:isVisible() then
-            existingWindow:bringToTop()
-        else
-            existingWindow:setVisible(true)
-            existingWindow:bringToTop()
-        end
-        return existingWindow
+    -- Vanilla pattern: Check if instance exists first
+    if CustomerViewWindow.instance then
+        _bringToTop(CustomerViewWindow)
+        return CustomerViewWindow.instance
     end
 
     local screenWidth = getCore():getScreenWidth()
@@ -568,11 +540,19 @@ function CustomerViewWindow.open(playerIndex, _context, entity)
     local windowX = math.max(0, screenWidth - windowWidth - 90)
     local windowY = math.max(0, (screenHeight - windowHeight) / 2)
 
+    -- Use saved coords if available
+    if CustomerViewWindow.coords then
+        windowX, windowY = CustomerViewWindow.coords[1], CustomerViewWindow.coords[2]
+    end
+
     local player = getSpecificPlayer(playerIndex)
     local window =
         CustomerViewWindow:new(windowX, windowY, windowWidth, windowHeight, player, entity)
     window:initialise()
     window:addToUIManager()
+
+    -- Store the instance
+    CustomerViewWindow.instance = window
 
     return window
 end

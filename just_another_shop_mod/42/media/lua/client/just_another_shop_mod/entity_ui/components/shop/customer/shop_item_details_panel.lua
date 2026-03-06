@@ -171,19 +171,21 @@ function ShopItemDetailsPanel:onDebugForceGive()
     end
     -- ──────────────────────────────────────────
 
-    if luautils.walkToContainer(entity:getContainer(), self.player:getPlayerNum()) then
-        ISTimedActionQueue.add(
-            JASM_AcceptTradeAction:new(
-                self.player,
-                entity,
-                payload.itemType,
-                payload.requestItem,
-                payload.requestQty,
-                payload.offerQty,
-                payload.isForceGive
-            )
-        )
+    if not luautils.walkToContainer(entity:getContainer(), self.player:getPlayerNum()) then
+        return
     end
+
+    ISTimedActionQueue.add(
+        JASM_AcceptTradeAction:new(
+            self.player,
+            entity,
+            payload.itemType,
+            payload.requestItem,
+            payload.requestQty,
+            payload.offerQty,
+            payload.isForceGive
+        )
+    )
 end
 
 --- Callback when a requirement (trade option) is selected.
@@ -346,33 +348,33 @@ function ShopItemDetailsPanel:onAcceptTrade()
     end
     -- ──────────────────────────────────────────
 
-    if luautils.walkToContainer(entity:getContainer(), self.player:getPlayerNum()) then
-        local action = JASM_AcceptTradeAction:new(
-            self.player,
-            entity,
-            payload.itemType,
-            payload.requestItem,
-            payload.requestQty,
-            payload.offerQty,
-            payload.isForceGive
-        )
-
-        -- Add callback to refresh UI after trade completes
-        action:setOnComplete(function()
-            -- Rescan container to get fresh inventory
-            if self.parent and self.parent.dataManager then
-                local newInventory = self.parent.dataManager:scanContainer(entity:getContainer())
-                self.parent.inventory = newInventory
-
-                -- Refresh product list display
-                if self.parent.productPanel then
-                    self.parent.productPanel:setProducts(newInventory.list)
-                end
-            end
-        end, nil)
-
-        ISTimedActionQueue.add(action)
+    if not luautils.walkToContainer(entity:getContainer(), self.player:getPlayerNum()) then
+        return
     end
+
+    local action = JASM_AcceptTradeAction:new(
+        self.player,
+        entity,
+        payload.itemType,
+        payload.requestItem,
+        payload.requestQty,
+        payload.offerQty,
+        payload.isForceGive
+    )
+
+    -- Add callback to refresh UI after trade completes
+    action:setOnComplete(function()
+        -- Rescan container to get fresh inventory
+        if self.parent and self.parent.dataManager and self.parent.productPanel then
+            local newInventory = self.parent.dataManager:scanContainer(entity:getContainer())
+            self.parent.inventory = newInventory
+
+            -- Refresh product list display
+            self.parent.productPanel:setProducts(newInventory.list)
+        end
+    end, nil)
+
+    ISTimedActionQueue.add(action)
 end
 
 function ShopItemDetailsPanel:prerender()
