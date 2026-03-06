@@ -25,9 +25,14 @@ local NAMESPACE = "JASM"
 local logger = ZUL.new("just_another_shop_mod")
 
 if not _G.__JASM_SandboxVarsInitialized then
+    -- Client-side event for loaded sandbox vars
     Events.OnGameStart.Add(function()
         --- Initialize sandbox vars (safe to call multiple times; second call is a no-op
         --- because SandboxVarsModule.Init would overwrite — use a guard).
+        SandboxVarsModule.Init(NAMESPACE, DEFAULTS)
+    end)
+    -- Server-side event for loaded sandbox vars
+    Events.OnLoadedTileDefinitions.Add(function()
         SandboxVarsModule.Init(NAMESPACE, DEFAULTS)
     end)
     _G.__JASM_SandboxVarsInitialized = true
