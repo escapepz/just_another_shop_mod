@@ -319,6 +319,11 @@ function ShopItemDetailsPanel:onAcceptTrade()
         return
     end
 
+    -- if selectedTrade.hasCount < selectedTrade.requestQty then
+    --     HaloTextHelper.addBadText(self.player, "You don't have enough funds for this trade.")
+    --     return
+    -- end
+    -- print("ShopItemDetailsPanel:onAcceptTrade() - trade accepted")
     ---@cast self.entity IsoObject
     local entity = self.entity
     if not entity then
