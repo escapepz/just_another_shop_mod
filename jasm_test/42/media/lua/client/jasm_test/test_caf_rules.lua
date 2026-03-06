@@ -341,17 +341,9 @@ local function init()
     JASM_TestRunner.register("caf_protection_owner_locked_take", "client", function()
         local RuleShopProtection = require("just_another_shop_mod/rules/caf/shop_protection_rule")
 
-        -- Mock Square and ShopManager
-        local mockSquare = createMockSquare(0, 0, 0)
+        -- Setup shop with lock
         local srcParent = createMockParent(true, "ShopOwner", {})
-        srcParent.getSquare = function()
-            return mockSquare
-        end
-
-        local originalGetLock = _G.JASM_ShopManager.getShopLock
-        _G.JASM_ShopManager.getShopLock = function()
-            return "Buyer"
-        end -- Locked by someone else
+        srcParent.modData.shopLock = "Buyer" -- Shop locked by someone else
 
         local ctx = createMockCAFContext({
             srcParent = srcParent,
@@ -360,12 +352,14 @@ local function init()
 
         RuleShopProtection(ctx)
 
-        -- Cleanup
-        _G.JASM_ShopManager.getShopLock = originalGetLock
-
         JASM_TestRunner.assert_true(
             ctx.flags.rejected,
             "Owner should be rejected from taking items if shop is locked by someone else"
+        )
+        JASM_TestRunner.assert_equals(
+            ctx.flags.reason,
+            "Shop is locked by Buyer.",
+            "Rejection reason should mention lock holder"
         )
     end)
 
@@ -373,17 +367,9 @@ local function init()
     JASM_TestRunner.register("caf_protection_owner_locked_give", "client", function()
         local RuleShopProtection = require("just_another_shop_mod/rules/caf/shop_protection_rule")
 
-        -- Mock Square and ShopManager
-        local mockSquare = createMockSquare(0, 0, 0)
+        -- Setup shop with lock
         local destParent = createMockParent(true, "ShopOwner", {})
-        destParent.getSquare = function()
-            return mockSquare
-        end
-
-        local originalGetLock = _G.JASM_ShopManager.getShopLock
-        _G.JASM_ShopManager.getShopLock = function()
-            return "Buyer"
-        end -- Locked by someone else
+        destParent.modData.shopLock = "Buyer" -- Shop locked by someone else
 
         local ctx = createMockCAFContext({
             destParent = destParent,
@@ -392,13 +378,75 @@ local function init()
 
         RuleShopProtection(ctx)
 
-        -- Cleanup
-        _G.JASM_ShopManager.getShopLock = originalGetLock
-
         JASM_TestRunner.assert_false(
             ctx.flags.rejected,
             "Owner should be allowed to restock even if shop is locked"
         )
+    end)
+
+    -- Test: Protection rule restricts customer if shop is locked
+    JASM_TestRunner.register("caf_protection_customer_locked", "client", function()
+        local RuleShopProtection = require("just_another_shop_mod/rules/caf/shop_protection_rule")
+
+        -- Setup shop with lock
+        local srcParent = createMockParent(true, "ShopOwner", {})
+        srcParent.modData.shopLock = "CustomerA" -- Shop locked by another customer
+
+        local ctx = createMockCAFContext({
+            srcParent = srcParent,
+            username = "CustomerB", -- Different player trying to access
+        })
+
+        RuleShopProtection(ctx)
+
+        JASM_TestRunner.assert_true(
+            ctx.flags.rejected,
+            "Customer should be rejected from accessing locked shop"
+        )
+        JASM_TestRunner.assert_equals(
+            ctx.flags.reason,
+            "Shop is locked by CustomerA.",
+            "Should show who locked it"
+        )
+    end)
+
+    -- Test: Protection rule allows owner when unlocked
+    JASM_TestRunner.register("caf_protection_owner_unlocked_take", "client", function()
+        local RuleShopProtection = require("just_another_shop_mod/rules/caf/shop_protection_rule")
+
+        -- Setup shop WITHOUT lock
+        local srcParent = createMockParent(true, "ShopOwner", {})
+        srcParent.modData.shopLock = nil -- Not locked
+
+        local ctx = createMockCAFContext({
+            srcParent = srcParent,
+            username = "ShopOwner",
+        })
+
+        RuleShopProtection(ctx)
+
+        JASM_TestRunner.assert_false(
+            ctx.flags.rejected,
+            "Owner should be allowed to take items when shop is not locked"
+        )
+    end)
+
+    -- Test: modData persistence
+    JASM_TestRunner.register("moddata_shoplock_persistence", "client", function()
+        -- Verify modData.shopLock survives across transmit
+        local parent = createMockParent(true, "Owner1", {})
+
+        -- Set lock
+        parent.modData.shopLock = "Player1"
+        JASM_TestRunner.assert_equals(
+            parent.modData.shopLock,
+            "Player1",
+            "Lock should be stored in modData"
+        )
+
+        -- Clear lock
+        parent.modData.shopLock = nil
+        JASM_TestRunner.assert_nil(parent.modData.shopLock, "Lock should be cleared from modData")
     end)
 
     print("[JASM_TEST] CAF Rules tests registered")

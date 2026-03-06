@@ -11,6 +11,7 @@
         "actboy",
         "behaviour",
         "deserialised",
+        "desync",
         "escapepz",
         "halotext",
         "initialise",
@@ -22,6 +23,7 @@
         "joypad",
         "kikito",
         "konijima",
+        "lockshop",
         "luautils",
         "middleclass",
         "mklink",
@@ -37,10 +39,12 @@
         "pzstudio",
         "Rescan",
         "serialised",
+        "shoplock",
         "steamapps",
         "stylua",
         "testuser",
         "Thumpable",
+        "unlockshop",
         "unregistration",
         "Zomboid"
     ]

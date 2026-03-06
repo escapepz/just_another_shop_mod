@@ -132,10 +132,8 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
 
     -- Top Level Shop Access (General Public)
     if isShop then
-        -- Shop Lock Check (Anti-griefing / Race condition protection)
-        local square = containerObj:getSquare()
-        local squareID = square and KUtilities.SquareToString(square)
-        local lockHolder = squareID and _G.JASM_ShopManager:getShopLock(squareID)
+        -- modData.shopLock is synced from server via transmitModData() - safe to read client-side
+        local lockHolder = modData.shopLock
         local isLockedByOther = lockHolder and lockHolder ~= playerObj:getUsername()
 
         -- Open Customer View

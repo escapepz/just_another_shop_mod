@@ -7,6 +7,8 @@ require("ISUI/ISScrollingListBox")
 require("TimedActions/ISBaseTimedAction")
 require("TimedActions/ISTimedActionQueue")
 
+local JASM_SandboxVars = require("just_another_shop_mod/jasm_sandbox_vars")
+
 local ShopDataManager = require("just_another_shop_mod/entity_ui/models/shop_data_manager")
 local SearchFilterPanel =
     require("just_another_shop_mod/entity_ui/components/shop/shared/shop_search_filter_panel")
@@ -21,6 +23,8 @@ local ShopFooterPanel =
 
 local ZUL = require("zul")
 local logger = ZUL.new("just_another_shop_mod")
+
+local KUtilities = require("pz_utils_shared").konijima.Utilities
 
 -- ============================================================
 -- COLOR PALETTE (matches design5.html / customer_view_window)
@@ -966,6 +970,55 @@ function OwnerViewWindow.open(playerIndex, _context, entity)
         z = entity:getZ(),
     })
 
+    local player = getSpecificPlayer(playerIndex)
+    local lockMethod = JASM_SandboxVars.Get("ShopLockMethod", 1)
+
+    -- ===== Lock check BEFORE instance/singleton check =====
+    if lockMethod == 1 then
+        -- Layer 1: Check JASM application-level lock via modData (synced from server)
+        local modData = entity:getModData()
+        if modData and modData.isShop then
+            local lockHolder = modData.shopLock
+            if lockHolder and lockHolder ~= player:getUsername() then
+                HaloTextHelper.addBadText(
+                    player,
+                    "Shop is locked by " .. tostring(lockHolder) .. "."
+                )
+                logger:info("OwnerViewWindow.open() blocked - JASM lock", {
+                    player = player:getUsername(),
+                    lockedBy = lockHolder,
+                })
+                return nil
+            end
+        end
+
+        -- Layer 2 awareness: fallback if entity shows a different user (desync guard)
+        local entityUser = entity:getUsingPlayer()
+        if entityUser and entityUser ~= player then
+            local entityUserName = entityUser:getUsername()
+            HaloTextHelper.addBadText(player, "Shop is in use by " .. entityUserName .. ".")
+            logger:warn("OwnerViewWindow.open() blocked - entity desync (JASM unaware)", {
+                player = player:getUsername(),
+                entityUser = entityUserName,
+            })
+            return nil
+        end
+    elseif lockMethod == 2 then
+        -- VANILLA mode: check only entity:getUsingPlayer()
+        local entityUser = entity:getUsingPlayer()
+        if entityUser and entityUser ~= player then
+            HaloTextHelper.addBadText(
+                player,
+                "Shop is in use by " .. entityUser:getUsername() .. "."
+            )
+            logger:info("OwnerViewWindow.open() blocked - vanilla entity lock", {
+                player = player:getUsername(),
+                entityUser = entityUser:getUsername(),
+            })
+            return nil
+        end
+    end
+
     -- Vanilla pattern: Check if instance exists first
     if OwnerViewWindow.instance then
         _bringToTop(OwnerViewWindow)
@@ -986,10 +1039,25 @@ function OwnerViewWindow.open(playerIndex, _context, entity)
         windowX, windowY = OwnerViewWindow.coords[1], OwnerViewWindow.coords[2]
     end
 
-    local player = getSpecificPlayer(playerIndex)
     local window = OwnerViewWindow:new(windowX, windowY, windowWidth, windowHeight, player, entity)
     window:initialise()
     window:addToUIManager()
+
+    -- ===== Layer 1: Acquire JASM lock after window is successfully created =====
+    if lockMethod == 1 then
+        local square = entity:getSquare()
+        if square then
+            KUtilities.SendClientCommand("JASM_ShopManager", "LockShop", {
+                x = square:getX(),
+                y = square:getY(),
+                z = square:getZ(),
+            })
+            logger:info("OwnerViewWindow.open() - LockShop sent", {
+                player = player:getUsername(),
+                squareID = KUtilities.SquareToString(square),
+            })
+        end
+    end
 
     -- Store the instance
     OwnerViewWindow.instance = window

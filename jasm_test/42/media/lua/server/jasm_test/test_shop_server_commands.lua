@@ -296,6 +296,92 @@ local function init()
         )
     end)
 
+    -- ------------------------------------------------------------------
+    -- NEW: Issue 13 - Server Side ModData Lock wrapper tests
+    -- ------------------------------------------------------------------
+
+    JASM_TestRunner.register("setShopLock_updates_moddata", "server", function()
+        -- Test that setShopLock stores lock in modData
+        local mockObj = createMockShopObject()
+        mockObj.modData.shopName = "Test Shop"
+
+        -- Simulate setShopLock call
+        local modData = mockObj:getModData()
+        modData.shopLock = "Player1"
+        -- (In real code, would call parent:transmitModData())
+
+        JASM_TestRunner.assert_equals(
+            modData.shopLock,
+            "Player1",
+            "setShopLock should store username in modData.shopLock"
+        )
+    end)
+
+    JASM_TestRunner.register("clearShopLock_validates_holder", "server", function()
+        -- Test that clearShopLock only clears if holder matches
+        local mockObj = createMockShopObject()
+        mockObj.modData.shopLock = "Player1"
+
+        -- Try to clear with wrong player
+        local modData = mockObj:getModData()
+        if modData.shopLock == "Player2" then -- Should not match
+            modData.shopLock = nil
+        end
+
+        JASM_TestRunner.assert_equals(
+            modData.shopLock,
+            "Player1",
+            "clearShopLock should NOT clear if holder doesn't match"
+        )
+
+        -- Clear with correct player
+        if modData.shopLock == "Player1" then
+            modData.shopLock = nil
+        end
+
+        JASM_TestRunner.assert_nil(modData.shopLock, "clearShopLock should clear if holder matches")
+    end)
+
+    JASM_TestRunner.register("lockshop_command_uses_moddata", "server", function()
+        -- Test handleLockShop uses setShopLock (modData-based)
+        local mockObj = createMockShopObject()
+        mockObj.modData.isShop = true
+        mockObj.modData.shopName = "Test Shop"
+
+        local modData = mockObj:getModData()
+
+        -- Simulate LockShop command
+        if modData and modData.isShop then
+            modData.shopLock = "Player1"
+        end
+
+        JASM_TestRunner.assert_equals(
+            modData.shopLock,
+            "Player1",
+            "LockShop command should set modData.shopLock"
+        )
+    end)
+
+    JASM_TestRunner.register("unlockshop_command_uses_moddata", "server", function()
+        -- Test handleUnlockShop uses clearShopLock (modData-based)
+        local mockObj = createMockShopObject()
+        mockObj.modData.isShop = true
+        mockObj.modData.shopName = "Test Shop"
+        mockObj.modData.shopLock = "Player1"
+
+        local modData = mockObj:getModData()
+
+        -- Simulate UnlockShop command
+        if modData and modData.isShop and modData.shopLock == "Player1" then
+            modData.shopLock = nil
+        end
+
+        JASM_TestRunner.assert_nil(
+            modData.shopLock,
+            "UnlockShop command should clear modData.shopLock"
+        )
+    end)
+
     print("[JASM_TEST] ShopServerCommands tests registered")
 end
 

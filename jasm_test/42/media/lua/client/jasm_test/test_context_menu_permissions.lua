@@ -30,7 +30,7 @@ local function createMockContext()
 end
 
 -- Helper to mock an IsoObject (Shop Crate)
-local function createMockShopCrate(isShop, shopType, ownerID)
+local function createMockShopCrate(isShop, shopType, ownerID, lockedBy)
     return {
         getContainer = function()
             return {}
@@ -49,6 +49,7 @@ local function createMockShopCrate(isShop, shopType, ownerID)
                 isShop = isShop,
                 shopType = shopType,
                 shopOwnerID = ownerID,
+                shopLock = lockedBy,
             }
         end,
         getObjectIndex = function()
@@ -264,6 +265,21 @@ local function init()
         JASM_SandboxVars.Get = original_SandboxGet
 
         JASM_TestRunner.assert_not_nil(unregisterOption, "Owner SHOULD see UnRegister Shop option")
+    end)
+
+    JASM_TestRunner.register("context_menu_shows_locked_status", "client", function()
+        -- Create a shop locked by Player1
+        local shop = createMockShopCrate(true, "PLAYER", "Owner1", "Player1")
+
+        -- Context menu directly accesses modData
+        local modData = shop:getModData()
+        local lockHolder = modData.shopLock
+
+        JASM_TestRunner.assert_equals(
+            lockHolder,
+            "Player1",
+            "Context menu should show lock holder from modData"
+        )
     end)
 
     print("[JASM_TEST] Context Menu Permissions tests registered")

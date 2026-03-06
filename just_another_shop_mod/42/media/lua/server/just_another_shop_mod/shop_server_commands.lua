@@ -48,6 +48,44 @@ local function setThumpable(thumpable, thumpableN, state)
 end
 
 -- ---------------------------------------------------------------------------
+-- Lock State Wrappers
+-- ---------------------------------------------------------------------------
+
+---Store shop lock in modData
+---@param containerObj IsoObject
+---@param username string Player username
+local function setShopLock(containerObj, username)
+    if not containerObj then
+        return
+    end
+    local modData = containerObj:getModData()
+    modData.shopLock = username
+    containerObj:transmitModData()
+    logger:debug("setShopLock", {
+        shopName = modData.shopName,
+        lockedBy = username,
+    })
+end
+
+---Release shop lock from modData
+---@param containerObj IsoObject
+---@param username string Player username (must match current lock holder)
+local function clearShopLock(containerObj, username)
+    if not containerObj then
+        return
+    end
+    local modData = containerObj:getModData()
+    if modData.shopLock == username then
+        modData.shopLock = nil
+        containerObj:transmitModData()
+        logger:debug("clearShopLock", {
+            shopName = modData.shopName,
+            wasLockedBy = username,
+        })
+    end
+end
+
+-- ---------------------------------------------------------------------------
 -- Action handlers (Single Responsibility)
 -- ---------------------------------------------------------------------------
 
@@ -175,12 +213,27 @@ local function handleLockShop(player, args)
         return
     end
 
-    local squareID = KUtilities.SquareToString(square)
-
-    if _G.JASM_ShopManager:lockShop(squareID, player:getUsername()) then
-        KUtilities.SendServerCommandTo(player, "JASM_ShopManager", "LockSuccess", args)
-    else
-        KUtilities.SendServerCommandTo(player, "JASM_ShopManager", "LockFail", args)
+    local objects = square:getObjects()
+    for i = 0, objects:size() - 1 do
+        local obj = objects:get(i)
+        local modData = obj:getModData()
+        if modData and modData.isShop then
+            if not modData.shopLock or modData.shopLock == player:getUsername() then
+                setShopLock(obj, player:getUsername())
+                KUtilities.SendServerCommandTo(player, "JASM_ShopManager", "LockSuccess", args)
+                logger:info("LockShop command - modData updated", {
+                    player = player:getUsername(),
+                    shopName = modData.shopName,
+                })
+            else
+                KUtilities.SendServerCommandTo(player, "JASM_ShopManager", "LockFail", args)
+                logger:warn("LockShop failed - already locked", {
+                    player = player:getUsername(),
+                    lockedBy = modData.shopLock,
+                })
+            end
+            return
+        end
     end
 end
 
@@ -193,9 +246,20 @@ local function handleUnlockShop(player, args)
         return
     end
 
-    local squareID = KUtilities.SquareToString(square)
-    _G.JASM_ShopManager:unlockShop(squareID, player:getUsername())
-    KUtilities.SendServerCommandTo(player, "JASM_ShopManager", "UnlockSuccess", args)
+    local objects = square:getObjects()
+    for i = 0, objects:size() - 1 do
+        local obj = objects:get(i)
+        local modData = obj:getModData()
+        if modData and modData.isShop then
+            clearShopLock(obj, player:getUsername())
+            KUtilities.SendServerCommandTo(player, "JASM_ShopManager", "UnlockSuccess", args)
+            logger:info("UnlockShop command - modData cleared", {
+                player = player:getUsername(),
+                shopName = modData.shopName,
+            })
+            return
+        end
+    end
 end
 
 ---Handle ManageShop command (REGISTER / UNREGISTER)

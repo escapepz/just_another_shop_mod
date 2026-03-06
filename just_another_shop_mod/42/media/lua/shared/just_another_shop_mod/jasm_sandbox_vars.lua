@@ -19,6 +19,14 @@ local DEFAULTS = {
     --- Even when true, admins still cannot unregister a shop that has items inside.
     ---@type boolean
     AdminBypass = true,
+
+    --- Shop lock protection method.
+    --- 1 "DUAL"    = JASM application lock (modData) + vanilla entity:getUsingPlayer() engine lock.
+    ---             Fast client-side conflict detection with player-name feedback in halotext.
+    --- 2 "VANILLA" = Vanilla engine lock only. No JASM lock state is written.
+    ---             Uses built-in ISEntityWindow/ISEntityUI conflict detection.
+    ---@type number
+    ShopLockMethod = 1,
 }
 
 local NAMESPACE = "JASM"

@@ -1,10 +1,11 @@
 local ZUL = require("zul")
-local pz_utils = require("pz_utils_shared")
 
 local logger = ZUL.new("just_another_shop_mod")
 -- logger:setLevel("TRACE")
 
+local pz_utils = require("pz_utils_shared")
 local KUtilities = pz_utils.konijima.Utilities
+
 local JASM_SandboxVars = require("just_another_shop_mod/jasm_sandbox_vars")
 
 ---@param ctx CAF.Context
@@ -22,34 +23,33 @@ local RuleShopProtection = function(ctx)
     if modData and modData.isShop then
         local ownerID = modData.shopOwnerID
         local playerUsername = player:getUsername()
-
         -- Rule: Lock Check
         -- If shop is locked by another player, NOBODY can modify inventory
-        local square = parent:getSquare()
-        if square then
-            local squareID = KUtilities.SquareToString(square)
-            local lockHolder = _G.JASM_ShopManager:getShopLock(squareID)
+        -- modData.shopLock is synced from server via transmitModData() - safe to read client-side
+        local lockHolder = modData.shopLock
 
-            if lockHolder and lockHolder ~= playerUsername then
-                -- STRICT LOCK: If locked by someone else, NOBODY can remove items (Source check).
-                -- This prevents the owner from stealing items while a customer is browsing (Issue 1).
-                ctx.flags.rejected = true
-                ctx.flags.reason = "Shop is locked by " .. tostring(lockHolder) .. "."
-                -- ctx.callbacks = ctx.callbacks or {}
-                -- ctx.callbacks.onRejected = function()
-                HaloTextHelper.addBadText(getSpecificPlayer(0), ctx.flags.reason)
-                -- end
-                logger:info("Shop locked - removal denied", {
-                    player = playerUsername,
-                    lockedBy = lockHolder,
-                    shop = modData.shopName,
-                })
-                return
-            end
+        if lockHolder and lockHolder ~= playerUsername then
+            -- STRICT LOCK: If locked by someone else, NOBODY can remove items (Source check).
+            -- This prevents the owner from stealing items while a customer is browsing (Issue 1).
+            -- Block customer AND owner from withdrawing when shop locked
+            -- Lock holder can PURCHASE (trade) but not directly grab/drop items
+            -- Owner can DEPOSIT (restock) but not withdraw
+            ctx.flags.rejected = true
+            ctx.flags.reason = "Shop is locked by " .. tostring(lockHolder) .. "."
+            -- ctx.callbacks = ctx.callbacks or {}
+            -- ctx.callbacks.onRejected = function()
+            HaloTextHelper.addBadText(getSpecificPlayer(0), ctx.flags.reason)
+            -- end
+            logger:info("Shop locked - removal denied", {
+                player = playerUsername,
+                lockedBy = lockHolder,
+                shop = modData.shopName,
+            })
+            return
         end
 
-        -- Rule: Owners can take anything (only if not locked by someone else - handled above)
-        if playerUsername == ownerID then
+        -- Rule: Owners can take anything (only if not locked)
+        if playerUsername == ownerID and not lockHolder then
             logger:debug("Owner access granted (Source)", {
                 player = player:getUsername(),
                 shop = modData.shopName,
@@ -111,24 +111,21 @@ local RuleShopProtection = function(ctx)
         local playerUsername = player:getUsername()
 
         -- Rule: Lock Check (Destination)
-        local square = destParent:getSquare()
-        if square then
-            local squareID = KUtilities.SquareToString(square)
-            local lockHolder = _G.JASM_ShopManager:getShopLock(squareID)
+        -- modData.shopLock is synced from server via transmitModData() - safe to read client-side
+        local lockHolder = destModData.shopLock
 
-            -- If locked by someone else, verify if owner/admin can still restock
-            if lockHolder and lockHolder ~= playerUsername then
-                local adminBypass = JASM_SandboxVars.Get("AdminBypass")
-                local isOwner = playerUsername == ownerID
-                local isAdmin = adminBypass and KUtilities.IsPlayerAdmin(player)
+        -- If locked by someone else, verify if owner/admin can still restock
+        if lockHolder and lockHolder ~= playerUsername then
+            local adminBypass = JASM_SandboxVars.Get("AdminBypass")
+            local isOwner = playerUsername == ownerID
+            local isAdmin = adminBypass and KUtilities.IsPlayerAdmin(player)
 
-                -- Even if locked, we allow the owner/admin to "give" (restock) items.
-                restock_check(isOwner, isAdmin, lockHolder)
-            end
+            -- Even if locked, we allow the owner/admin to "give" (restock) items.
+            restock_check(isOwner, isAdmin, lockHolder)
+        end
 
-            if ctx.flags.rejected then
-                return
-            end
+        if ctx.flags.rejected then
+            return
         end
 
         -- Rule: Owners can deposit anything
