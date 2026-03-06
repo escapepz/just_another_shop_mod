@@ -119,6 +119,17 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
         end
     end
 
+    local function openShop(window)
+        local adjacent = AdjacentFreeTileFinder.Find(containerObj:getSquare(), playerObj)
+        if adjacent then
+            ISTimedActionQueue.clear(playerObj)
+            ---@type ISWalkToTimedAction
+            local action = ISWalkToTimedAction:new(playerObj, adjacent)
+            action:setOnComplete(window.open, playerIndex, nil, containerObj)
+            ISTimedActionQueue.add(action)
+        end
+    end
+
     -- Top Level Shop Access (General Public)
     if isShop then
         -- Shop Lock Check (Anti-griefing / Race condition protection)
@@ -138,18 +149,7 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
                 -- Already next to it
                 JASM_ShopView_Customer.open(playerIndex, nil, containerObj)
             else
-                local adjacent = AdjacentFreeTileFinder.Find(containerObj:getSquare(), playerObj)
-                if adjacent then
-                    ISTimedActionQueue.clear(playerObj)
-                    local action = ISWalkToTimedAction:new(playerObj, adjacent)
-                    action:setOnComplete(
-                        JASM_ShopView_Customer.open,
-                        playerIndex,
-                        nil,
-                        containerObj
-                    )
-                    ISTimedActionQueue.add(action)
-                end
+                openShop(JASM_ShopView_Customer)
             end
         end)
 
@@ -176,20 +176,9 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
                 )
             then
                 -- Already next to it
-                JASM_ShopView_Customer.open(playerIndex, nil, containerObj)
+                JASM_ShopView_Owner.open(playerIndex, nil, containerObj)
             else
-                local adjacent = AdjacentFreeTileFinder.Find(containerObj:getSquare(), playerObj)
-                if adjacent then
-                    ISTimedActionQueue.clear(playerObj)
-                    local action = ISWalkToTimedAction:new(playerObj, adjacent)
-                    action:setOnComplete(
-                        JASM_ShopView_Customer.open,
-                        playerIndex,
-                        nil,
-                        containerObj
-                    )
-                    ISTimedActionQueue.add(action)
-                end
+                openShop(JASM_ShopView_Owner)
             end
         end)
     end
