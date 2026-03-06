@@ -113,6 +113,14 @@ function MockPZ.createIsoPlayer(username, isAdmin)
         getPlayerNum = function(self)
             return self.playerNum
         end,
+
+        getCurrentSquare = function(self)
+            return self.square
+        end,
+
+        getSquare = function(self)
+            return self.square
+        end,
     }
 end
 
@@ -209,8 +217,33 @@ function MockPZ.setupGlobals()
     if not _G.luautils then
         _G.luautils = {
             walkAdj = function(player, square, isWalk) end,
-            walkToContainer = function(container, playerNum) end,
+            walkToContainer = function(container, playerNum)
+                return true
+            end,
             okModal = function(text, centerX, centerY, target, onOk) end,
+        }
+    end
+
+    -- Mock AdjacentFreeTileFinder
+    if not _G.AdjacentFreeTileFinder then
+        _G.AdjacentFreeTileFinder = {
+            isTileOrAdjacent = function(sq1, sq2)
+                return true
+            end,
+            Find = function(sq, player)
+                return sq
+            end,
+        }
+    end
+
+    -- Mock ISWorldObjectContextMenu
+    if not _G.ISWorldObjectContextMenu then
+        _G.ISWorldObjectContextMenu = {
+            addToolTip = function()
+                return {
+                    setName = function(self, name) end,
+                }
+            end,
         }
     end
 
@@ -479,19 +512,27 @@ function MockPZ.setupGlobals()
             return derived
         end,
         new = function(self, character)
-            local o = {}
+            local o = {
+                character = character,
+                onCompleteFunc = nil,
+                onCompleteArgs = nil,
+            }
             setmetatable(o, { __index = self })
-            o.character = character
             return o
         end,
+        setOnComplete = function(self, func, ...)
+            self.onCompleteFunc = func
+            self.onCompleteArgs = { n = select("#", ...), ... }
+        end,
     }
+
+    _G.ISWalkToTimedAction = ISBaseTimedAction:derive("ISWalkToTimedAction")
 
     package.preload["TimedActions/ISBaseTimedAction"] = function()
         return _G.ISBaseTimedAction
     end
 
     package.preload["TimedActions/ISWalkToTimedAction"] = function()
-        _G.ISWalkToTimedAction = ISBaseTimedAction:derive("ISWalkToTimedAction")
         return _G.ISWalkToTimedAction
     end
     _G.ISTextEntryBox = ISPanel:derive("ISTextEntryBox")

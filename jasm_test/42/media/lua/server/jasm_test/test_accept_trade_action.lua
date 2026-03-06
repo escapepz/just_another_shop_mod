@@ -231,16 +231,16 @@ local function init()
         local originalGetItems = mockPlayer.inventory.getItems
         mockPlayer.inventory.getItems = function(self)
             local items = originalGetItems(self)
-            local itms = self.items
+            local _items = self.items
             return {
                 size = function()
-                    return #itms
+                    return #_items
                 end,
                 get = function(self2, i)
                     if i == 4 then
                         return nil
                     end -- Fails on 5th item
-                    return itms[i + 1]
+                    return _items[i + 1]
                 end,
             }
         end
