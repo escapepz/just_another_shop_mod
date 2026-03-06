@@ -295,6 +295,14 @@ function MockPZ.setupGlobals()
         end
     end
 
+    -- Mock HaloTextHelper
+    if not _G.HaloTextHelper then
+        _G.HaloTextHelper = {
+            addBadText = function(player, text) end,
+            addText = function(player, text) end,
+        }
+    end
+
     -- Mock JASM_AcceptTradeAction and JASM_PublishTradeAction
     _G.JASM_AcceptTradeAction = {
         new = function(self, player, entity, payload)
