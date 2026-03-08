@@ -35,13 +35,13 @@ function ShopItemActionFooter:createChildren()
         0.27,
         1,
         UIFont.Small,
-        true
+        false
     )
 
     if self.errorLabel then
         self.errorLabel:initialise()
         self.errorLabel:instantiate()
-        self.errorLabel.center = true
+        self.errorLabel.center = false
         self:addChild(self.errorLabel)
     end
 
@@ -93,6 +93,8 @@ end
 function ShopItemActionFooter:setError(msg)
     if self.errorLabel then
         self.errorLabel:setName(msg or "")
+        self.errorLabel:setWidthToName()
+        self.errorLabel:setX((self:getWidth() - self.errorLabel:getWidth()) / 2)
     end
 end
 
@@ -115,8 +117,8 @@ function ShopItemActionFooter:calculateLayout(width, height)
     self:setHeight(height)
 
     if self.errorLabel then
-        self.errorLabel:setX(0)
-        self.errorLabel:setWidth(width)
+        self.errorLabel:setWidthToName()
+        self.errorLabel:setX((width - self.errorLabel:getWidth()) / 2)
     end
 
     local btnW = math.min(200, width - UI_BORDER_SPACING * 2)

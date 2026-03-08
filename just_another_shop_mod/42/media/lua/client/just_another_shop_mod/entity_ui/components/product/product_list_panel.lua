@@ -15,6 +15,7 @@ local ProductListView =
 ---@field dataList any -- Java ArrayList
 ---@field mouseover boolean
 ---@field onSelectProduct fun(target: any, product: any)
+---@field container ItemContainer
 ---@field selected any
 ---@field target any
 ---@field player IsoPlayer
@@ -54,17 +55,23 @@ local function onRenderTile(_listbox, _product, _x, _y, _width, _height, _mouseo
     local product = _product
     local _self = _listbox -- ISTiledIconListBox
 
+    -- Issue 2: Safety check to avoid rendering highlights outside visible grid area
+    if _y + _height < 0 or _y > _self:getHeight() then
+        return
+    end
+
     -- 1. Card Background: #0f0f0f  (matches .item-slot)
     _self:drawRect(_x + 4, _y + 4, _width - 8, _height - 8, 0.9, 0.06, 0.06, 0.06)
     -- Card border: #333
     _self:drawRectBorder(_x + 4, _y + 4, _width - 8, _height - 8, 0.9, 0.20, 0.20, 0.20)
 
     -- Selection / Hover  (matches .item-slot.selected  /  .item-slot:hover)
+    local isMouseOver = _mouseover and _self:isMouseOver()
     if _self.selectedTileData == product then
         -- Selected: #2a2416 bg + #f39c12 orange border  (0.16,0.14,0.09 alpha=1)
         _self:drawRect(_x + 2, _y + 2, _width - 4, _height - 4, 1.0, 0.16, 0.14, 0.09)
         _self:drawRectBorder(_x + 2, _y + 2, _width - 4, _height - 4, 1.0, 0.95, 0.61, 0.07)
-    elseif _mouseover then
+    elseif isMouseOver then
         -- Hover: slightly lighter card  (#1a1a1a)
         _self:drawRect(_x + 2, _y + 2, _width - 4, _height - 4, 0.6, 0.10, 0.10, 0.10)
     end
@@ -180,6 +187,25 @@ function ProductListPanel:createChildren()
         end
         self.iconPanel.minimumColumns = 1
         self.iconPanel.target = self
+
+        -- Stencil clipping disabled - causes cutoff when window moves
+        -- Let the panel handle its own clipping via overflow property or parent scissor
+        -- local oldRender = self.iconPanel.render
+        -- self.iconPanel.render = function()
+        --     if self.iconPanel:isVisible() then
+        --         local ax = self.iconPanel:getAbsoluteX()
+        --         local ay = self.iconPanel:getAbsoluteY()
+        --         self.iconPanel:setStencilRect(
+        --             ax,
+        --             ay,
+        --             self.iconPanel:getWidth(),
+        --             self.iconPanel:getHeight()
+        --         )
+        --         oldRender(self.iconPanel)
+        --         self.iconPanel:clearStencilRect()
+        --     end
+        -- end
+
         self:addChild(self.iconPanel)
     end
 
@@ -278,9 +304,27 @@ end
 
 function ProductListPanel:prerender()
     if self.dirtyLayout and self.calculateLayout then
-        self:calculateLayout(self.xuiPreferredResizeWidth, self.xuiPreferredResizeHeight)
+        self:calculateLayout(self.width, self.height)
     end
     ISPanel.prerender(self)
+end
+
+function ProductListPanel:render()
+    -- Issue 14 & Loot Panel Method: Check container dirty flag in render frame
+    if self.container then
+        local isDirty = self.container:isDirty() or self.container:isDrawDirty()
+        if isDirty then
+            -- Clear flags to prevent refresh loops (Issue 2 - Highlight Flicker)
+            self.container:setDrawDirty(false)
+            self.container:setDirty(false)
+
+            if self.target and self.target.refresh then
+                self.target:refresh()
+            end
+        end
+    end
+
+    ISPanel.render(self)
 end
 
 function ProductListPanel:onResize()
@@ -362,13 +406,19 @@ function ProductListPanel:setProducts(products)
 
     -- Refresh grid
     if self.iconPanel then
+        -- Clear stale mouseover to prevent highlight "sticking" after refresh
+        ---@diagnostic disable-next-line: inject-field
+        self.iconPanel.mouseOverTile = -1
+        -- Re-assign callback every refresh to fight potential native resets (Issue 2)
+        ---@diagnostic disable-next-line: assign-type-mismatch
+        self.iconPanel.onRenderTile = onRenderTile
         self.iconPanel:calculateTiles()
     end
     self.dirtyLayout = true
     self:calculateLayout(self.width, self.height)
 end
 
-function ProductListPanel:new(x, y, w, h, player, xuiSkin)
+function ProductListPanel:new(x, y, w, h, player, xuiSkin, container)
     logger:debug("ProductListPanel:new() called")
     ---@type ProductListPanel
     local o = ISPanel:new(x, y, w, h)
@@ -376,9 +426,12 @@ function ProductListPanel:new(x, y, w, h, player, xuiSkin)
     self.__index = self
     o.player = player
     o.xuiSkin = xuiSkin or XuiManager.GetDefaultSkin()
+    o.container = container
     o.viewMode = "grid"
-    o.minimumWidth = 0
-    o.minimumHeight = 0
+    o.minimumWidth = 80
+    o.minimumHeight = 80
+    o.xuiPreferredResizeWidth = w
+    o.xuiPreferredResizeHeight = h
     -- Left panel background: #1a1a1a (matching middle-panel in HTML)
     o.background = true
     o.backgroundColor = { r = 0.10, g = 0.10, b = 0.10, a = 1.0 }

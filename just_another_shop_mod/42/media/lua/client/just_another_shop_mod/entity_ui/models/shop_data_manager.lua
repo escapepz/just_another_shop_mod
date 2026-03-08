@@ -141,24 +141,47 @@ function ShopDataManager:sort(mode)
     return self.inventory
 end
 
---- Static utility to scan player inventory
+--- Static utility to scan player inventory.
 ---@param player IsoPlayer
+---@param recursive boolean|nil If true, scans all sub-containers (backpacks). Defaults to false.
 ---@return CustomerViewInventory
-function ShopDataManager.ScanPlayerInventory(player)
-    local pInv = player:getInventory()
+function ShopDataManager.ScanPlayerInventory(player, recursive)
+    local rootInv = player:getInventory()
     local pMap = { map = {}, list = {} }
-    local items = pInv:getItems()
-    local size = items:size()
-    for i = 0, size - 1 do
-        local item = items:get(i)
-        local type = item:getFullType()
-        if not pMap.map[type] then
-            pMap.map[type] =
-                { count = 0, name = item:getName(), icon = item:getIcon(), type = type }
-            table.insert(pMap.list, pMap.map[type])
+
+    local function scan(container)
+        if not container then
+            return
         end
-        pMap.map[type].count = pMap.map[type].count + 1
+        local items = container:getItems()
+        local size = items:size()
+        for i = 0, size - 1 do
+            local item = items:get(i)
+            local type = item:getFullType()
+
+            -- Register item count in map
+            if not pMap.map[type] then
+                pMap.map[type] = {
+                    count = 0,
+                    name = item:getName(),
+                    icon = item:getIcon(),
+                    type = type,
+                }
+                table.insert(pMap.list, pMap.map[type])
+            end
+            pMap.map[type].count = pMap.map[type].count + 1
+
+            -- Recurse if enabled and item has its own inventory (backpacks, bags)
+            if recursive then
+                local subInv = item:getInventory()
+                if subInv and subInv ~= container then
+                    scan(subInv)
+                end
+            end
+        end
     end
+
+    scan(rootInv)
     return pMap
 end
 

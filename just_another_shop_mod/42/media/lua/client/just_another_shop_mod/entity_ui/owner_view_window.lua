@@ -288,29 +288,80 @@ function OwnerViewWindow:prerender()
         end
     end
 
-    -- Issue 14: Refresh inventory list when owner restocks (item count check)
+    ISEntityWindow.prerender(self)
+
+    -- Issue 14: Refresh shop inventory when container changes (Owner View)
     ---@cast self.entity IsoObject
     local _container = self.entity and self.entity:getContainer()
     if _container then
         local _currentSize = _container:getItems():size()
-        if _currentSize ~= self._lastContainerSize then
-            logger:debug("OwnerViewWindow:prerender() - container size changed, rescanning", {
-                old = self._lastContainerSize,
-                new = _currentSize,
-            })
-            self._lastContainerSize = _currentSize
-            local _fresh = self.dataManager:scanContainer(_container)
-            self.inventory = _fresh
-            self:refreshInventoryList(_fresh)
-            -- Update selected item stock count if selection is still valid
-            if self.selectedItem and _fresh.map[self.selectedItem.type] then
-                self.selectedItem = _fresh.map[self.selectedItem.type]
-                self:updateOfferPreview(self.selectedItem)
-            end
+        local _isDirty = _container:isDirty() or _container:isDrawDirty()
+        if _currentSize ~= self._lastContainerSize or _isDirty then
+            self:refresh()
         end
     end
+end
 
-    ISEntityWindow.prerender(self)
+--- Rescans the container and refreshes all UI components with fresh data.
+function OwnerViewWindow:refresh()
+    ---@cast self.entity IsoObject
+    local _container = self.entity and self.entity:getContainer()
+    if not _container then
+        return
+    end
+
+    logger:debug("OwnerViewWindow:refresh() - rescanning container")
+
+    -- 1. Scan Container
+    self.dataManager:scanContainer(_container)
+    self.inventory = self.dataManager.inventory
+    self._lastContainerSize = _container:getItems():size()
+
+    -- 2. Preserve UI State: Re-apply Search and Sort (Issue 14 Regression Fix)
+    if self.searchPanel then
+        local searchText = self.searchPanel.searchBox:getInternalText() or ""
+        local sortMode = "Alphabetical (A-Z)"
+        if self.searchPanel.sortCombo then
+            sortMode = self.searchPanel.sortCombo:getOptionText(self.searchPanel.sortCombo.selected)
+                or sortMode
+        end
+
+        logger:debug("OwnerViewWindow:refresh() - restoring filters", {
+            searchText = searchText,
+            sortMode = sortMode,
+        })
+
+        -- Re-run search/sort flow on the fresh data
+        self.dataManager:search(searchText)
+        self.dataManager:sort(sortMode)
+        -- self.inventory list is now filtered and sorted correctly
+    end
+
+    -- 3. Clear dirty flags to match Loot Panel (prevents frame loop flickering)
+    _container:setDrawDirty(false)
+    _container:setDirty(false)
+
+    -- 4. Update Panels
+    self:refreshInventoryList(self.inventory)
+
+    -- Update selected item stock count display ONLY (Issue 14)
+    -- Early exit if no item is selected or the item isn't in the fresh inventory
+    local _freshItem = self.selectedItem and self.inventory.map[self.selectedItem.type]
+    if not _freshItem then
+        return
+    end
+
+    self.selectedItem = _freshItem
+
+    -- Update the right-side header with new stock number
+    if self.updateOfferPreview then
+        self:updateOfferPreview(_freshItem)
+    end
+
+    -- Sync highlight in product panel without triggering a selection callback
+    if self.productPanel then
+        self.productPanel:setSelectedProduct(_freshItem)
+    end
 end
 
 -- ============================================================
@@ -383,9 +434,19 @@ function OwnerViewWindow:initLeftPanels()
     -- Removed onViewToggle: owner view is strictly list-only
     self.leftStackLayout:setElement(0, 0, self.searchPanel)
 
+    ---@cast self.entity IsoObject
     -- List view (fills remaining height)
-    self.productPanel =
-        self:xuiBuild(nil, ProductListPanel, 0, 0, 10, 10, self.player, self.xuiSkin)
+    self.productPanel = self:xuiBuild(
+        nil,
+        ProductListPanel,
+        0,
+        0,
+        10,
+        10,
+        self.player,
+        self.xuiSkin,
+        self.entity and self.entity:getContainer()
+    )
 
     if self.productPanel then
         self.productPanel.target = self
@@ -832,16 +893,8 @@ function OwnerViewWindow:onPublishClicked()
         -- Clear the optimistic pending marker now that server confirmed
         clientModData.pendingTrade = nil
 
-        -- Rescan container and refresh product list
-        if window.dataManager and window.productPanel then
-            local updatedInventory = window.dataManager:scanContainer(self.entity:getContainer())
-            window.inventory = updatedInventory
-
-            -- Update displayed products
-            -- if window.productPanel then
-            window.productPanel:setProducts(updatedInventory.list)
-            -- end
-        end
+        -- Rescan container and refresh UI
+        window:refresh()
     end, nil)
 
     -- Cancel callback: clear pending marker if player aborts

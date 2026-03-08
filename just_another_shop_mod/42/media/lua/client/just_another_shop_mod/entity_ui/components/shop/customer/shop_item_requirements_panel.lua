@@ -66,7 +66,7 @@ function ShopItemRequirementsPanel:createChildren()
         local rList = self.tableLayout:addRow()
         if rList then
             ---@type ISScrollingListBox|nil
-            local list = self:xuiBuild(nil, ISScrollingListBox, 0, 0, self.width, 10)
+            local list = self:xuiBuild(nil, ISScrollingListBox, 0, 0, self.width, REQ_ITEM_H)
             if list then
                 self.requirementsList = list
                 list.itemheight = REQ_ITEM_H
@@ -145,12 +145,30 @@ function ShopItemRequirementsPanel:setTrades(trades)
     if not self.requirementsList then
         return
     end
-    self.requirementsList:clear()
-    for _, trade in ipairs(trades or {}) do
-        self.requirementsList:addItem(trade.requestItem, trade)
+
+    -- Save current selection to restore after refresh (Issue 5 / Issue 14 Improvement)
+    local selectedRequestItem = nil
+    local selIdx = self.requirementsList.selected
+    if selIdx > 0 and selIdx <= #self.requirementsList.items then
+        ---@diagnostic disable-next-line: undefined-field
+        selectedRequestItem = self.requirementsList.items[selIdx].item.requestItem
     end
+
+    self.requirementsList:clear()
+    local restoreIdx = 1
+
+    for i, trade in ipairs(trades or {}) do
+        self.requirementsList:addItem(trade.requestItem, trade)
+        if selectedRequestItem and trade.requestItem == selectedRequestItem then
+            restoreIdx = i
+        end
+    end
+
+    -- Force layout update immediately after populating list to fix hitbox (Issue 1)
+    self:calculateLayout(self.width, 0)
+
     if #self.requirementsList.items > 0 then
-        self.requirementsList.selected = 1
+        self.requirementsList.selected = restoreIdx
     end
 end
 

@@ -281,26 +281,108 @@ function CustomerViewWindow:prerender()
         end
     end
 
-    -- Issue 14: Refresh shop inventory when owner restocks (item count check)
+    ISEntityWindow.prerender(self)
+
+    -- Issue 14 & Issue 5: Refresh shop inventory when container OR player inventory changes
     ---@cast self.entity IsoObject
     local _container = self.entity and self.entity:getContainer()
+    local _playerInv = self.player and self.player:getInventory()
+
+    local _shopDirty = false
     if _container then
         local _currentSize = _container:getItems():size()
-        if _currentSize ~= self._lastContainerSize then
-            logger:debug("CustomerViewWindow:prerender() - container size changed, rescanning", {
-                old = self._lastContainerSize,
-                new = _currentSize,
-            })
-            self._lastContainerSize = _currentSize
-            local _fresh = self.dataManager:scanContainer(_container)
-            self.inventory = _fresh
-            if self.productPanel then
-                self.productPanel:setProducts(_fresh)
-            end
+        local _isDirty = _container:isDirty() or _container:isDrawDirty()
+        if _currentSize ~= self._lastContainerSize or _isDirty then
+            _shopDirty = true
         end
     end
 
-    ISEntityWindow.prerender(self)
+    local _playerDirty = false
+    if _playerInv then
+        local _currentInvSize = _playerInv:getItems():size()
+        local _isInvDirty = _playerInv:isDirty() or _playerInv:isDrawDirty()
+        if _currentInvSize ~= self._lastPlayerInvSize or _isInvDirty then
+            _playerDirty = true
+        end
+    end
+
+    if _shopDirty or _playerDirty then
+        self:refresh(_shopDirty, _playerDirty)
+    end
+end
+
+--- Rescans containers and refreshes UI.
+---@param shopDirty boolean If true, rescan shop container and rebuild product list.
+---@param playerDirty boolean If true, rescan player inventory and update trade satisfactions.
+function CustomerViewWindow:refresh(shopDirty, playerDirty)
+    ---@cast self.entity IsoObject
+    local _container = self.entity and self.entity:getContainer()
+    if not _container then
+        return
+    end
+
+    -- 1. Handle Shop Refresh
+    if shopDirty then
+        logger:debug("CustomerViewWindow:refresh() - SHOP dirty")
+        self.dataManager:scanContainer(_container)
+        self.inventory = self.dataManager.inventory
+        self._lastContainerSize = _container:getItems():size()
+
+        -- Flattened Search/Sort logic
+        local sPanel = self.searchPanel
+        if sPanel then
+            local searchText = sPanel.searchBox:getInternalText() or ""
+            local sortCombo = sPanel.sortCombo
+            local sortMode = sortCombo and sortCombo:getOptionText(sortCombo.selected)
+                or "Alphabetical (A-Z)"
+
+            self.dataManager:search(searchText)
+            self.dataManager:sort(sortMode)
+        end
+
+        if self.productPanel then
+            self.productPanel:setProducts(self.inventory)
+        end
+
+        _container:setDrawDirty(false)
+        _container:setDirty(false)
+    end
+
+    -- 2. Handle Player Refresh
+    local _playerInv = self.player and self.player:getInventory()
+    local _pInvMap = nil
+
+    if playerDirty and _playerInv then
+        logger:debug("CustomerViewWindow:refresh() - PLAYER dirty")
+        _pInvMap = ShopDataManager.ScanPlayerInventory(self.player)
+        self._lastPlayerInvSize = _playerInv:getItems():size()
+        _playerInv:setDrawDirty(false)
+        _playerInv:setDirty(false)
+    end
+
+    -- 3. Surgical Update of Details Panel
+    -- Check requirements immediately
+    local pPanel = self.productPanel
+    local dPanel = self.detailsPanel
+    if not (pPanel and dPanel and pPanel.selectedProduct) then
+        return
+    end
+
+    local selected = pPanel.selectedProduct
+    local freshProduct = self.inventory.map[selected.type]
+
+    -- Handle "Item removed from shop" case and exit
+    if not freshProduct then
+        dPanel:setProduct(nil)
+        return
+    end
+
+    -- Final sequence (No nesting)
+    if _pInvMap then
+        dPanel:setInventory(_pInvMap)
+    end
+    dPanel:setProduct(freshProduct)
+    pPanel:setSelectedProduct(freshProduct)
 end
 
 --- Remove the default debug panel if it exists.
@@ -376,6 +458,8 @@ function CustomerViewWindow:initPanels()
     end
 
     -- Build Product List -> Left Stack Row 1
+    ---@cast self.entity IsoObject
+
     ---@type ProductListPanel|nil
     self.productPanel = self:xuiBuildInLayout(
         self.leftStackLayout,
@@ -388,7 +472,8 @@ function CustomerViewWindow:initPanels()
         10,
         10,
         self.player,
-        self.xuiSkin
+        self.xuiSkin,
+        self.entity and self.entity:getContainer()
     )
     if self.productPanel then
         self.productPanel.target = self
@@ -412,6 +497,12 @@ function CustomerViewWindow:initPanels()
     )
     if self.detailsPanel then
         self.detailsPanel.entity = self.entity
+        self.detailsPanel.target = self -- Set target for refresh callbacks
+
+        -- Initial player inventory sync for trade requirements
+        local _pInvManager = ShopDataManager()
+        local _pInvFresh = _pInvManager:scanContainer(self.player:getInventory())
+        self.detailsPanel:setInventory(_pInvFresh)
     end
 end
 
@@ -529,6 +620,9 @@ function CustomerViewWindow:new(x, y, w, h, player, entity)
         o.inventory = { map = {}, list = {} }
         o._lastContainerSize = 0
     end
+
+    -- Track player inventory for trade paths
+    o._lastPlayerInvSize = player:getInventory():getItems():size()
 
     return o
 end
