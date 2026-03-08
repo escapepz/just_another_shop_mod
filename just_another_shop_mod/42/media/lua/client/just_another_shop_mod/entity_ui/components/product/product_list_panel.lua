@@ -188,23 +188,23 @@ function ProductListPanel:createChildren()
         self.iconPanel.minimumColumns = 1
         self.iconPanel.target = self
 
-        -- Wrapped render for forced stencil clipping (Issue 2 Fix)
-        -- This ensures absolute screen-space clipping that survives refreshes and movements
-        local oldRender = self.iconPanel.render
-        self.iconPanel.render = function()
-            if self.iconPanel:isVisible() then
-                local ax = self.iconPanel:getAbsoluteX()
-                local ay = self.iconPanel:getAbsoluteY()
-                self.iconPanel:setStencilRect(
-                    ax,
-                    ay,
-                    self.iconPanel:getWidth(),
-                    self.iconPanel:getHeight()
-                )
-                oldRender(self.iconPanel)
-                self.iconPanel:clearStencilRect()
-            end
-        end
+        -- Stencil clipping disabled - causes cutoff when window moves
+        -- Let the panel handle its own clipping via overflow property or parent scissor
+        -- local oldRender = self.iconPanel.render
+        -- self.iconPanel.render = function()
+        --     if self.iconPanel:isVisible() then
+        --         local ax = self.iconPanel:getAbsoluteX()
+        --         local ay = self.iconPanel:getAbsoluteY()
+        --         self.iconPanel:setStencilRect(
+        --             ax,
+        --             ay,
+        --             self.iconPanel:getWidth(),
+        --             self.iconPanel:getHeight()
+        --         )
+        --         oldRender(self.iconPanel)
+        --         self.iconPanel:clearStencilRect()
+        --     end
+        -- end
 
         self:addChild(self.iconPanel)
     end

@@ -38,6 +38,7 @@
         "preaction",
         "prerender",
         "pzstudio",
+        "rects",
         "Rescan",
         "rescanning",
         "Rescans",
@@ -49,6 +50,7 @@
         "Thumpable",
         "unlockshop",
         "unregistration",
+        "yonaba",
         "Zomboid"
     ]
 }
