@@ -54,25 +54,33 @@ end
 ---Store shop lock in modData
 ---@param containerObj IsoObject
 ---@param username string Player username
+---@return boolean success
 local function setShopLock(containerObj, username)
     if not containerObj then
-        return
+        logger:debug("setShopLock - aborting, containerObj is nil")
+        return false
     end
     local modData = containerObj:getModData()
+    if modData.shopLock == username then
+        return true -- already locked by this user, redundant but valid
+    end
     modData.shopLock = username
     containerObj:transmitModData()
     logger:debug("setShopLock", {
         shopName = modData.shopName,
         lockedBy = username,
     })
+    return true
 end
 
 ---Release shop lock from modData
 ---@param containerObj IsoObject
 ---@param username string Player username (must match current lock holder)
+---@return boolean success
 local function clearShopLock(containerObj, username)
     if not containerObj then
-        return
+        logger:debug("clearShopLock - aborting, containerObj is nil")
+        return false
     end
     local modData = containerObj:getModData()
     if modData.shopLock == username then
@@ -82,7 +90,9 @@ local function clearShopLock(containerObj, username)
             shopName = modData.shopName,
             wasLockedBy = username,
         })
+        return true
     end
+    return false
 end
 
 -- ---------------------------------------------------------------------------
@@ -204,27 +214,33 @@ local function handleUnregister(player, args, containerObj, thumpable, thumpable
     )
 end
 
----Handle LockShop command
 ---@param player IsoPlayer
 ---@param args table
 local function handleLockShop(player, args)
     local square = getSquare(args.x, args.y, args.z)
     if not square then
+        logger:debug("handleLockShop - aborting, square is nil", args)
         return
     end
 
     local objects = square:getObjects()
+    if not objects then
+        logger:debug("handleLockShop - aborting, objects is nil", args)
+        return
+    end
+
     for i = 0, objects:size() - 1 do
         local obj = objects:get(i)
         local modData = obj:getModData()
         if modData and modData.isShop then
             if not modData.shopLock or modData.shopLock == player:getUsername() then
-                setShopLock(obj, player:getUsername())
-                KUtilities.SendServerCommandTo(player, "JASM_ShopManager", "LockSuccess", args)
-                logger:info("LockShop command - modData updated", {
-                    player = player:getUsername(),
-                    shopName = modData.shopName,
-                })
+                if setShopLock(obj, player:getUsername()) then
+                    KUtilities.SendServerCommandTo(player, "JASM_ShopManager", "LockSuccess", args)
+                    logger:info("LockShop command - modData updated", {
+                        player = player:getUsername(),
+                        shopName = modData.shopName,
+                    })
+                end
             else
                 KUtilities.SendServerCommandTo(player, "JASM_ShopManager", "LockFail", args)
                 logger:warn("LockShop failed - already locked", {
@@ -235,6 +251,7 @@ local function handleLockShop(player, args)
             return
         end
     end
+    logger:debug("handleLockShop - aborting, no shop object found on square", args)
 end
 
 ---Handle UnlockShop command
@@ -243,23 +260,37 @@ end
 local function handleUnlockShop(player, args)
     local square = getSquare(args.x, args.y, args.z)
     if not square then
+        logger:debug("handleUnlockShop - aborting, square is nil", args)
         return
     end
 
     local objects = square:getObjects()
+    if not objects then
+        logger:debug("handleUnlockShop - aborting, objects is nil", args)
+        return
+    end
+
     for i = 0, objects:size() - 1 do
         local obj = objects:get(i)
         local modData = obj:getModData()
         if modData and modData.isShop then
-            clearShopLock(obj, player:getUsername())
-            KUtilities.SendServerCommandTo(player, "JASM_ShopManager", "UnlockSuccess", args)
-            logger:info("UnlockShop command - modData cleared", {
-                player = player:getUsername(),
-                shopName = modData.shopName,
-            })
+            if clearShopLock(obj, player:getUsername()) then
+                KUtilities.SendServerCommandTo(player, "JASM_ShopManager", "UnlockSuccess", args)
+                logger:info("UnlockShop command - modData cleared", {
+                    player = player:getUsername(),
+                    shopName = modData.shopName,
+                })
+            else
+                -- If it wasn't cleared (maybe redundant command), just finish silently
+                logger:debug("handleUnlockShop - redundant or unauthorized attempt", {
+                    player = player:getUsername(),
+                    currentLock = modData.shopLock,
+                })
+            end
             return
         end
     end
+    logger:debug("handleUnlockShop - aborting, no shop object found on square", args)
 end
 
 ---Handle ManageShop command (REGISTER / UNREGISTER)
@@ -268,11 +299,19 @@ end
 local function handleManageShop(player, args)
     local square = getSquare(args.x, args.y, args.z)
     if not square then
+        logger:debug("handleManageShop - aborting, square is nil", args)
         return
     end
 
-    local containerObj = square:getObjects():get(args.index)
+    local objects = square:getObjects()
+    if not objects then
+        logger:debug("handleManageShop - aborting, objects is nil", args)
+        return
+    end
+
+    local containerObj = objects:get(args.index)
     if not containerObj or not containerObj:getContainer() then
+        logger:debug("handleManageShop - aborting, containerObj or its container is nil", args)
         return
     end
 
@@ -297,6 +336,7 @@ end
 ---@param args table
 local function OnClientCommand(module, command, player, args)
     if module ~= "JASM_ShopManager" then
+        -- logger:debug("OnClientCommand - ignoring module", { module = module })
         return
     end
 

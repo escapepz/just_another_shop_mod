@@ -116,13 +116,17 @@ end
 
 --- Override close to release shop lock and prevent closing sibling windows
 function CustomerViewWindow:close()
+    if self.closing then
+        return
+    end
+    self.closing = true
+
     logger:debug("CustomerViewWindow:close() - closing customer view only")
 
     -- Release shop lock when window closes (Issue 8)
     if self.entity then
         local square = self.entity:getSquare()
         if square then
-            local KUtilities = require("pz_utils_shared").konijima.Utilities
             local squareID = KUtilities.SquareToString(square)
             KUtilities.SendClientCommand("JASM_ShopManager", "UnlockShop", {
                 x = square:getX(),
