@@ -281,6 +281,44 @@ function CustomerViewWindow:prerender()
         end
     end
 
+    -- Issue 14 & Issue 5: Refresh shop inventory when container OR player inventory changes
+    ---@cast self.entity IsoObject
+    local _container = self.entity and self.entity:getContainer()
+    local _playerInv = self.player and self.player:getInventory()
+    local _needsRefresh = false
+
+    -- Track Shop Container (Items Stock)
+    if _container then
+        local _currentSize = _container:getItems():size()
+        local _isDirty = _container:isDirty() or _container:isDrawDirty()
+        if _currentSize ~= self._lastContainerSize or _isDirty then
+            logger:debug("CustomerViewWindow:prerender() - Shop Dirty", {
+                sizeChange = _currentSize ~= self._lastContainerSize,
+                isDirty = _isDirty,
+            })
+            _needsRefresh = true
+            -- self._lastContainerSize = _currentSize -- Will be set in refresh()
+        end
+    end
+
+    -- Track Player Inventory (You Need / Progress counts)
+    if _playerInv then
+        local _currentInvSize = _playerInv:getItems():size()
+        local _isInvDirty = _playerInv:isDirty() or _playerInv:isDrawDirty()
+        if _currentInvSize ~= self._lastPlayerInvSize or _isInvDirty then
+            logger:debug("CustomerViewWindow:prerender() - Player Dirty", {
+                sizeChange = _currentInvSize ~= self._lastPlayerInvSize,
+                isInvDirty = _isInvDirty,
+            })
+            _needsRefresh = true
+            -- self._lastPlayerInvSize = _currentInvSize -- Will be set in refresh()
+        end
+    end
+
+    if _needsRefresh then
+        self:refresh()
+    end
+
     ISEntityWindow.prerender(self)
 end
 
@@ -292,21 +330,61 @@ function CustomerViewWindow:refresh()
     end
 
     logger:debug("CustomerViewWindow:refresh() - rescanning container")
-    local _fresh = self.dataManager:scanContainer(_container)
-    self.inventory = _fresh
+
+    -- 1. Scan Shop Container
+    self.dataManager:scanContainer(_container)
+    self.inventory = self.dataManager.inventory
     self._lastContainerSize = _container:getItems():size()
 
-    -- Clear dirty flags to match Loot Panel (prevents frame loop flickering)
-    _container:setDrawDirty(false)
-    _container:setDirty(false)
+    -- 2. Preserve UI State: Re-apply Search and Sort (Issue 14 Regression Fix)
+    if self.searchPanel then
+        local searchText = self.searchPanel.searchBox:getInternalText() or ""
+        local sortMode = "Alphabetical (A-Z)"
+        if self.searchPanel.sortCombo then
+            sortMode = self.searchPanel.sortCombo:getOptionText(self.searchPanel.sortCombo.selected)
+                or sortMode
+        end
 
+        logger:debug("CustomerViewWindow:refresh() - restoring filters", {
+            searchText = searchText,
+            sortMode = sortMode,
+        })
+
+        -- Re-run search/sort flow on the fresh data
+        self.dataManager:search(searchText)
+        self.dataManager:sort(sortMode)
+        -- self.inventory list is now filtered and sorted correctly
+    end
+
+    -- 3. Scan Player Inventory for trade requirement checks (Issue 5 / Issue 14 Extension)
+    local _playerInv = self.player and self.player:getInventory()
+    local _playerInvFresh = nil
+    if _playerInv then
+        -- Use a temporary data manager to avoid corrupting SHOP's sorting/filtering state
+        local _pInvManager = ShopDataManager()
+        _playerInvFresh = _pInvManager:scanContainer(_playerInv)
+        self._lastPlayerInvSize = _playerInv:getItems():size()
+
+        -- Clear dirty flags (to prevent continuous refresh loop in prerender)
+        _container:setDrawDirty(false)
+        _container:setDirty(false)
+        _playerInv:setDrawDirty(false)
+        _playerInv:setDirty(false)
+    end
+
+    -- 4. Update Panels
     if self.productPanel then
-        self.productPanel:setProducts(_fresh)
+        -- We pass the full self.inventory which now contains the correctly filtered list
+        self.productPanel:setProducts(self.inventory)
 
         -- Update details panel if a product is currently selected
         local selected = self.productPanel.selectedProduct
-        if selected and _fresh.map[selected.type] then
-            self:onSelectProduct(_fresh.map[selected.type])
+        if selected and self.inventory.map[selected.type] then
+            -- Pass the FRESH player inventory to details panel before refreshing selection
+            if self.detailsPanel and _playerInvFresh then
+                self.detailsPanel:setInventory(_playerInvFresh)
+            end
+            self:onSelectProduct(self.inventory.map[selected.type])
         end
     end
 end
@@ -424,6 +502,11 @@ function CustomerViewWindow:initPanels()
     if self.detailsPanel then
         self.detailsPanel.entity = self.entity
         self.detailsPanel.target = self -- Set target for refresh callbacks
+
+        -- Initial player inventory sync for trade requirements
+        local _pInvManager = ShopDataManager()
+        local _pInvFresh = _pInvManager:scanContainer(self.player:getInventory())
+        self.detailsPanel:setInventory(_pInvFresh)
     end
 end
 
@@ -541,6 +624,9 @@ function CustomerViewWindow:new(x, y, w, h, player, entity)
         o.inventory = { map = {}, list = {} }
         o._lastContainerSize = 0
     end
+
+    -- Track player inventory for trade paths
+    o._lastPlayerInvSize = player:getInventory():getItems():size()
 
     return o
 end

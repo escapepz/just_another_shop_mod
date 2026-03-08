@@ -289,6 +289,17 @@ function OwnerViewWindow:prerender()
     end
 
     ISEntityWindow.prerender(self)
+
+    -- Issue 14: Refresh shop inventory when container changes (Owner View)
+    ---@cast self.entity IsoObject
+    local _container = self.entity and self.entity:getContainer()
+    if _container then
+        local _currentSize = _container:getItems():size()
+        local _isDirty = _container:isDirty() or _container:isDrawDirty()
+        if _currentSize ~= self._lastContainerSize or _isDirty then
+            self:refresh()
+        end
+    end
 end
 
 --- Rescans the container and refreshes all UI components with fresh data.
@@ -300,19 +311,56 @@ function OwnerViewWindow:refresh()
     end
 
     logger:debug("OwnerViewWindow:refresh() - rescanning container")
-    local _fresh = self.dataManager:scanContainer(_container)
-    self.inventory = _fresh
+
+    -- 1. Scan Container
+    self.dataManager:scanContainer(_container)
+    self.inventory = self.dataManager.inventory
     self._lastContainerSize = _container:getItems():size()
 
-    -- Clear dirty flags to match Loot Panel (prevents frame loop flickering)
+    -- 2. Preserve UI State: Re-apply Search and Sort (Issue 14 Regression Fix)
+    if self.searchPanel then
+        local searchText = self.searchPanel.searchBox:getInternalText() or ""
+        local sortMode = "Alphabetical (A-Z)"
+        if self.searchPanel.sortCombo then
+            sortMode = self.searchPanel.sortCombo:getOptionText(self.searchPanel.sortCombo.selected)
+                or sortMode
+        end
+
+        logger:debug("OwnerViewWindow:refresh() - restoring filters", {
+            searchText = searchText,
+            sortMode = sortMode,
+        })
+
+        -- Re-run search/sort flow on the fresh data
+        self.dataManager:search(searchText)
+        self.dataManager:sort(sortMode)
+        -- self.inventory list is now filtered and sorted correctly
+    end
+
+    -- 3. Clear dirty flags to match Loot Panel (prevents frame loop flickering)
     _container:setDrawDirty(false)
     _container:setDirty(false)
 
-    self:refreshInventoryList(_fresh)
+    -- 4. Update Panels
+    self:refreshInventoryList(self.inventory)
 
-    -- Update selected item stock count if selection is still valid
-    if self.selectedItem and _fresh.map[self.selectedItem.type] then
-        self:onSelectInventoryItem(_fresh.map[self.selectedItem.type])
+    -- Update selected item stock count display ONLY (Issue 14)
+    -- Early exit if no item is selected or the item isn't in the fresh inventory
+    local _freshItem = self.selectedItem and self.inventory.map[self.selectedItem.type]
+    if not _freshItem then
+        return
+    end
+
+    self.selectedItem = _freshItem
+
+    -- Update the right-side header with new stock number
+    if self.updateOfferPreview then
+        self:updateOfferPreview(_freshItem)
+    end
+
+    -- Sync highlight in product panel without triggering a selection callback
+    if self.productPanel then
+        self.productPanel:setSelectedProduct(_freshItem)
     end
 end
 
