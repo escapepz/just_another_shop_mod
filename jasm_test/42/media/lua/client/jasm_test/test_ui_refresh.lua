@@ -329,6 +329,8 @@ local function init()
         ISTimedActionQueue = originalISTimedActionQueue
         _G.JASM_AcceptTradeAction = originalAcceptTradeAction
     end)
+
+    print("[JASM_TEST] UI Refresh tests registered")
 end
 
 return init

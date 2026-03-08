@@ -1,3 +1,4 @@
+---@diagnostic disable: undefined-field, global-in-non-module
 local JASM_TestRunner = require("jasm_test_shared")
 
 local function init()
@@ -25,8 +26,14 @@ local function init()
             local JASM_ShopView_Customer =
                 require("just_another_shop_mod/entity_ui/customer_view_window")
             local originalCustomerOpen = JASM_ShopView_Customer.open
+            local customerOpenCalled = false
+            local calledEntity = nil
             ---@diagnostic disable-next-line: duplicate-set-field
-            JASM_ShopView_Customer.open = function() end
+            JASM_ShopView_Customer.open = function(playerIdx, _, entity)
+                customerOpenCalled = true
+                calledPlayerIndex = playerIdx
+                calledEntity = entity
+            end
 
             local JASM_ShopView_Owner = require("just_another_shop_mod/entity_ui/owner_view_window")
             local originalOwnerOpen = JASM_ShopView_Owner.open
@@ -42,6 +49,19 @@ local function init()
                 getUsername = function()
                     return "testuser"
                 end,
+                getCurrentSquare = function()
+                    return {
+                        getX = function()
+                            return 10
+                        end,
+                        getY = function()
+                            return 10
+                        end,
+                        getZ = function()
+                            return 0
+                        end,
+                    }
+                end,
             }
             local original_getSpecificPlayer = _G.getSpecificPlayer
             ---@diagnostic disable-next-line: global-in-non-module
@@ -55,9 +75,44 @@ local function init()
                 return false
             end
 
+            -- Mock JASM_ShopManager for lock check
+            local originalShopManager = _G.JASM_ShopManager
+            _G.JASM_ShopManager = {
+                getShopLock = function()
+                    return nil
+                end,
+            }
+
             -- Pure mock queue to prevent action execution in-game
             local originalQueueAdd = ISTimedActionQueue.add
-            ISTimedActionQueue.add = function(action) end
+            local originalQueueClear = ISTimedActionQueue.clear
+            ISTimedActionQueue.add = function(action)
+                ---@cast action ISBaseTimedAction
+                if action and action.onCompleteFunc then
+                    local args = action.onCompleteArgs or {}
+                    action.onCompleteFunc(
+                        args[1],
+                        args[2],
+                        args[3],
+                        args[4],
+                        args[5],
+                        args[6],
+                        args[7],
+                        args[8]
+                    )
+                end
+            end
+            ISTimedActionQueue.clear = function(character) end
+
+            -- Mock AdjacentFreeTileFinder to avoid passing Lua mocks to Java
+            local originalFind = AdjacentFreeTileFinder.Find
+            local originalIsTileOrAdjacent = AdjacentFreeTileFinder.isTileOrAdjacent
+            AdjacentFreeTileFinder.Find = function(sq, player)
+                return sq
+            end
+            AdjacentFreeTileFinder.isTileOrAdjacent = function(sq1, sq2)
+                return false -- Force walk for testing openShop callback
+            end
 
             -- Pure mock context to avoid ISPlayerData dependency in-game
             local optionsAdded = {}
@@ -125,6 +180,19 @@ local function init()
                 getZ = function()
                     return 0
                 end,
+                getSquare = function()
+                    return {
+                        getX = function()
+                            return 0
+                        end,
+                        getY = function()
+                            return 0
+                        end,
+                        getZ = function()
+                            return 0
+                        end,
+                    }
+                end,
             }
 
             local worldObjects = { containerObj }
@@ -157,24 +225,33 @@ local function init()
             end
 
             -- Verify and cleanup
-            local success = walkToContainerCalled
+            local success = customerOpenCalled
+            -- print("calledPlayerIndex: ", calledPlayerIndex, "expected: ", playerIndex)
+            -- print("calledEntity: ", calledEntity, "expected: ", containerObj)
             local correctParams = (
-                calledContainer == mockContainer and calledPlayerIndex == playerIndex
+                calledEntity == containerObj and calledPlayerIndex == playerIndex
             )
 
             luautils.walkToContainer = originalWalkToContainer
             ISTimedActionQueue.add = originalQueueAdd
+            ISTimedActionQueue.clear = originalQueueClear
+            AdjacentFreeTileFinder.Find = originalFind
+            AdjacentFreeTileFinder.isTileOrAdjacent = originalIsTileOrAdjacent
             _G.getSpecificPlayer = original_getSpecificPlayer
             pz_utils.konijima.Utilities.IsPlayerAdmin = original_IsPlayerAdmin
+            _G.JASM_ShopManager = originalShopManager
             ---@diagnostic disable-next-line: duplicate-set-field
             JASM_ShopView_Customer.open = originalCustomerOpen
             ---@diagnostic disable-next-line: duplicate-set-field
             JASM_ShopView_Owner.open = originalOwnerOpen
 
-            JASM_TestRunner.assert_true(success, "walkToContainer should have been called")
+            JASM_TestRunner.assert_true(
+                success,
+                "JASM_ShopView_Customer.open should have been called"
+            )
             JASM_TestRunner.assert_true(
                 correctParams,
-                "Should be called with correct container and player index"
+                "Should be called with correct entity and player index"
             )
         end
     )
@@ -189,12 +266,34 @@ local function init()
             -- 1. Setup Tracking
             local originalWalkToContainer = luautils.walkToContainer
             local originalQueueAdd = ISTimedActionQueue.add
+            local originalQueueClear = ISTimedActionQueue.clear
             local walkToContainerCalled = false
             luautils.walkToContainer = function(container, playerNum)
                 walkToContainerCalled = true
                 return true
             end
-            ISTimedActionQueue.add = function(action) end
+            ISTimedActionQueue.add = function(action)
+                ---@cast action ISBaseTimedAction
+                if action and action.onCompleteFunc then
+                    local args = action.onCompleteArgs or {}
+                    action.onCompleteFunc(
+                        args[1],
+                        args[2],
+                        args[3],
+                        args[4],
+                        args[5],
+                        args[6],
+                        args[7],
+                        args[8]
+                    )
+                end
+            end
+            ISTimedActionQueue.clear = function(character) end
+
+            local originalFind = AdjacentFreeTileFinder.Find
+            AdjacentFreeTileFinder.Find = function(sq, player)
+                return sq
+            end
 
             -- 2. Mocking ShopItemDetailsPanel dependencies
             local ShopItemDetailsPanel = require(
@@ -259,6 +358,8 @@ local function init()
             -- Cleanup and verify
             luautils.walkToContainer = originalWalkToContainer
             ISTimedActionQueue.add = originalQueueAdd
+            ISTimedActionQueue.clear = originalQueueClear
+            AdjacentFreeTileFinder.Find = originalFind
             JASM_TestRunner.assert_true(
                 walkToContainerCalled,
                 "walkToContainer should have been called in onAcceptTrade"

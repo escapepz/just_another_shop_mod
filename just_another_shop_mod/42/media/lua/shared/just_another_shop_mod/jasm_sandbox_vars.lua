@@ -19,15 +19,28 @@ local DEFAULTS = {
     --- Even when true, admins still cannot unregister a shop that has items inside.
     ---@type boolean
     AdminBypass = true,
+
+    --- Shop lock protection method.
+    --- 1 "DUAL"    = JASM application lock (modData) + vanilla entity:getUsingPlayer() engine lock.
+    ---             Fast client-side conflict detection with player-name feedback in halotext.
+    --- 2 "VANILLA" = Vanilla engine lock only. No JASM lock state is written.
+    ---             Uses built-in ISEntityWindow/ISEntityUI conflict detection.
+    ---@type number
+    ShopLockMethod = 1,
 }
 
 local NAMESPACE = "JASM"
 local logger = ZUL.new("just_another_shop_mod")
 
 if not _G.__JASM_SandboxVarsInitialized then
+    -- Client-side event for loaded sandbox vars
     Events.OnGameStart.Add(function()
         --- Initialize sandbox vars (safe to call multiple times; second call is a no-op
         --- because SandboxVarsModule.Init would overwrite — use a guard).
+        SandboxVarsModule.Init(NAMESPACE, DEFAULTS)
+    end)
+    -- Server-side event for loaded sandbox vars
+    Events.OnLoadedTileDefinitions.Add(function()
         SandboxVarsModule.Init(NAMESPACE, DEFAULTS)
     end)
     _G.__JASM_SandboxVarsInitialized = true

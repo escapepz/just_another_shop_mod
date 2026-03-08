@@ -7,6 +7,8 @@ require("ISUI/ISScrollingListBox")
 require("TimedActions/ISBaseTimedAction")
 require("TimedActions/ISTimedActionQueue")
 
+local JASM_SandboxVars = require("just_another_shop_mod/jasm_sandbox_vars")
+
 local ShopDataManager = require("just_another_shop_mod/entity_ui/models/shop_data_manager")
 local SearchFilterPanel =
     require("just_another_shop_mod/entity_ui/components/shop/shared/shop_search_filter_panel")
@@ -21,6 +23,8 @@ local ShopFooterPanel =
 
 local ZUL = require("zul")
 local logger = ZUL.new("just_another_shop_mod")
+
+local KUtilities = require("pz_utils_shared").konijima.Utilities
 
 -- ============================================================
 -- COLOR PALETTE (matches design5.html / customer_view_window)
@@ -83,6 +87,8 @@ local MAX_PATHS = 5 -- design5_rule §3: max 5 confirmed paths
 ---@field currentPublishAction JASM_PublishTradeAction|nil
 ---@field isPublishing      boolean
 local OwnerViewWindow = ISEntityWindow:derive("OwnerViewWindow")
+OwnerViewWindow.instance = nil
+OwnerViewWindow.coords = nil
 
 -- ============================================================
 -- REUSED HELPER: xuiBuild (identical pattern to CustomerViewWindow)
@@ -279,6 +285,28 @@ function OwnerViewWindow:prerender()
         if self.xuiResizeAnchorRight then
             self:setX(oldX - (self:getWidth() - oldWidth))
             self.xuiResizeAnchorRight = false
+        end
+    end
+
+    -- Issue 14: Refresh inventory list when owner restocks (item count check)
+    ---@cast self.entity IsoObject
+    local _container = self.entity and self.entity:getContainer()
+    if _container then
+        local _currentSize = _container:getItems():size()
+        if _currentSize ~= self._lastContainerSize then
+            logger:debug("OwnerViewWindow:prerender() - container size changed, rescanning", {
+                old = self._lastContainerSize,
+                new = _currentSize,
+            })
+            self._lastContainerSize = _currentSize
+            local _fresh = self.dataManager:scanContainer(_container)
+            self.inventory = _fresh
+            self:refreshInventoryList(_fresh)
+            -- Update selected item stock count if selection is still valid
+            if self.selectedItem and _fresh.map[self.selectedItem.type] then
+                self.selectedItem = _fresh.map[self.selectedItem.type]
+                self:updateOfferPreview(self.selectedItem)
+            end
         end
     end
 
@@ -533,27 +561,32 @@ function OwnerViewWindow:onSelectInventoryItem(entry)
     local tradesToLoad = self:getTradeData(entry)
 
     -- Load saved per-item paths if the entry has trades stored
-    if entry and tradesToLoad and type(tradesToLoad) == "table" then
+    if
+        entry
+        and tradesToLoad
+        and type(tradesToLoad) == "table"
+        and type(tradesToLoad.paths) == "table"
+    then
         local loadedPaths = tradesToLoad.paths or tradesToLoad -- fallback for legacy/flat
-        if type(loadedPaths) == "table" then
-            for _, t in ipairs(loadedPaths) do
-                local path = {
-                    itemType = t.requestItem or "",
-                    requestQty = math.floor(tonumber(t.requestQty) or 1),
-                    name = t.name or t.requestItem or "",
-                    icon = nil,
-                }
-                -- Try to look up icon from inventory map
-                local mapped = self.inventory
-                    and self.inventory.map
-                    and self.inventory.map[path.itemType]
+        -- if type(loadedPaths) == "table" then
+        for _, t in ipairs(loadedPaths) do
+            local path = {
+                itemType = t.requestItem or "",
+                requestQty = math.floor(tonumber(t.requestQty) or 1),
+                name = t.name or t.requestItem or "",
+                icon = nil,
+            }
+            -- Try to look up icon from inventory map
+            local mapped = self.inventory
+                and self.inventory.map
+                and self.inventory.map[path.itemType]
 
-                if mapped then
-                    path.icon = mapped.icon
-                end
-                table.insert(self.requirementPaths, path)
+            if mapped then
+                path.icon = mapped.icon
             end
+            table.insert(self.requirementPaths, path)
         end
+        -- end
     end
 
     ---@cast self.entity IsoObject
@@ -612,9 +645,9 @@ function OwnerViewWindow:updateOfferPreview(entry)
         self.offerPanel:setQty(configuredOfferQty)
 
         -- Check if it's a proxy string not supported by emojis
-        if tex and type(tex) == "string" and not getTexture(tex) then
-            tex = nil -- will default to ?
-        end
+        -- if tex and type(tex) == "string" and not getTexture(tex) then
+        --     tex = nil -- will default to ?
+        -- end
 
         self.offerPanel:setOfferItem(name, typeStr, stock, tex)
     end
@@ -800,14 +833,14 @@ function OwnerViewWindow:onPublishClicked()
         clientModData.pendingTrade = nil
 
         -- Rescan container and refresh product list
-        if window.dataManager then
+        if window.dataManager and window.productPanel then
             local updatedInventory = window.dataManager:scanContainer(self.entity:getContainer())
             window.inventory = updatedInventory
 
             -- Update displayed products
-            if window.productPanel then
-                window.productPanel:setProducts(updatedInventory.list)
-            end
+            -- if window.productPanel then
+            window.productPanel:setProducts(updatedInventory.list)
+            -- end
         end
     end, nil)
 
@@ -889,8 +922,10 @@ function OwnerViewWindow:new(x, y, w, h, player, entity)
 
     if container then
         o.inventory = o.dataManager:scanContainer(container)
+        o._lastContainerSize = container:getItems():size()
     else
         o.inventory = { map = {}, list = {} }
+        o._lastContainerSize = 0
     end
 
     o.requirementPaths = {}
@@ -905,59 +940,155 @@ function OwnerViewWindow:new(x, y, w, h, player, entity)
     return o
 end
 
---- Override close to prevent closing sibling windows
+--- Override close to release shop lock and prevent closing sibling windows
 function OwnerViewWindow:close()
+    if self.closing then
+        return
+    end
+    self.closing = true
+
     logger:debug("OwnerViewWindow:close() - closing owner view only")
-    ISEntityWindow.close(self)
+
+    -- Release shop lock if owner holds it (Issue 8)
+    if self.entity then
+        local square = self.entity:getSquare()
+        if square then
+            local squareID = KUtilities.SquareToString(square)
+            KUtilities.SendClientCommand("JASM_ShopManager", "UnlockShop", {
+                x = square:getX(),
+                y = square:getY(),
+                z = square:getZ(),
+            })
+            logger:debug("OwnerViewWindow:close() - unlock sent", { squareID = squareID })
+        end
+    end
+
+    -- Save position for next open (vanilla pattern)
+    OwnerViewWindow.coords = { self:getX(), self:getY(), self:getWidth(), self:getHeight() }
+
+    -- Vanilla pattern: cleanup singleton
+    OwnerViewWindow.instance = nil
+
+    -- ISBaseEntityWindow.close handles: ISCollapsableWindow.close, ISEntityUI.OnCloseWindow,
+    -- joypad cleanup, entity:setUsingPlayer(nil), and removeFromUIManager
+    ISBaseEntityWindow.close(self)
 end
 
 -- ============================================================
 -- REGISTRATION / CONTEXT MENU
 -- ============================================================
 
---- Helper: Find existing OwnerViewWindow for entity by querying UIManager
----@param entity IsoObject
----@return CustomerViewWindow|UIElement?
-local function findExistingOwnerWindow(entity)
-    local uiList = UIManager.getUI()
-    if not uiList then
-        return nil
+local function _bringToTop(window)
+    -- Bring to top if already open
+    if window.instance:isVisible() then
+        window.instance:bringToTop()
+    else
+        window.instance:setVisible(true)
+        window.instance:bringToTop()
     end
-
-    for i = 0, uiList:size() - 1 do
-        ---@type CustomerViewWindow|UIElement
-        local child = uiList:get(i)
-        if instanceof(child, "OwnerViewWindow") and child.entity == entity then
-            return child
-        end
-    end
-    return nil
 end
 
 ---@param playerIndex integer
 ---@param _context any
 ---@param entity IsoObject
 function OwnerViewWindow.open(playerIndex, _context, entity)
-    -- Check if window already open for this entity
-    local existingWindow = findExistingOwnerWindow(entity)
-    if existingWindow and existingWindow:isVisible() then
-        existingWindow:bringToTop()
-        return existingWindow
+    logger:debug("OwnerViewWindow.open() - request for entity", {
+        x = entity:getX(),
+        y = entity:getY(),
+        z = entity:getZ(),
+    })
+
+    local player = getSpecificPlayer(playerIndex)
+    local lockMethod = JASM_SandboxVars.Get("ShopLockMethod", 1)
+
+    -- ===== Lock check BEFORE instance/singleton check =====
+    if lockMethod == 1 then
+        -- Layer 1: Check JASM application-level lock via modData (synced from server)
+        local modData = entity:getModData()
+        if modData and modData.isShop then
+            local lockHolder = modData.shopLock
+            if lockHolder and lockHolder ~= player:getUsername() then
+                HaloTextHelper.addBadText(
+                    player,
+                    "Shop is locked by " .. tostring(lockHolder) .. "."
+                )
+                logger:info("OwnerViewWindow.open() blocked - JASM lock", {
+                    player = player:getUsername(),
+                    lockedBy = lockHolder,
+                })
+                return nil
+            end
+        end
+
+        -- Layer 2 awareness: fallback if entity shows a different user (desync guard)
+        local entityUser = entity:getUsingPlayer()
+        if entityUser and entityUser ~= player then
+            local entityUserName = entityUser:getUsername()
+            HaloTextHelper.addBadText(player, "Shop is in use by " .. entityUserName .. ".")
+            logger:warn("OwnerViewWindow.open() blocked - entity desync (JASM unaware)", {
+                player = player:getUsername(),
+                entityUser = entityUserName,
+            })
+            return nil
+        end
+    elseif lockMethod == 2 then
+        -- VANILLA mode: check only entity:getUsingPlayer()
+        local entityUser = entity:getUsingPlayer()
+        if entityUser and entityUser ~= player then
+            HaloTextHelper.addBadText(
+                player,
+                "Shop is in use by " .. entityUser:getUsername() .. "."
+            )
+            logger:info("OwnerViewWindow.open() blocked - vanilla entity lock", {
+                player = player:getUsername(),
+                entityUser = entityUser:getUsername(),
+            })
+            return nil
+        end
+    end
+
+    -- Vanilla pattern: Check if instance exists first
+    if OwnerViewWindow.instance then
+        _bringToTop(OwnerViewWindow)
+        return OwnerViewWindow.instance
     end
 
     local screenWidth = getCore():getScreenWidth()
     local screenHeight = getCore():getScreenHeight()
 
-    local windowWidth = 800
-    local windowHeight = 600
+    local windowWidth = 800.0
+    local windowHeight = 600.0
     -- Position left side, keeps center visible (player view/zombie danger zone)
-    local windowX = math.max(0, screenWidth / 2 - windowWidth - 69)
-    local windowY = math.max(0, (screenHeight - windowHeight) / 2)
+    local windowX = math.max(0.0, screenWidth / 2.0 - windowWidth - 69.0)
+    local windowY = math.max(0.0, (screenHeight - windowHeight) / 2.0)
 
-    local player = getSpecificPlayer(playerIndex)
+    -- Use saved coords if available
+    if OwnerViewWindow.coords then
+        windowX, windowY = OwnerViewWindow.coords[1], OwnerViewWindow.coords[2]
+    end
+
     local window = OwnerViewWindow:new(windowX, windowY, windowWidth, windowHeight, player, entity)
     window:initialise()
     window:addToUIManager()
+
+    -- ===== Layer 1: Acquire JASM lock after window is successfully created =====
+    if lockMethod == 1 then
+        local square = entity:getSquare()
+        if square then
+            KUtilities.SendClientCommand("JASM_ShopManager", "LockShop", {
+                x = square:getX(),
+                y = square:getY(),
+                z = square:getZ(),
+            })
+            logger:info("OwnerViewWindow.open() - LockShop sent", {
+                player = player:getUsername(),
+                squareID = KUtilities.SquareToString(square),
+            })
+        end
+    end
+
+    -- Store the instance
+    OwnerViewWindow.instance = window
 
     return window
 end

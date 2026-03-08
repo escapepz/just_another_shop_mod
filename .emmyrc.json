@@ -16,5 +16,8 @@
             "tmp"
         ],
         "library": [".libraries", ".types"]
+    },
+    "runtime": {
+        "version": "Lua5.1"
     }
 }

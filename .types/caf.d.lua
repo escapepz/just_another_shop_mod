@@ -1,4 +1,3 @@
-
 ---@class CAF.Context
 ---@field character IsoPlayer
 ---@field item InventoryItem
@@ -10,3 +9,5 @@
 ---@field flags.rejected boolean
 ---@field flags.reason string
 ---@field flags.adminOverride boolean
+---@field callbacks table
+---@field callbacks.onRejected fun

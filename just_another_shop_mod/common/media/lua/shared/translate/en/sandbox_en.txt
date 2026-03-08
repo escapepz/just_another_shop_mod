@@ -3,4 +3,9 @@ Sandbox_EN = {
     
     Sandbox_JASM_AdminBypass = "Admin Bypass",
     Sandbox_JASM_AdminBypass_tooltip = "If enabled, server admins can take items from any shop container freely.",
+    
+    Sandbox_JASM_ShopLockMethod = "Shop Lock Method",
+    Sandbox_JASM_ShopLockMethod_tooltip = "Method used to lock shops.",
+    Sandbox_JASM_ShopLockMethod_Values_option1 = "Dual",
+    Sandbox_JASM_ShopLockMethod_Values_option2 = "Vanilla",
 }

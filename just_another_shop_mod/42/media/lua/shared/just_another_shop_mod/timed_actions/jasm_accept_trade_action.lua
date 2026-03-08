@@ -6,6 +6,7 @@ local logger = ZUL.new("just_another_shop_mod")
 local pz_utils = require("pz_utils_shared")
 local JASM_SandboxVars = require("just_another_shop_mod/jasm_sandbox_vars")
 
+local KUtilities = pz_utils.konijima.Utilities
 -- ============================================================
 -- JASM_AcceptTradeAction
 -- B42 Networked TimedAction for customer "Accept Trade".
@@ -227,35 +228,72 @@ function JASM_AcceptTradeAction:complete()
     local shopContainer = containerObj:getContainer()
     local playerInv = self.character:getInventory()
 
-    -- 1. ALL-OR-NOTHING PRE-VALIDATION
+    -- 1. IDENTIFY ALL ITEMS (ATOMIC PRE-VALIDATION)
 
-    -- Validate shop stock count (B42 uses getItemCount for ItemContainer)
-    local shopStock = shopContainer:getItemCount(self.itemType)
-    if shopStock < self.offerQty then
-        logger:error("Shop has insufficient stock", {
+    local currencyItems = {}
+    local productItems = {}
+
+    -- Collect product items from shop
+    local shopItems = shopContainer:getItems()
+    for i = 0, shopItems:size() - 1 do
+        local item = shopItems:get(i)
+        if item and item:getFullType() == self.itemType then
+            table.insert(productItems, item)
+            if #productItems >= self.offerQty then
+                break
+            end
+        end
+    end
+
+    if #productItems < self.offerQty then
+        logger:error("Shop has insufficient stock (Atomic check)", {
             shop = containerObj:getName(),
             required = self.offerQty,
-            available = shopStock,
+            available = #productItems,
             item = self.itemType,
         })
+        -- Send halotext command to player on client
+        KUtilities.SendServerCommandTo(
+            self.character,
+            "JASM_ShopManager",
+            "TradeDenied",
+            { reason = "insufficient_stock" }
+        )
         return false
     end
 
-    -- Validate player currency if not force-giving
+    -- Collect currency items from player (if not admin force)
     if not self.isForceGive then
-        local playerFunds = playerInv:getItemCount(self.requestItem)
-        if playerFunds < self.requestQty then
-            logger:error("Player has insufficient funds", {
+        local pItems = playerInv:getItems()
+        for i = 0, pItems:size() - 1 do
+            local item = pItems:get(i)
+            if item and item:getFullType() == self.requestItem then
+                table.insert(currencyItems, item)
+                if #currencyItems >= self.requestQty then
+                    break
+                end
+            end
+        end
+
+        if #currencyItems < self.requestQty then
+            logger:error("Player has insufficient funds (Atomic check)", {
                 player = self.character:getUsername(),
                 required = self.requestQty,
-                available = playerFunds,
+                available = #currencyItems,
                 item = self.requestItem,
             })
+            -- Send halotext command to player on client
+            KUtilities.SendServerCommandTo(
+                self.character,
+                "JASM_ShopManager",
+                "TradeDenied",
+                { reason = "insufficient_funds" }
+            )
             return false
         end
     end
 
-    -- 2. PROCESS TRANSFER
+    -- 2. PROCESS TRANSFER (NOW SAFE)
 
     if self.isForceGive then
         -- Admin check (secondary safety)
@@ -264,6 +302,12 @@ function JASM_AcceptTradeAction:complete()
 
         if not (isAdmin and adminBypass) then
             logger:error("JASM_AcceptTradeAction:complete() - unauthorized force give attempt")
+            KUtilities.SendServerCommandTo(
+                self.character,
+                "JASM_ShopManager",
+                "TradeDenied",
+                { reason = "unauthorized" }
+            )
             return false
         end
 
@@ -272,19 +316,8 @@ function JASM_AcceptTradeAction:complete()
             { qty = self.offerQty }
         )
     else
-        -- Transfer currency from player to shop (ATOMIC - all or nothing)
-        for i = 1, self.requestQty do
-            local item = playerInv:getFirstType(self.requestItem)
-
-            if not item then
-                logger:error("Currency item disappeared mid-transfer", {
-                    player = self.character:getUsername(),
-                    completed = i - 1,
-                    expected = self.requestQty,
-                })
-                return false -- ABORT - don't proceed to product transfer
-            end
-
+        -- Transfer currency from player to shop
+        for _, item in ipairs(currencyItems) do
             playerInv:Remove(item)
             sendRemoveItemFromContainer(playerInv, item)
             shopContainer:AddItem(item)
@@ -292,20 +325,8 @@ function JASM_AcceptTradeAction:complete()
         end
     end
 
-    -- Transfer product from shop to player (ATOMIC - all or nothing)
-    -- This runs for BOTH normal trade and Force Give (if it reached here)
-    for i = 1, self.offerQty do
-        local item = shopContainer:getFirstType(self.itemType)
-
-        if not item then
-            logger:error("Product item disappeared mid-transfer", {
-                shop = containerObj:getName(),
-                completed = i - 1,
-                expected = self.offerQty,
-            })
-            return false -- ABORT
-        end
-
+    -- Transfer product from shop to player
+    for _, item in ipairs(productItems) do
         shopContainer:Remove(item)
         sendRemoveItemFromContainer(shopContainer, item)
         playerInv:AddItem(item)
@@ -318,6 +339,12 @@ function JASM_AcceptTradeAction:complete()
         price = (not self.isForceGive) and (self.requestQty .. "x " .. self.requestItem)
             or "FORCED",
     })
+
+    -- Trigger UI refresh callback (Issue 5)
+    if self.onCompleteFunc then
+        local args = self.onCompleteArgs or {}
+        self.onCompleteFunc(args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8])
+    end
 
     return true
 end

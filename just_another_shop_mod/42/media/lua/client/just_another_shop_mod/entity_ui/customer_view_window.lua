@@ -11,6 +11,9 @@ local ItemDetailsPanel =
     require("just_another_shop_mod/entity_ui/components/shop/customer/shop_item_details_panel")
 local ShopDataManager = require("just_another_shop_mod/entity_ui/models/shop_data_manager")
 
+local JASM_SandboxVars = require("just_another_shop_mod/jasm_sandbox_vars")
+local KUtilities = require("pz_utils_shared").konijima.Utilities
+
 local ZUL = require("zul")
 local logger = ZUL.new("just_another_shop_mod")
 
@@ -30,6 +33,8 @@ local logger = ZUL.new("just_another_shop_mod")
 ---@field inventory CustomerViewInventory
 ---@field dataManager ShopDataManager
 local CustomerViewWindow = ISEntityWindow:derive("CustomerViewWindow")
+CustomerViewWindow.instance = nil
+CustomerViewWindow.coords = nil
 
 --- Helper to build, initialise and instantiate a component in one go.
 function CustomerViewWindow:xuiBuild(style, class, ...)
@@ -109,10 +114,38 @@ function CustomerViewWindow:so_override_the_entity_header()
     self.entityHeader:calculateLayout(self.width, 0)
 end
 
---- Override close to prevent closing sibling windows
+--- Override close to release shop lock and prevent closing sibling windows
 function CustomerViewWindow:close()
+    if self.closing then
+        return
+    end
+    self.closing = true
+
     logger:debug("CustomerViewWindow:close() - closing customer view only")
-    ISEntityWindow.close(self)
+
+    -- Release shop lock when window closes (Issue 8)
+    if self.entity then
+        local square = self.entity:getSquare()
+        if square then
+            local squareID = KUtilities.SquareToString(square)
+            KUtilities.SendClientCommand("JASM_ShopManager", "UnlockShop", {
+                x = square:getX(),
+                y = square:getY(),
+                z = square:getZ(),
+            })
+            logger:debug("CustomerViewWindow:close() - unlock sent", { squareID = squareID })
+        end
+    end
+
+    -- Save position for next open (vanilla pattern)
+    CustomerViewWindow.coords = { self:getX(), self:getY(), self:getWidth(), self:getHeight() }
+
+    -- Vanilla pattern: cleanup singleton
+    CustomerViewWindow.instance = nil
+
+    -- ISBaseEntityWindow.close handles: ISCollapsableWindow.close, ISEntityUI.OnCloseWindow,
+    -- joypad cleanup, entity:setUsingPlayer(nil), and removeFromUIManager
+    ISBaseEntityWindow.close(self)
 end
 
 --- Create child components and set up the layout.
@@ -245,6 +278,25 @@ function CustomerViewWindow:prerender()
         if self.xuiResizeAnchorRight then
             self:setX(oldX - (self:getWidth() - oldWidth))
             self.xuiResizeAnchorRight = false
+        end
+    end
+
+    -- Issue 14: Refresh shop inventory when owner restocks (item count check)
+    ---@cast self.entity IsoObject
+    local _container = self.entity and self.entity:getContainer()
+    if _container then
+        local _currentSize = _container:getItems():size()
+        if _currentSize ~= self._lastContainerSize then
+            logger:debug("CustomerViewWindow:prerender() - container size changed, rescanning", {
+                old = self._lastContainerSize,
+                new = _currentSize,
+            })
+            self._lastContainerSize = _currentSize
+            local _fresh = self.dataManager:scanContainer(_container)
+            self.inventory = _fresh
+            if self.productPanel then
+                self.productPanel:setProducts(_fresh)
+            end
         end
     end
 
@@ -472,67 +524,128 @@ function CustomerViewWindow:new(x, y, w, h, player, entity)
 
     if container then
         o.inventory = o.dataManager:scanContainer(container)
+        o._lastContainerSize = container:getItems():size()
     else
         o.inventory = { map = {}, list = {} }
+        o._lastContainerSize = 0
     end
 
     return o
 end
 
--- Track open windows by entity to prevent cross-closing
-local _openWindowsByEntity = {}
-
---- Helper: Find existing CustomerViewWindow for entity by querying UIManager
----@param entity IsoObject
----@return UIElement|CustomerViewWindow?
-local function findExistingCustomerWindow(entity)
-    local uiList = UIManager.getUI()
-    if not uiList then
-        return nil
+local function _bringToTop(window)
+    -- Bring to top if already open
+    if window.instance:isVisible() then
+        window.instance:bringToTop()
+    else
+        window.instance:setVisible(true)
+        window.instance:bringToTop()
     end
-
-    local uiSize = uiList:size()
-
-    -- Early return if the UI list doesn't exist or is empty
-    if not uiList or uiSize == 0 then
-        return nil
-    end
-
-    for i = 0, uiSize - 1 do
-        ---@type CustomerViewWindow|UIElement
-        local child = uiList:get(i)
-        if instanceof(child, "CustomerViewWindow") and child.entity == entity then
-            return child
-        end
-    end
-    return nil
 end
 
 ---@param playerIndex integer
 ---@param _context any
 ---@param entity IsoObject
 function CustomerViewWindow.open(playerIndex, _context, entity)
-    -- Check if window already open for this entity
-    local existingWindow = findExistingCustomerWindow(entity)
-    if existingWindow and existingWindow:isVisible() then
-        existingWindow:bringToTop()
-        return existingWindow
+    logger:debug("CustomerViewWindow.open() - request for entity", {
+        x = entity:getX(),
+        y = entity:getY(),
+        z = entity:getZ(),
+    })
+
+    local player = getSpecificPlayer(playerIndex)
+    local lockMethod = JASM_SandboxVars.Get("ShopLockMethod", 1)
+
+    -- ===== Lock check BEFORE instance/singleton check =====
+    if lockMethod == 1 then
+        -- Layer 1: Check JASM application-level lock via modData (synced from server)
+        local modData = entity:getModData()
+        if modData and modData.isShop then
+            local lockHolder = modData.shopLock
+            if lockHolder and lockHolder ~= player:getUsername() then
+                HaloTextHelper.addBadText(
+                    player,
+                    "Shop is locked by " .. tostring(lockHolder) .. "."
+                )
+                logger:info("CustomerViewWindow.open() blocked - JASM lock", {
+                    player = player:getUsername(),
+                    lockedBy = lockHolder,
+                })
+                return nil
+            end
+        end
+
+        -- Layer 2 awareness: fallback if entity shows a different user (desync guard)
+        local entityUser = entity:getUsingPlayer()
+        if entityUser and entityUser ~= player then
+            local entityUserName = entityUser:getUsername()
+            HaloTextHelper.addBadText(player, "Shop is in use by " .. entityUserName .. ".")
+            logger:warn("CustomerViewWindow.open() blocked - entity desync (JASM unaware)", {
+                player = player:getUsername(),
+                entityUser = entityUserName,
+            })
+            return nil
+        end
+    elseif lockMethod == 2 then
+        -- VANILLA mode: check only entity:getUsingPlayer()
+        local entityUser = entity:getUsingPlayer()
+        if entityUser and entityUser ~= player then
+            HaloTextHelper.addBadText(
+                player,
+                "Shop is in use by " .. entityUser:getUsername() .. "."
+            )
+            logger:info("CustomerViewWindow.open() blocked - vanilla entity lock", {
+                player = player:getUsername(),
+                entityUser = entityUser:getUsername(),
+            })
+            return nil
+        end
+    end
+
+    -- Vanilla pattern: Check if instance exists first
+    if CustomerViewWindow.instance then
+        _bringToTop(CustomerViewWindow)
+        return CustomerViewWindow.instance
     end
 
     local screenWidth = getCore():getScreenWidth()
     local screenHeight = getCore():getScreenHeight()
 
-    local windowWidth = 800
-    local windowHeight = 600
-    -- Position right side, keeps center visible (player view/zombie danger zone)
-    local windowX = math.max(0, screenWidth - windowWidth - 90)
-    local windowY = math.max(0, (screenHeight - windowHeight) / 2)
+    local windowWidth = 800.0
+    local windowHeight = 600.0
 
-    local player = getSpecificPlayer(playerIndex)
+    -- Position right side, keeps center visible (player view/zombie danger zone)
+    local windowX = math.max(0.0, screenWidth - windowWidth - 90.0)
+    local windowY = math.max(0.0, (screenHeight - windowHeight) / 2.0)
+
+    -- Use saved coords if available
+    if CustomerViewWindow.coords then
+        windowX, windowY = CustomerViewWindow.coords[1], CustomerViewWindow.coords[2]
+    end
+
     local window =
         CustomerViewWindow:new(windowX, windowY, windowWidth, windowHeight, player, entity)
     window:initialise()
     window:addToUIManager()
+
+    -- ===== Layer 1: Acquire JASM lock after window is successfully created =====
+    if lockMethod == 1 then
+        local square = entity:getSquare()
+        if square then
+            KUtilities.SendClientCommand("JASM_ShopManager", "LockShop", {
+                x = square:getX(),
+                y = square:getY(),
+                z = square:getZ(),
+            })
+            logger:info("CustomerViewWindow.open() - LockShop sent", {
+                player = player:getUsername(),
+                squareID = KUtilities.SquareToString(square),
+            })
+        end
+    end
+
+    -- Store the instance
+    CustomerViewWindow.instance = window
 
     return window
 end

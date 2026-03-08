@@ -14,9 +14,11 @@ local function init()
         local originalGetSquare = _G.getSquare
         local originalSendRemove = _G.sendRemoveItemFromContainer
         local originalSendAdd = _G.sendAddItemToContainer
+        local originalSendServerCommand = _G.sendServerCommand
 
         _G.sendRemoveItemFromContainer = function(container, item) end
         _G.sendAddItemToContainer = function(container, item) end
+        _G.sendServerCommand = function(...) end
 
         local pz_utils = require("pz_utils_shared")
         local originalIsAdmin = pz_utils.konijima.Utilities.IsPlayerAdmin
@@ -58,6 +60,16 @@ local function init()
                 end,
                 AddItem = function(self, it)
                     table.insert(self.items, it)
+                end,
+                getItems = function(self)
+                    return {
+                        size = function()
+                            return #self.items
+                        end,
+                        get = function(_, i)
+                            return self.items[i + 1]
+                        end,
+                    }
                 end,
             }
         end
@@ -208,7 +220,7 @@ local function init()
             "Player should have 1 axe"
         )
 
-        -- Scenario 4: Atomicity (Currency vanishes mid-transfer)
+        -- Scenario 4: Atomicity (Currency vanishes mid-discovery)
         mockPlayer.inventory.items = {}
         for i = 1, 10 do
             table.insert(mockPlayer.inventory.items, createItem("Base.Money"))
@@ -218,22 +230,29 @@ local function init()
             table.insert(mockShopContainer.items, createItem("Base.Axe"))
         end
 
-        local callCount = 0
-        local originalGetFirst = mockPlayer.inventory.getFirstType
-        mockPlayer.inventory.getFirstType = function(self, type)
-            callCount = callCount + 1
-            if callCount == 5 then
-                return nil
-            end -- Fails on 5th item
-            return originalGetFirst(self, type)
+        local originalGetItems = mockPlayer.inventory.getItems
+        mockPlayer.inventory.getItems = function(self)
+            local items = originalGetItems(self)
+            local _items = self.items
+            return {
+                size = function()
+                    return #_items
+                end,
+                get = function(self2, i)
+                    if i == 4 then
+                        return nil
+                    end -- Fails on 5th item
+                    return _items[i + 1]
+                end,
+            }
         end
 
         result = action:complete()
-        JASM_TestRunner.assert_false(result, "Trade should fail mid-transfer")
+        JASM_TestRunner.assert_false(result, "Trade should fail during pre-validation")
         JASM_TestRunner.assert_equals(
-            6,
+            10,
             mockPlayer.inventory:getItemCount("Base.Money"),
-            "Player should have 6 money (4 removed before abort)"
+            "Player should still have 10 money (No items should be moved if pre-validation fails)"
         )
         JASM_TestRunner.assert_equals(
             0,
@@ -247,9 +266,11 @@ local function init()
         )
 
         -- Cleanup
+        mockPlayer.inventory.getItems = originalGetItems
         _G.getSquare = originalGetSquare
         _G.sendRemoveItemFromContainer = originalSendRemove
         _G.sendAddItemToContainer = originalSendAdd
+        _G.sendServerCommand = originalSendServerCommand
         pz_utils.konijima.Utilities.IsPlayerAdmin = originalIsAdmin
     end)
 

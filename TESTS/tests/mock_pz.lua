@@ -113,6 +113,28 @@ function MockPZ.createIsoPlayer(username, isAdmin)
         getPlayerNum = function(self)
             return self.playerNum
         end,
+
+        getSquare = function(self)
+            return self.square
+        end,
+
+        DistTo = function(self, x, y)
+            if type(x) == "table" then
+                return IsoUtils.DistanceTo(
+                    self.x or 0,
+                    self.y or 0,
+                    self.z or 0,
+                    x:getX(),
+                    x:getY(),
+                    x:getZ()
+                )
+            end
+            return IsoUtils.DistanceTo2D(self.x or 0, self.y or 0, x, y)
+        end,
+
+        DistTo2D = function(self, x, y)
+            return IsoUtils.DistanceTo2D(self.x or 0, self.y or 0, x, y)
+        end,
     }
 end
 
@@ -196,6 +218,29 @@ function MockPZ.setupGlobals()
         end
     end
 
+    -- Mock networking and system globals
+    _G.isClient = _G.isClient or function()
+        return false
+    end
+    _G.isServer = _G.isServer or function()
+        return false
+    end
+    _G.sendClientCommand = _G.sendClientCommand or function(...) end
+    _G.sendServerCommand = _G.sendServerCommand or function(...) end
+    _G.triggerEvent = _G.triggerEvent or function(...) end
+
+    -- Mock IsoUtils
+    if not _G.IsoUtils then
+        _G.IsoUtils = {
+            DistanceTo = function(x1, y1, z1, x2, y2, z2)
+                return math.sqrt((x1 - x2) ^ 2 + (y1 - y2) ^ 2 + (z1 - z2) ^ 2)
+            end,
+            DistanceTo2D = function(x1, y1, x2, y2)
+                return math.sqrt((x1 - x2) ^ 2 + (y1 - y2) ^ 2)
+            end,
+        }
+    end
+
     -- Mock getSpecificPlayer
     if not _G.getSpecificPlayer then
         _G.getSpecificPlayer = function(id)
@@ -209,8 +254,33 @@ function MockPZ.setupGlobals()
     if not _G.luautils then
         _G.luautils = {
             walkAdj = function(player, square, isWalk) end,
-            walkToContainer = function(container, playerNum) end,
+            walkToContainer = function(container, playerNum)
+                return true
+            end,
             okModal = function(text, centerX, centerY, target, onOk) end,
+        }
+    end
+
+    -- Mock AdjacentFreeTileFinder
+    if not _G.AdjacentFreeTileFinder then
+        _G.AdjacentFreeTileFinder = {
+            isTileOrAdjacent = function(sq1, sq2)
+                return true
+            end,
+            Find = function(sq, player)
+                return sq
+            end,
+        }
+    end
+
+    -- Mock ISWorldObjectContextMenu
+    if not _G.ISWorldObjectContextMenu then
+        _G.ISWorldObjectContextMenu = {
+            addToolTip = function()
+                return {
+                    setName = function(self, name) end,
+                }
+            end,
         }
     end
 
@@ -235,6 +305,38 @@ function MockPZ.setupGlobals()
     if not _G.ISTimedActionQueue then
         _G.ISTimedActionQueue = {
             add = function(action) end,
+        }
+    end
+
+    -- Mock Events system
+    if not _G.Events then
+        _G.Events = setmetatable({}, {
+            __index = function(t, k)
+                t[k] = {
+                    Add = function(fn) end,
+                    Remove = function(fn) end,
+                }
+                return t[k]
+            end,
+        })
+    end
+
+    -- Mock getCore
+    if not _G.getCore then
+        _G.getCore = function()
+            return {
+                getGameVersion = function()
+                    return "v42"
+                end,
+            }
+        end
+    end
+
+    -- Mock HaloTextHelper
+    if not _G.HaloTextHelper then
+        _G.HaloTextHelper = {
+            addBadText = function(player, text) end,
+            addText = function(player, text) end,
         }
     end
 
@@ -455,19 +557,27 @@ function MockPZ.setupGlobals()
             return derived
         end,
         new = function(self, character)
-            local o = {}
+            local o = {
+                character = character,
+                onCompleteFunc = nil,
+                onCompleteArgs = nil,
+            }
             setmetatable(o, { __index = self })
-            o.character = character
             return o
         end,
+        setOnComplete = function(self, func, ...)
+            self.onCompleteFunc = func
+            self.onCompleteArgs = { n = select("#", ...), ... }
+        end,
     }
+
+    _G.ISWalkToTimedAction = ISBaseTimedAction:derive("ISWalkToTimedAction")
 
     package.preload["TimedActions/ISBaseTimedAction"] = function()
         return _G.ISBaseTimedAction
     end
 
     package.preload["TimedActions/ISWalkToTimedAction"] = function()
-        _G.ISWalkToTimedAction = ISBaseTimedAction:derive("ISWalkToTimedAction")
         return _G.ISWalkToTimedAction
     end
     _G.ISTextEntryBox = ISPanel:derive("ISTextEntryBox")

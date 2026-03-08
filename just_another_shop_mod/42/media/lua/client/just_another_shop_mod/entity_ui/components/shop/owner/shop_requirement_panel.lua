@@ -100,26 +100,26 @@ end
 
 function ShopRequirementPanel:onAddPathClicked(requestQty, itemType)
     if not itemType or itemType == "" then
-        if self.onError then
-            self.onError(self.target, "Type cannot be empty")
-        end
+        -- if self.onError then
+        self.onError(self.target, "Type cannot be empty")
+        -- end
         return
     end
 
     local itemScript = ScriptManager.instance:getItem(itemType)
     if not itemScript then
-        if self.onError then
-            self.onError(self.target, "Invalid item type: " .. itemType)
-        end
+        -- if self.onError then
+        self.onError(self.target, "Invalid item type: " .. itemType)
+        -- end
         return
     end
 
     requestQty = math.max(1, math.floor(tonumber(requestQty) or 1))
 
     if #self.requirementPaths >= self.maxPaths then
-        if self.onError then
-            self.onError(self.target, "Maximum " .. self.maxPaths .. " requirement paths allowed")
-        end
+        -- if self.onError then
+        self.onError(self.target, "Maximum " .. self.maxPaths .. " requirement paths allowed")
+        -- end
         return
     end
 
