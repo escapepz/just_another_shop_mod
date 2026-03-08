@@ -281,26 +281,42 @@ function CustomerViewWindow:prerender()
         end
     end
 
-    -- Issue 14: Refresh shop inventory when owner restocks (item count check)
+    -- Issue 14 & Issue 5: Refresh shop inventory when container changes
     ---@cast self.entity IsoObject
     local _container = self.entity and self.entity:getContainer()
     if _container then
         local _currentSize = _container:getItems():size()
-        if _currentSize ~= self._lastContainerSize then
-            logger:debug("CustomerViewWindow:prerender() - container size changed, rescanning", {
-                old = self._lastContainerSize,
-                new = _currentSize,
-            })
-            self._lastContainerSize = _currentSize
-            local _fresh = self.dataManager:scanContainer(_container)
-            self.inventory = _fresh
-            if self.productPanel then
-                self.productPanel:setProducts(_fresh)
-            end
+        local _isDirty = _container:isDirty() or _container:isDrawDirty()
+        if _currentSize ~= self._lastContainerSize or _isDirty then
+            self:refresh()
         end
     end
 
     ISEntityWindow.prerender(self)
+end
+
+--- Rescans the container and refreshes all UI components with fresh data.
+function CustomerViewWindow:refresh()
+    ---@cast self.entity IsoObject
+    local _container = self.entity and self.entity:getContainer()
+    if not _container then
+        return
+    end
+
+    logger:debug("CustomerViewWindow:refresh() - rescanning container")
+    local _fresh = self.dataManager:scanContainer(_container)
+    self.inventory = _fresh
+    self._lastContainerSize = _container:getItems():size()
+
+    if self.productPanel then
+        self.productPanel:setProducts(_fresh)
+
+        -- Update details panel if a product is currently selected
+        local selected = self.productPanel.selectedProduct
+        if selected and _fresh.map[selected.type] then
+            self:onSelectProduct(_fresh.map[selected.type])
+        end
+    end
 end
 
 --- Remove the default debug panel if it exists.
@@ -412,6 +428,7 @@ function CustomerViewWindow:initPanels()
     )
     if self.detailsPanel then
         self.detailsPanel.entity = self.entity
+        self.detailsPanel.target = self -- Set target for refresh callbacks
     end
 end
 

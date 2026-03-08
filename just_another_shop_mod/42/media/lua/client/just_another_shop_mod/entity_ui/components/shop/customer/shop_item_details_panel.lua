@@ -369,13 +369,8 @@ function ShopItemDetailsPanel:onAcceptTrade()
 
     -- Add callback to refresh UI after trade completes
     action:setOnComplete(function()
-        -- Rescan container to get fresh inventory
-        if self.parent and self.parent.dataManager and self.parent.productPanel then
-            local newInventory = self.parent.dataManager:scanContainer(entity:getContainer())
-            self.parent.inventory = newInventory
-
-            -- Refresh product list display
-            self.parent.productPanel:setProducts(newInventory.list)
+        if self.target and self.target.refresh then
+            self.target:refresh()
         end
     end, nil)
 

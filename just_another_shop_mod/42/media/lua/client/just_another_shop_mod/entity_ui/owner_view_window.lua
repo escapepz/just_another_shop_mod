@@ -288,29 +288,39 @@ function OwnerViewWindow:prerender()
         end
     end
 
-    -- Issue 14: Refresh inventory list when owner restocks (item count check)
+    -- Issue 14 & Issue 5: Refresh inventory list when container changes
     ---@cast self.entity IsoObject
     local _container = self.entity and self.entity:getContainer()
     if _container then
         local _currentSize = _container:getItems():size()
-        if _currentSize ~= self._lastContainerSize then
-            logger:debug("OwnerViewWindow:prerender() - container size changed, rescanning", {
-                old = self._lastContainerSize,
-                new = _currentSize,
-            })
-            self._lastContainerSize = _currentSize
-            local _fresh = self.dataManager:scanContainer(_container)
-            self.inventory = _fresh
-            self:refreshInventoryList(_fresh)
-            -- Update selected item stock count if selection is still valid
-            if self.selectedItem and _fresh.map[self.selectedItem.type] then
-                self.selectedItem = _fresh.map[self.selectedItem.type]
-                self:updateOfferPreview(self.selectedItem)
-            end
+        local _isDirty = _container:isDirty() or _container:isDrawDirty()
+        if _currentSize ~= self._lastContainerSize or _isDirty then
+            self:refresh()
         end
     end
 
     ISEntityWindow.prerender(self)
+end
+
+--- Rescans the container and refreshes all UI components with fresh data.
+function OwnerViewWindow:refresh()
+    ---@cast self.entity IsoObject
+    local _container = self.entity and self.entity:getContainer()
+    if not _container then
+        return
+    end
+
+    logger:debug("OwnerViewWindow:refresh() - rescanning container")
+    local _fresh = self.dataManager:scanContainer(_container)
+    self.inventory = _fresh
+    self._lastContainerSize = _container:getItems():size()
+
+    self:refreshInventoryList(_fresh)
+
+    -- Update selected item stock count if selection is still valid
+    if self.selectedItem and _fresh.map[self.selectedItem.type] then
+        self:onSelectInventoryItem(_fresh.map[self.selectedItem.type])
+    end
 end
 
 -- ============================================================
@@ -832,16 +842,8 @@ function OwnerViewWindow:onPublishClicked()
         -- Clear the optimistic pending marker now that server confirmed
         clientModData.pendingTrade = nil
 
-        -- Rescan container and refresh product list
-        if window.dataManager and window.productPanel then
-            local updatedInventory = window.dataManager:scanContainer(self.entity:getContainer())
-            window.inventory = updatedInventory
-
-            -- Update displayed products
-            -- if window.productPanel then
-            window.productPanel:setProducts(updatedInventory.list)
-            -- end
-        end
+        -- Rescan container and refresh UI
+        window:refresh()
     end, nil)
 
     -- Cancel callback: clear pending marker if player aborts
