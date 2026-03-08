@@ -114,12 +114,26 @@ function MockPZ.createIsoPlayer(username, isAdmin)
             return self.playerNum
         end,
 
-        getCurrentSquare = function(self)
+        getSquare = function(self)
             return self.square
         end,
 
-        getSquare = function(self)
-            return self.square
+        DistTo = function(self, x, y)
+            if type(x) == "table" then
+                return IsoUtils.DistanceTo(
+                    self.x or 0,
+                    self.y or 0,
+                    self.z or 0,
+                    x:getX(),
+                    x:getY(),
+                    x:getZ()
+                )
+            end
+            return IsoUtils.DistanceTo2D(self.x or 0, self.y or 0, x, y)
+        end,
+
+        DistTo2D = function(self, x, y)
+            return IsoUtils.DistanceTo2D(self.x or 0, self.y or 0, x, y)
         end,
     }
 end
@@ -202,6 +216,29 @@ function MockPZ.setupGlobals()
         _G.getSquare = function(x, y, z)
             return MockPZ.createSquare(x, y, z)
         end
+    end
+
+    -- Mock networking and system globals
+    _G.isClient = _G.isClient or function()
+        return false
+    end
+    _G.isServer = _G.isServer or function()
+        return false
+    end
+    _G.sendClientCommand = _G.sendClientCommand or function(...) end
+    _G.sendServerCommand = _G.sendServerCommand or function(...) end
+    _G.triggerEvent = _G.triggerEvent or function(...) end
+
+    -- Mock IsoUtils
+    if not _G.IsoUtils then
+        _G.IsoUtils = {
+            DistanceTo = function(x1, y1, z1, x2, y2, z2)
+                return math.sqrt((x1 - x2) ^ 2 + (y1 - y2) ^ 2 + (z1 - z2) ^ 2)
+            end,
+            DistanceTo2D = function(x1, y1, x2, y2)
+                return math.sqrt((x1 - x2) ^ 2 + (y1 - y2) ^ 2)
+            end,
+        }
     end
 
     -- Mock getSpecificPlayer

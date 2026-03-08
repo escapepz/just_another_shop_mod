@@ -14,9 +14,11 @@ local function init()
         local originalGetSquare = _G.getSquare
         local originalSendRemove = _G.sendRemoveItemFromContainer
         local originalSendAdd = _G.sendAddItemToContainer
+        local originalSendServerCommand = _G.sendServerCommand
 
         _G.sendRemoveItemFromContainer = function(container, item) end
         _G.sendAddItemToContainer = function(container, item) end
+        _G.sendServerCommand = function(...) end
 
         local pz_utils = require("pz_utils_shared")
         local originalIsAdmin = pz_utils.konijima.Utilities.IsPlayerAdmin
@@ -268,6 +270,7 @@ local function init()
         _G.getSquare = originalGetSquare
         _G.sendRemoveItemFromContainer = originalSendRemove
         _G.sendAddItemToContainer = originalSendAdd
+        _G.sendServerCommand = originalSendServerCommand
         pz_utils.konijima.Utilities.IsPlayerAdmin = originalIsAdmin
     end)
 
