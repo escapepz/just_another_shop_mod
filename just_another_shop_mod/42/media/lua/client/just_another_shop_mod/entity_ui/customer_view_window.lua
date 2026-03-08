@@ -281,6 +281,25 @@ function CustomerViewWindow:prerender()
         end
     end
 
+    -- Issue 14: Refresh shop inventory when owner restocks (item count check)
+    ---@cast self.entity IsoObject
+    local _container = self.entity and self.entity:getContainer()
+    if _container then
+        local _currentSize = _container:getItems():size()
+        if _currentSize ~= self._lastContainerSize then
+            logger:debug("CustomerViewWindow:prerender() - container size changed, rescanning", {
+                old = self._lastContainerSize,
+                new = _currentSize,
+            })
+            self._lastContainerSize = _currentSize
+            local _fresh = self.dataManager:scanContainer(_container)
+            self.inventory = _fresh
+            if self.productPanel then
+                self.productPanel:setProducts(_fresh)
+            end
+        end
+    end
+
     ISEntityWindow.prerender(self)
 end
 
@@ -505,8 +524,10 @@ function CustomerViewWindow:new(x, y, w, h, player, entity)
 
     if container then
         o.inventory = o.dataManager:scanContainer(container)
+        o._lastContainerSize = container:getItems():size()
     else
         o.inventory = { map = {}, list = {} }
+        o._lastContainerSize = 0
     end
 
     return o
@@ -590,11 +611,12 @@ function CustomerViewWindow.open(playerIndex, _context, entity)
     local screenWidth = getCore():getScreenWidth()
     local screenHeight = getCore():getScreenHeight()
 
-    local windowWidth = 800
-    local windowHeight = 600
+    local windowWidth = 800.0
+    local windowHeight = 600.0
+
     -- Position right side, keeps center visible (player view/zombie danger zone)
-    local windowX = math.max(0, screenWidth - windowWidth - 90)
-    local windowY = math.max(0, (screenHeight - windowHeight) / 2)
+    local windowX = math.max(0.0, screenWidth - windowWidth - 90.0)
+    local windowY = math.max(0.0, (screenHeight - windowHeight) / 2.0)
 
     -- Use saved coords if available
     if CustomerViewWindow.coords then

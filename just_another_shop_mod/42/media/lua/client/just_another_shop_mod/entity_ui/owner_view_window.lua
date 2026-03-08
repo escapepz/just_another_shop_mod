@@ -288,6 +288,28 @@ function OwnerViewWindow:prerender()
         end
     end
 
+    -- Issue 14: Refresh inventory list when owner restocks (item count check)
+    ---@cast self.entity IsoObject
+    local _container = self.entity and self.entity:getContainer()
+    if _container then
+        local _currentSize = _container:getItems():size()
+        if _currentSize ~= self._lastContainerSize then
+            logger:debug("OwnerViewWindow:prerender() - container size changed, rescanning", {
+                old = self._lastContainerSize,
+                new = _currentSize,
+            })
+            self._lastContainerSize = _currentSize
+            local _fresh = self.dataManager:scanContainer(_container)
+            self.inventory = _fresh
+            self:refreshInventoryList(_fresh)
+            -- Update selected item stock count if selection is still valid
+            if self.selectedItem and _fresh.map[self.selectedItem.type] then
+                self.selectedItem = _fresh.map[self.selectedItem.type]
+                self:updateOfferPreview(self.selectedItem)
+            end
+        end
+    end
+
     ISEntityWindow.prerender(self)
 end
 
@@ -900,8 +922,10 @@ function OwnerViewWindow:new(x, y, w, h, player, entity)
 
     if container then
         o.inventory = o.dataManager:scanContainer(container)
+        o._lastContainerSize = container:getItems():size()
     else
         o.inventory = { map = {}, list = {} }
+        o._lastContainerSize = 0
     end
 
     o.requirementPaths = {}
@@ -1032,11 +1056,11 @@ function OwnerViewWindow.open(playerIndex, _context, entity)
     local screenWidth = getCore():getScreenWidth()
     local screenHeight = getCore():getScreenHeight()
 
-    local windowWidth = 800
-    local windowHeight = 600
+    local windowWidth = 800.0
+    local windowHeight = 600.0
     -- Position left side, keeps center visible (player view/zombie danger zone)
-    local windowX = math.max(0, screenWidth / 2 - windowWidth - 69)
-    local windowY = math.max(0, (screenHeight - windowHeight) / 2)
+    local windowX = math.max(0.0, screenWidth / 2.0 - windowWidth - 69.0)
+    local windowY = math.max(0.0, (screenHeight - windowHeight) / 2.0)
 
     -- Use saved coords if available
     if OwnerViewWindow.coords then
