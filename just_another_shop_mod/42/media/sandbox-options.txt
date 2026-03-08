@@ -8,3 +8,14 @@ option JASM.AdminBypass
     type = boolean,
     default = true,
 }
+
+option JASM.ShopLockMethod
+{
+    page = JASM,
+    translation = JASM_ShopLockMethod,
+    tooltip = JASM_ShopLockMethod_tooltip,
+    valueTranslation = JASM_ShopLockMethod_Values,
+    type = enum,
+    numValues = 2,
+    default = 1,
+}
