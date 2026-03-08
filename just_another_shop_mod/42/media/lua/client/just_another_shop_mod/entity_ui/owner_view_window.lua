@@ -288,17 +288,6 @@ function OwnerViewWindow:prerender()
         end
     end
 
-    -- Issue 14 & Issue 5: Refresh inventory list when container changes
-    ---@cast self.entity IsoObject
-    local _container = self.entity and self.entity:getContainer()
-    if _container then
-        local _currentSize = _container:getItems():size()
-        local _isDirty = _container:isDirty() or _container:isDrawDirty()
-        if _currentSize ~= self._lastContainerSize or _isDirty then
-            self:refresh()
-        end
-    end
-
     ISEntityWindow.prerender(self)
 end
 
@@ -314,6 +303,10 @@ function OwnerViewWindow:refresh()
     local _fresh = self.dataManager:scanContainer(_container)
     self.inventory = _fresh
     self._lastContainerSize = _container:getItems():size()
+
+    -- Clear dirty flags to match Loot Panel (prevents frame loop flickering)
+    _container:setDrawDirty(false)
+    _container:setDirty(false)
 
     self:refreshInventoryList(_fresh)
 
@@ -393,9 +386,19 @@ function OwnerViewWindow:initLeftPanels()
     -- Removed onViewToggle: owner view is strictly list-only
     self.leftStackLayout:setElement(0, 0, self.searchPanel)
 
+    ---@cast self.entity IsoObject
     -- List view (fills remaining height)
-    self.productPanel =
-        self:xuiBuild(nil, ProductListPanel, 0, 0, 10, 10, self.player, self.xuiSkin)
+    self.productPanel = self:xuiBuild(
+        nil,
+        ProductListPanel,
+        0,
+        0,
+        10,
+        10,
+        self.player,
+        self.xuiSkin,
+        self.entity and self.entity:getContainer()
+    )
 
     if self.productPanel then
         self.productPanel.target = self

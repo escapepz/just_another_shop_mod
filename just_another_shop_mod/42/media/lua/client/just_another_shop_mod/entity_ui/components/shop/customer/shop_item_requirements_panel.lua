@@ -66,7 +66,7 @@ function ShopItemRequirementsPanel:createChildren()
         local rList = self.tableLayout:addRow()
         if rList then
             ---@type ISScrollingListBox|nil
-            local list = self:xuiBuild(nil, ISScrollingListBox, 0, 0, self.width, 10)
+            local list = self:xuiBuild(nil, ISScrollingListBox, 0, 0, self.width, REQ_ITEM_H)
             if list then
                 self.requirementsList = list
                 list.itemheight = REQ_ITEM_H
@@ -149,6 +149,8 @@ function ShopItemRequirementsPanel:setTrades(trades)
     for _, trade in ipairs(trades or {}) do
         self.requirementsList:addItem(trade.requestItem, trade)
     end
+    -- Force layout update immediately after populating list to fix hitbox (Issue 1)
+    self:calculateLayout(self.width, 0)
     if #self.requirementsList.items > 0 then
         self.requirementsList.selected = 1
     end

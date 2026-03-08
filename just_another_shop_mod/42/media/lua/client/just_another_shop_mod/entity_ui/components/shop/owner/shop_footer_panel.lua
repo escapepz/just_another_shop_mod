@@ -78,6 +78,7 @@ function ShopFooterPanel:createChildren()
                     true
                 )
                 if self.errorLabel then
+                    self.errorLabel.center = false
                     contentLayout:setElement(0, rLabel:index(), self.errorLabel)
                 end
             end
@@ -166,17 +167,25 @@ function ShopFooterPanel:createChildren()
 end
 
 function ShopFooterPanel:setError(msg)
-    self.errorLabel:setName(msg)
-    self.errorLabel.r = 1.0
-    self.errorLabel.g = 0.27
-    self.errorLabel.b = 0.27
+    if self.errorLabel then
+        self.errorLabel:setName(msg)
+        self.errorLabel.r = 1.0
+        self.errorLabel.g = 0.27
+        self.errorLabel.b = 0.27
+        self.errorLabel:setWidthToName()
+        self.errorLabel:setX((self:getWidth() - self.errorLabel:getWidth()) / 2)
+    end
 end
 
 function ShopFooterPanel:setSuccess(msg)
-    self.errorLabel:setName(msg)
-    self.errorLabel.r = 0.30
-    self.errorLabel.g = 0.90
-    self.errorLabel.b = 0.30
+    if self.errorLabel then
+        self.errorLabel:setName(msg)
+        self.errorLabel.r = 0.30
+        self.errorLabel.g = 0.90
+        self.errorLabel.b = 0.30
+        self.errorLabel:setWidthToName()
+        self.errorLabel:setX((self:getWidth() - self.errorLabel:getWidth()) / 2)
+    end
 end
 
 function ShopFooterPanel:clearError()
