@@ -2,9 +2,10 @@ author=escapepz
 
 id=just_another_shop_mod
 name=Just Another Shop Mod
-description=A lightweight shop system based on the Container Authority Framework.
+description=A lightweight shop system built on the CAF/MAF frameworks.
 
-poster=poster.png
+poster=shop_customer_view_square_512.png
+poster2=shop_owner_view_square_512.png
 icon=icon.png
 
 modversion=1.0.0

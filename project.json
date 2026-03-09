@@ -3,9 +3,17 @@
     "title": "Just Another Shop Mod",
     "authors": ["escapepz", "eScape"],
     "workshop": {
+        "id": 3681786362,
         "visibility": "unlisted",
-        "tags": ["Build 42"],
-        "excludes": []
+        "tags": [
+            "Build 42",
+            "Multiplayer",
+            "Framework",
+            "Interface",
+            "QoL",
+            "WIP"
+        ],
+        "excludes": ["jasm_test"]
     },
     "mods": {
         "just_another_shop_mod": {
