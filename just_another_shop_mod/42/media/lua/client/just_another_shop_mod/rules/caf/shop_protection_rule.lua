@@ -25,8 +25,27 @@ local RuleShopProtection = function(ctx)
         local playerUsername = player:getUsername()
         -- Rule: Lock Check
         -- If shop is locked by another player, NOBODY can modify inventory
-        -- modData.shopLock is synced from server via transmitModData() - safe to read client-side
-        local lockHolder = modData.shopLock
+        local lockMethod = JASM_SandboxVars.Get("ShopLockMethod", 1)
+        local lockHolder = nil
+
+        if lockMethod == 1 then
+            -- DUAL mode: JASM modData lock is authoritative
+            local globalModData = ModData.getOrCreate("JASM_ServerSession")
+            local currentSession = globalModData and globalModData.id
+
+            if modData.shopLockSessionID == currentSession then
+                lockHolder = modData.shopLock
+            else
+                lockHolder = nil -- stale lock from previous server crash
+            end
+        elseif lockMethod == 2 then
+            -- VANILLA mode: entity usage is authoritative
+            -- Note: getUsingPlayer is technically from GameEntity/Component in B42, duck-typed here
+            local entityUser = parent:getUsingPlayer()
+            if entityUser then
+                lockHolder = entityUser:getUsername()
+            end
+        end
 
         if lockHolder and lockHolder ~= playerUsername then
             -- STRICT LOCK: If locked by someone else, NOBODY can remove items (Source check).
@@ -111,8 +130,27 @@ local RuleShopProtection = function(ctx)
         local playerUsername = player:getUsername()
 
         -- Rule: Lock Check (Destination)
-        -- modData.shopLock is synced from server via transmitModData() - safe to read client-side
-        local lockHolder = destModData.shopLock
+        local lockMethod = JASM_SandboxVars.Get("ShopLockMethod", 1)
+        local lockHolder = nil
+
+        if lockMethod == 1 then
+            -- DUAL mode: JASM modData lock is authoritative
+            local globalModData = ModData.getOrCreate("JASM_ServerSession")
+            local currentSession = globalModData and globalModData.id
+
+            if destModData.shopLockSessionID == currentSession then
+                lockHolder = destModData.shopLock
+            else
+                lockHolder = nil -- stale lock from previous server crash
+            end
+        elseif lockMethod == 2 then
+            -- VANILLA mode: entity usage is authoritative
+            -- Note: getUsingPlayer is technically from GameEntity/Component in B42, duck-typed here
+            local entityUser = destParent and destParent:getUsingPlayer()
+            if entityUser then
+                lockHolder = entityUser:getUsername()
+            end
+        end
 
         -- If locked by someone else, verify if owner/admin can still restock
         if lockHolder and lockHolder ~= playerUsername then

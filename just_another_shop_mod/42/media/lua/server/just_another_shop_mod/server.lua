@@ -35,6 +35,16 @@ local function Init()
     ---@diagnostic disable-next-line: assign-type-mismatch
     Events.OnClientCommand.Add(ServerCommand)
 
+    -- Issue 16: Setup Global Session ID for stateless lock verification
+    local JASM_SandboxVars = require("just_another_shop_mod/jasm_sandbox_vars")
+    local lockMethod = JASM_SandboxVars.Get("ShopLockMethod", 1)
+    if lockMethod == 1 then
+        local sessionData = ModData.getOrCreate("JASM_ServerSession")
+        sessionData.id = tostring(getTimeInMillis()) .. "_" .. tostring(ZombRand(100000))
+        ModData.transmit("JASM_ServerSession")
+        logger:info("DUAL mode: generated new Shop Lock Session ID: " .. sessionData.id)
+    end
+
     logger:info("Just Another Shop Mod (CAF-MAF-Based) loaded successfully.")
 
     return _G.JASM_ShopManager

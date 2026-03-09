@@ -65,6 +65,8 @@ local function setShopLock(containerObj, username)
         return true -- already locked by this user, redundant but valid
     end
     modData.shopLock = username
+    local sessionData = ModData.getOrCreate("JASM_ServerSession")
+    modData.shopLockSessionID = sessionData and sessionData.id
     containerObj:transmitModData()
     logger:debug("setShopLock", {
         shopName = modData.shopName,
@@ -85,6 +87,7 @@ local function clearShopLock(containerObj, username)
     local modData = containerObj:getModData()
     if modData.shopLock == username then
         modData.shopLock = nil
+        modData.shopLockSessionID = nil
         containerObj:transmitModData()
         logger:debug("clearShopLock", {
             shopName = modData.shopName,
@@ -234,6 +237,13 @@ end
 ---@param player IsoPlayer
 ---@param args table
 local function handleLockShop(player, args)
+    -- In VANILLA mode, ISEntityWindow owns the lock; no modData write
+    local lockMethod = JASM_SandboxVars.Get("ShopLockMethod", 1)
+    if lockMethod == 2 then
+        logger:debug("handleLockShop - VANILLA mode, skip modData write")
+        return
+    end
+
     local square = getSquare(args.x, args.y, args.z)
     if not square then
         return logger:debug("handleLockShop - no square", args)
@@ -268,6 +278,13 @@ end
 ---@param player IsoPlayer
 ---@param args table
 local function handleUnlockShop(player, args)
+    -- In VANILLA mode, ISEntityWindow owns the lock; nothing to clear in modData
+    local lockMethod = JASM_SandboxVars.Get("ShopLockMethod", 1)
+    if lockMethod == 2 then
+        logger:debug("handleUnlockShop - VANILLA mode, skip modData clear")
+        return
+    end
+
     local square = getSquare(args.x, args.y, args.z)
     if not square then
         return logger:debug("handleUnlockShop - no square", args)

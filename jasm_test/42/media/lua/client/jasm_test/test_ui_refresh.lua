@@ -89,6 +89,11 @@ local function init()
                 end,
             },
             parent = mockParent,
+            target = {
+                refresh = function()
+                    mockProductPanel:setProducts({})
+                end,
+            },
             -- REQUIRED MEMBERS FOR ShopItemDetailsPanel implementation
             updateTradeButton = function(self) end,
             calculateLayout = function(self) end,
@@ -213,6 +218,9 @@ local function init()
             isPublishing = false,
             currentPublishAction = nil,
             calculateLayout = function(self) end,
+            refresh = function(self)
+                self.productPanel:setProducts({})
+            end,
         }
 
         -- 3. Act: Trigger the UI method

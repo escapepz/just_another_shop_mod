@@ -124,7 +124,8 @@ function CustomerViewWindow:close()
     logger:debug("CustomerViewWindow:close() - closing customer view only")
 
     -- Release shop lock when window closes (Issue 8)
-    if self.entity then
+    local lockMethod = JASM_SandboxVars.Get("ShopLockMethod", 1)
+    if lockMethod == 1 and self.entity then
         local square = self.entity:getSquare()
         if square then
             local squareID = KUtilities.SquareToString(square)
@@ -655,7 +656,12 @@ function CustomerViewWindow.open(playerIndex, _context, entity)
         -- Layer 1: Check JASM application-level lock via modData (synced from server)
         local modData = entity:getModData()
         if modData and modData.isShop then
-            local lockHolder = modData.shopLock
+            local globalModData = ModData.getOrCreate("JASM_ServerSession")
+            local currentSession = globalModData and globalModData.id
+
+            local lockSession = modData.shopLockSessionID
+            local lockHolder = lockSession == currentSession and modData.shopLock or nil
+
             if lockHolder and lockHolder ~= player:getUsername() then
                 HaloTextHelper.addBadText(
                     player,

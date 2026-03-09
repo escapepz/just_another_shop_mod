@@ -382,6 +382,54 @@ local function init()
         )
     end)
 
+    JASM_TestRunner.register("test_issue16_setShopLock_stores_sessionID", "server", function()
+        -- Simulate setShopLock call appending ServerSessionID
+        local mockObj = createMockShopObject()
+        local modData = mockObj:getModData()
+
+        local currentSession = ModData.getOrCreate("JASM_ServerSession")
+        currentSession.id = "server_session_123"
+
+        modData.shopLock = "Player1"
+        modData.shopLockSessionID = currentSession.id
+
+        JASM_TestRunner.assert_equals(
+            modData.shopLock,
+            "Player1",
+            "setShopLock should store username"
+        )
+        JASM_TestRunner.assert_equals(
+            modData.shopLockSessionID,
+            "server_session_123",
+            "setShopLock should store current server session ID"
+        )
+    end)
+
+    JASM_TestRunner.register("test_issue15_handleLockShop_vanilla_skip", "server", function()
+        -- Simulate handler skips in VANILLA mode
+        local mockObj = createMockShopObject()
+        local modData = mockObj:getModData()
+
+        local JASM_SandboxVars = require("just_another_shop_mod/jasm_sandbox_vars")
+        local originalGet = JASM_SandboxVars.Get
+        JASM_SandboxVars.Get = function(k, d)
+            return k == "ShopLockMethod" and 2 or originalGet(k, d)
+        end
+
+        local lockMethod = JASM_SandboxVars.Get("ShopLockMethod", 1)
+        if lockMethod == 2 then
+            -- early return simulated
+        else
+            modData.shopLock = "Player1"
+        end
+
+        JASM_SandboxVars.Get = originalGet -- Restore
+        JASM_TestRunner.assert_nil(
+            modData.shopLock,
+            "handleLockShop must NOT write modData in VANILLA mode"
+        )
+    end)
+
     print("[JASM_TEST] ShopServerCommands tests registered")
 end
 

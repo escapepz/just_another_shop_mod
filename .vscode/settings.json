@@ -27,6 +27,7 @@
         "lockshop",
         "luautils",
         "middleclass",
+        "Millis",
         "mklink",
         "moddata",
         "modversion",
@@ -51,6 +52,7 @@
         "unlockshop",
         "unregistration",
         "yonaba",
+        "Zomb",
         "Zomboid"
     ]
 }

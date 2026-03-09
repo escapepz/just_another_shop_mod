@@ -130,10 +130,18 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
         end
     end
 
+    local lockHolder = modData.shopLock
+    local lockSession = modData.shopLockSessionID
+    local globalModData = ModData.getOrCreate("JASM_ServerSession")
+    local currentSession = globalModData and globalModData.id
+
+    -- Invalidate lock if session ID differs
+    if lockSession ~= currentSession then
+        lockHolder = nil
+    end
+
     -- Top Level Shop Access (General Public)
     if isShop then
-        -- modData.shopLock is synced from server via transmitModData() - safe to read client-side
-        local lockHolder = modData.shopLock
         local isLockedByOther = lockHolder and lockHolder ~= playerObj:getUsername()
 
         -- Open Customer View
