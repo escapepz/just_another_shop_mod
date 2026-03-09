@@ -77,6 +77,7 @@ require("jasm_test/test_caf_rules")()
 require("jasm_test/test_player_actions")()
 require("jasm_test/test_context_menu_permissions")()
 require("jasm_test/test_ui_refresh")()
+require("jasm_test/test_issue14_ui_refresh_locked_shop")()
 
 print("")
 print("=== All Test Modules Loaded ===")

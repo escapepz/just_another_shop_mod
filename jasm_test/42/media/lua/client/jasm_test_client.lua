@@ -11,6 +11,7 @@ local test_caf_rules = require("jasm_test/test_caf_rules")
 local test_player_actions = require("jasm_test/test_player_actions")
 local test_context_menu_permissions = require("jasm_test/test_context_menu_permissions")
 local test_ui_refresh = require("jasm_test/test_ui_refresh")
+local test_issue14 = require("jasm_test/test_issue14_ui_refresh_locked_shop")
 
 local pz_utils = require("pz_utils_shared")
 local KUtilities = pz_utils.konijima.Utilities
@@ -46,6 +47,7 @@ Events.OnGameStart.Add(function()
     test_player_actions()
     test_context_menu_permissions()
     test_ui_refresh()
+    test_issue14()
     print("[JASM_TEST] Client test runner initialized")
 end)
 

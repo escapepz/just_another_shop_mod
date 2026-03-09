@@ -218,6 +218,30 @@ function MockPZ.setupGlobals()
         end
     end
 
+    -- Mock ModData
+    if not _G.ModData then
+        local globalModData = {}
+        _G.ModData = {
+            getOrCreate = function(key)
+                if not globalModData[key] then
+                    globalModData[key] = {}
+                end
+                return globalModData[key]
+            end,
+            get = function(key)
+                return globalModData[key]
+            end,
+            add = function(key, val)
+                globalModData[key] = val
+            end,
+            exists = function(key)
+                return globalModData[key] ~= nil
+            end,
+            transmit = function(key) end,
+            request = function(key) end,
+        }
+    end
+
     -- Mock networking and system globals
     _G.isClient = _G.isClient or function()
         return false
@@ -225,6 +249,12 @@ function MockPZ.setupGlobals()
     _G.isServer = _G.isServer or function()
         return false
     end
+
+    -- Mock time function
+    _G.getTimeInMillis = _G.getTimeInMillis or function()
+        return os.time() * 1000
+    end
+
     _G.sendClientCommand = _G.sendClientCommand or function(...) end
     _G.sendServerCommand = _G.sendServerCommand or function(...) end
     _G.triggerEvent = _G.triggerEvent or function(...) end
@@ -315,6 +345,7 @@ function MockPZ.setupGlobals()
                 t[k] = {
                     Add = function(fn) end,
                     Remove = function(fn) end,
+                    subscribers = {}, -- For OnContainerUpdate listeners in tests
                 }
                 return t[k]
             end,

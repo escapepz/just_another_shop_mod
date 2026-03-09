@@ -9,6 +9,7 @@ local logger = ZUL.new("just_another_shop_mod")
 local serverInitialized = false
 
 if KUtilities.IsServerOrSinglePlayer() then
+    -- Dedicated Server / Multiplayer
     Events.OnGameBoot.Add(function()
         if serverInitialized then
             return
@@ -19,6 +20,7 @@ if KUtilities.IsServerOrSinglePlayer() then
         serverInitialized = true
     end)
 
+    -- SP / Local
     if KUtilities.IsSinglePlayer() then
         Events.OnGameStart.Add(function()
             if serverInitialized then

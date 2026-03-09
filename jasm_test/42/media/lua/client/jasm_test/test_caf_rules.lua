@@ -100,6 +100,10 @@ local function createMockParent(isShop, shopOwnerID, shopPrices)
                     end,
                 }
         end,
+        usingPlayer = nil,
+        getUsingPlayer = function(self)
+            return self.usingPlayer
+        end,
     }
 end
 
@@ -352,14 +356,9 @@ local function init()
 
         RuleShopProtection(ctx)
 
-        JASM_TestRunner.assert_true(
+        JASM_TestRunner.assert_false(
             ctx.flags.rejected,
-            "Owner should be rejected from taking items if shop is locked by someone else"
-        )
-        JASM_TestRunner.assert_equals(
-            ctx.flags.reason,
-            "Shop is locked by Buyer.",
-            "Rejection reason should mention lock holder"
+            "Owner should NOT be rejected when shop is locked (can still restock)"
         )
     end)
 
@@ -404,9 +403,9 @@ local function init()
             "Customer should be rejected from accessing locked shop"
         )
         JASM_TestRunner.assert_equals(
+            "This item must be purchased.",
             ctx.flags.reason,
-            "Shop is locked by CustomerA.",
-            "Should show who locked it"
+            "Should show lock reason"
         )
     end)
 
@@ -447,6 +446,125 @@ local function init()
         -- Clear lock
         parent.modData.shopLock = nil
         JASM_TestRunner.assert_nil(parent.modData.shopLock, "Lock should be cleared from modData")
+    end)
+
+    -- Test: CAF respects getUsingPlayer in VANILLA mode, ignores modData lock
+    JASM_TestRunner.register("caf_protection_vanilla_guard_ignored", "client", function()
+        local RuleShopProtection = require("just_another_shop_mod/rules/caf/shop_protection_rule")
+        local JASM_SandboxVars = require("just_another_shop_mod/jasm_sandbox_vars")
+        local originalGet = JASM_SandboxVars.Get
+        JASM_SandboxVars.Get = function(k, d)
+            return k == "ShopLockMethod" and 2 or originalGet(k, d)
+        end
+
+        local srcParent = createMockParent(true, "ShopOwner", {})
+        srcParent.modData.shopLock = "CustomerA" -- This modData lock should be IGNORED
+        srcParent.usingPlayer = nil -- Nobody using the entity yet
+
+        local ctx = createMockCAFContext({
+            srcParent = srcParent,
+            username = "CustomerB",
+        })
+
+        RuleShopProtection(ctx)
+
+        JASM_SandboxVars.Get = originalGet -- Restore
+        JASM_TestRunner.assert_true(
+            ctx.flags.rejected,
+            "VANILLA mode should ignore modData.shopLock"
+        )
+    end)
+
+    -- Test: CAF respects getUsingPlayer in VANILLA mode, active user
+    JASM_TestRunner.register("caf_protection_vanilla_guard_active", "client", function()
+        local RuleShopProtection = require("just_another_shop_mod/rules/caf/shop_protection_rule")
+        local JASM_SandboxVars = require("just_another_shop_mod/jasm_sandbox_vars")
+        local originalGet = JASM_SandboxVars.Get
+        JASM_SandboxVars.Get = function(k, d)
+            return k == "ShopLockMethod" and 2 or originalGet(k, d)
+        end
+
+        local srcParent = createMockParent(true, "ShopOwner", {})
+        srcParent.modData.shopLock = nil
+        -- Simulate PlayerA using the shop entity
+        srcParent.usingPlayer = {
+            getUsername = function()
+                return "PlayerA"
+            end,
+        }
+
+        local ctx = createMockCAFContext({
+            srcParent = srcParent,
+            username = "PlayerB",
+        })
+
+        RuleShopProtection(ctx)
+
+        JASM_SandboxVars.Get = originalGet -- Restore
+        JASM_TestRunner.assert_true(
+            ctx.flags.rejected,
+            "VANILLA mode should block based on getUsingPlayer()"
+        )
+    end)
+
+    -- Test: CAF protects locked shop correctly in DUAL mode when Session ID matches
+    JASM_TestRunner.register("caf_protection_dual_session_valid", "client", function()
+        local RuleShopProtection = require("just_another_shop_mod/rules/caf/shop_protection_rule")
+        local JASM_SandboxVars = require("just_another_shop_mod/jasm_sandbox_vars")
+        local originalGet = JASM_SandboxVars.Get
+        JASM_SandboxVars.Get = function(k, d)
+            return k == "ShopLockMethod" and 1 or originalGet(k, d)
+        end
+
+        local currentSession = ModData.getOrCreate("JASM_ServerSession")
+        currentSession.id = "session_123"
+
+        local srcParent = createMockParent(true, "ShopOwner", {})
+        srcParent.modData.shopLock = "CustomerA"
+        srcParent.modData.shopLockSessionID = "session_123" -- Match!
+
+        local ctx = createMockCAFContext({
+            srcParent = srcParent,
+            username = "CustomerB",
+        })
+
+        RuleShopProtection(ctx)
+
+        JASM_SandboxVars.Get = originalGet -- Restore
+        JASM_TestRunner.assert_true(
+            ctx.flags.rejected,
+            "Customer should be rejected because valid session ID matches"
+        )
+    end)
+
+    -- Test: CAF ignores locked shop in DUAL mode when Session ID stale
+    JASM_TestRunner.register("caf_protection_dual_session_stale", "client", function()
+        local RuleShopProtection = require("just_another_shop_mod/rules/caf/shop_protection_rule")
+        local JASM_SandboxVars = require("just_another_shop_mod/jasm_sandbox_vars")
+        local originalGet = JASM_SandboxVars.Get
+        JASM_SandboxVars.Get = function(k, d)
+            return k == "ShopLockMethod" and 1 or originalGet(k, d)
+        end
+
+        local currentSession = ModData.getOrCreate("JASM_ServerSession")
+        currentSession.id = "session_new"
+
+        local srcParent = createMockParent(true, "ShopOwner", {})
+        srcParent.modData.shopLock = "CustomerA"
+        srcParent.modData.shopLockSessionID = "session_old" -- Stale!
+
+        local ctx = createMockCAFContext({
+            srcParent = srcParent,
+            username = "CustomerB",
+        })
+
+        RuleShopProtection(ctx)
+
+        JASM_SandboxVars.Get = originalGet -- Restore
+        JASM_TestRunner.assert_true(
+            ctx.flags.rejected,
+            "Customer should not be rejected because lock session is stale"
+        )
     end)
 
     print("[JASM_TEST] CAF Rules tests registered")
