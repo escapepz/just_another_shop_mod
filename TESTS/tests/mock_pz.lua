@@ -249,6 +249,12 @@ function MockPZ.setupGlobals()
     _G.isServer = _G.isServer or function()
         return false
     end
+
+    -- Mock time function
+    _G.getTimeInMillis = _G.getTimeInMillis or function()
+        return os.time() * 1000
+    end
+
     _G.sendClientCommand = _G.sendClientCommand or function(...) end
     _G.sendServerCommand = _G.sendServerCommand or function(...) end
     _G.triggerEvent = _G.triggerEvent or function(...) end
@@ -339,6 +345,7 @@ function MockPZ.setupGlobals()
                 t[k] = {
                     Add = function(fn) end,
                     Remove = function(fn) end,
+                    subscribers = {}, -- For OnContainerUpdate listeners in tests
                 }
                 return t[k]
             end,
