@@ -293,11 +293,44 @@ function ShopItemDetailsPanel:updateTradeButton()
     local canTrade = false
     local errorTxt = ""
 
-    if selectedTrade then
-        if selectedTrade.hasCount >= selectedTrade.requestQty then
-            canTrade = true
-        else
+    if selectedTrade and self.product then
+        if selectedTrade.hasCount < selectedTrade.requestQty then
+            canTrade = false
             errorTxt = "You do not have all required items"
+        else
+            -- Check shop container capacity
+            ---@cast self.entity IsoObject
+            local shopContainer = self.entity:getContainer()
+            local currentWeight = shopContainer:getContentsWeight()
+            local currentItemCount = shopContainer:getItems():size()
+            local maxWeight = shopContainer:getCapacityWeight()
+
+            -- Weight estimation using ScriptManager
+            local itemScript = ScriptManager.instance:getItem(selectedTrade.requestItem)
+            local itemWeight = itemScript and itemScript:getActualWeight() or 0.1
+            local weightToGain = itemWeight * selectedTrade.requestQty
+
+            local productScript = ScriptManager.instance:getItem(self.product.type)
+            local productWeight = productScript and productScript:getActualWeight() or 0.1
+            local weightToLose = productWeight * (self.product.offerQty or 1)
+
+            local finalWeight = currentWeight - weightToLose + weightToGain
+            local finalCount = currentItemCount
+                - (self.product.offerQty or 1)
+                + selectedTrade.requestQty
+
+            -- Keep in sync with JASM_AcceptTradeAction cap (500)
+            local ITEM_COUNT_CAP = 500
+
+            if finalWeight > maxWeight then
+                canTrade = false
+                errorTxt = "Shop storage is full (Weight)"
+            elseif finalCount > ITEM_COUNT_CAP then
+                canTrade = false
+                errorTxt = "Shop storage is full (Item Count)"
+            else
+                canTrade = true
+            end
         end
     end
 

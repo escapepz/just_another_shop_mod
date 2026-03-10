@@ -28,6 +28,8 @@ local function OnServerCommand(module, command, args)
             insufficient_stock = "Shop doesn't have enough stock of that item.",
             insufficient_funds = "You don't have enough funds for this trade.",
             unauthorized = "You are not authorized to force this trade.",
+            shop_full_weight = "Shop storage is full (Weight limit).",
+            shop_full_count = "Shop storage is full (Item count limit).",
         }
         local text = errorTexts[reason] or "Trade denied."
         HaloTextHelper.addBadText(getSpecificPlayer(0), text)

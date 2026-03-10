@@ -293,6 +293,49 @@ function JASM_AcceptTradeAction:complete()
         end
     end
 
+    -- 1.5 CAPACITY VALIDATION (SERVER AUTHORITATIVE)
+    if not self.isForceGive then
+        local currentWeight = shopContainer:getContentsWeight()
+        local currentItemCount = shopContainer:getItems():size()
+
+        local weightToGain = 0
+        for _, item in ipairs(currencyItems) do
+            weightToGain = weightToGain + item:getActualWeight()
+        end
+
+        local weightToLose = 0
+        for _, item in ipairs(productItems) do
+            weightToLose = weightToLose + item:getActualWeight()
+        end
+
+        local finalWeight = currentWeight - weightToLose + weightToGain
+        local maxWeight = shopContainer:getCapacityWeight()
+
+        -- Lag Prevention: Item Count Cap (prevent 10,000+ item exploit)
+        local ITEM_COUNT_CAP = 500
+        local finalCount = currentItemCount - #productItems + #currencyItems
+
+        if finalWeight > maxWeight or finalCount > ITEM_COUNT_CAP then
+            local reason = (finalWeight > maxWeight) and "shop_full_weight" or "shop_full_count"
+            logger:error("Trade rejected: shop container full (Server check)", {
+                player = self.character:getUsername(),
+                reason = reason,
+                finalWeight = finalWeight,
+                maxWeight = maxWeight,
+                finalCount = finalCount,
+                cap = ITEM_COUNT_CAP,
+            })
+            -- Send halotext command to player on client
+            KUtilities.SendServerCommandTo(
+                self.character,
+                "JASM_ShopManager",
+                "TradeDenied",
+                { reason = reason }
+            )
+            return false
+        end
+    end
+
     -- 2. PROCESS TRANSFER (NOW SAFE)
 
     if self.isForceGive then

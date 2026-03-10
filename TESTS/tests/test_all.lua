@@ -49,6 +49,7 @@ print("")
 
 -- Load test framework and mocks first
 local MockPZ = require("mock_pz")
+_G.MockPZ = MockPZ
 
 -- Setup mocks
 MockPZ.setupGlobals()
@@ -72,6 +73,7 @@ require("jasm_test/test_shop_manager")()
 require("jasm_test/test_shop_server_commands")()
 require("jasm_test/test_maf_rules")()
 require("jasm_test/test_accept_trade_action")()
+require("jasm_test/test_capacity_limit")()
 
 require("jasm_test/test_caf_rules")()
 require("jasm_test/test_player_actions")()

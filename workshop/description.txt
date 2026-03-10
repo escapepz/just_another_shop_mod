@@ -5,6 +5,7 @@
 [url=https://escapepz.github.io/escapepz/sponsor3.html][img]https://escapepz.github.io/escapepz/images/sponsors/sponsor3.gif[/img][/url]
 [/code]
 
+[h1]Just Another Shop[/h1]
 [b]Just Another Shop Mod[/b] lets players and server admins turn ordinary storage crates into fully functional, interactive storefronts.
 [list]
 [*] [b]Create your own store:[/b] Easily register standard crates as shops for your base, town, or trading outposts.
@@ -14,6 +15,12 @@
 [*] [b]Safe trading:[/b] Built-in lock systems prevent multiple players from accessing and exploiting a shop at the exact same time.
 [/list]
 This mod is best suited for multiplayer servers, economy-driven survival, and roleplay communities looking for a reliable trading system.
+
+[h3][b]Usage[/b][/h3]
+
+- To setup a store, simply place an allowed crate (e.g., standard Wood or Metal crates).
+- Right-click and navigate to the [b]JASM Shop[/b] menu to register the container.
+- After registration, owners can [b]Manage Shop[/b] to adjust stock and prices, and customers can use [b]Open Shop UI[/b] to browse and buy goods.
 
 [hr][/hr]
 [h2]New suggestion for the mod?[/h2]

@@ -25,10 +25,30 @@ function ShopTrade.Validation(ctx)
     local playerInv = ctx.character:getInventory()
     local priceCount = playerInv:getItemCount(priceConfig.type)
 
-    -- 1. VALIDATION
+    -- 1. FUND VALIDATION
     if priceCount < priceConfig.count then
         ctx.flags.rejected = true
         ctx.flags.reason = "Missing: " .. priceConfig.count .. "x " .. priceConfig.type
+        return
+    end
+
+    -- 1.5 CAPACITY VALIDATION
+    local shopContainer = ctx.src
+    local currentWeight = shopContainer:getContentsWeight()
+    local currentItemCount = shopContainer:getItems():size()
+    local maxWeight = shopContainer:getCapacityWeight()
+
+    local currencyScript = ScriptManager.instance:getItem(priceConfig.type)
+    local currencyWeight = currencyScript and currencyScript:getActualWeight() or 0.1
+    local weightToGain = currencyWeight * priceConfig.count
+
+    local productWeight = ctx.item:getActualWeight()
+    local finalWeight = currentWeight - productWeight + weightToGain
+    local finalCount = currentItemCount - 1 + priceConfig.count
+
+    if finalWeight > maxWeight or finalCount > 500 then
+        ctx.flags.rejected = true
+        ctx.flags.reason = "Shop storage is full"
         return
     end
 

@@ -33,7 +33,7 @@ local RuleShopProtection = function(ctx)
             local globalModData = ModData.getOrCreate("JASM_ServerSession")
             local currentSession = globalModData and globalModData.id
 
-            if modData.shopLockSessionID == currentSession then
+            if modData.shopLockSessionID and modData.shopLockSessionID == currentSession then
                 lockHolder = modData.shopLock
             else
                 lockHolder = nil -- stale lock from previous server crash
@@ -138,7 +138,10 @@ local RuleShopProtection = function(ctx)
             local globalModData = ModData.getOrCreate("JASM_ServerSession")
             local currentSession = globalModData and globalModData.id
 
-            if destModData.shopLockSessionID == currentSession then
+            if
+                destModData.shopLockSessionID
+                and destModData.shopLockSessionID == currentSession
+            then
                 lockHolder = destModData.shopLock
             else
                 lockHolder = nil -- stale lock from previous server crash

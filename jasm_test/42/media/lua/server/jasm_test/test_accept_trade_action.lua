@@ -33,6 +33,21 @@ local function init()
         local function createInventoryMock()
             return {
                 items = {},
+                capacityWeight = 50.0,
+                getCapacityWeight = function(self)
+                    return self.capacityWeight
+                end,
+                getContentsWeight = function(self)
+                    local weight = 0
+                    for _, it in ipairs(self.items) do
+                        if it.getActualWeight then
+                            weight = weight + it:getActualWeight()
+                        else
+                            weight = weight + (it.weight or 0.1)
+                        end
+                    end
+                    return weight
+                end,
                 getItemCount = function(self, type)
                     local count = 0
                     for _, it in ipairs(self.items) do
@@ -62,12 +77,13 @@ local function init()
                     table.insert(self.items, it)
                 end,
                 getItems = function(self)
+                    local _items = self.items
                     return {
                         size = function()
-                            return #self.items
+                            return #_items
                         end,
                         get = function(_, i)
-                            return self.items[i + 1]
+                            return _items[i + 1]
                         end,
                     }
                 end,
@@ -134,10 +150,13 @@ local function init()
         end
 
         -- 4. Setup Items helper
-        local function createItem(type)
+        local function createItem(type, weight)
             return {
                 getFullType = function()
                     return type
+                end,
+                getActualWeight = function()
+                    return weight or 0.1
                 end,
             }
         end
@@ -267,6 +286,7 @@ local function init()
 
         -- Cleanup
         mockPlayer.inventory.getItems = originalGetItems
+        ---@diagnostic disable-next-line: assign-type-mismatch
         _G.getSquare = originalGetSquare
         _G.sendRemoveItemFromContainer = originalSendRemove
         _G.sendAddItemToContainer = originalSendAdd
