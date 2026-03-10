@@ -10,6 +10,19 @@ local MockPZ = {}
 
 -- Global stubs
 _G.print = _G.print or function(...) end
+_G.SandboxVars = _G.SandboxVars or { ItemNumbersLimitPerContainer = 0 }
+_G.luautils = _G.luautils
+    or {
+        countItemsRecursive = function(containerList, initialCount)
+            local count = initialCount or 0
+            for _, container in ipairs(containerList) do
+                count = count + container:getItems():size()
+                -- Note: In a real environment this would recurse into sub-containers.
+                -- For our shop tests, we only deal with top-level container items.
+            end
+            return count
+        end,
+    }
 
 ---Mock ItemContainer
 function MockPZ.createItemContainer()
@@ -31,8 +44,37 @@ function MockPZ.createItemContainer()
             return self.type
         end,
 
+        getInventory = function(self)
+            return self
+        end,
+
+        isExplored = function(self)
+            return true
+        end,
+
+        setExplored = function(self, b) end,
+
+        getItemsFromCategory = function(self, category)
+            return {
+                size = function()
+                    return 0
+                end,
+                get = function(_, i)
+                    return nil
+                end,
+            }
+        end,
+
         getCapacityWeight = function(self)
-            return self.capacityWeight
+            return self:getContentsWeight() -- B42: returns current weight
+        end,
+
+        getCapacity = function(self)
+            return self.capacityWeight -- B42: returns max limit
+        end,
+
+        getEffectiveCapacity = function(self, chr)
+            return self:getCapacity() -- Basic mock
         end,
 
         getContentsWeight = function(self)
@@ -73,6 +115,11 @@ function MockPZ.createItemContainer()
                 return 0
             end
             return #self.items[itemType]
+        end,
+
+        getCountRecurse = function(self, predicate)
+            -- Simplified for mock: returns total flattened size
+            return self:getItems():size()
         end,
 
         contains = function(self, item)
@@ -261,6 +308,15 @@ function MockPZ.createInventoryItem(itemType, count)
 
         getCount = function(self)
             return self.count
+        end,
+        getCategory = function(self)
+            return "Item"
+        end,
+        getInventory = function(self)
+            return nil
+        end,
+        isContainer = function(self)
+            return false
         end,
     }
 end

@@ -13,6 +13,15 @@ local function createMockInventoryItem(itemType)
         getActualWeight = function(self)
             return self.weight
         end,
+        getCategory = function(self)
+            return "Item"
+        end,
+        getInventory = function(self)
+            return nil
+        end,
+        isContainer = function(self)
+            return false
+        end,
         setWeight = function(self, w)
             self.weight = w
         end,
@@ -26,7 +35,20 @@ local function createMockItemContainer()
         parent = nil,
     }
     function c:getCapacityWeight()
-        return self.capacityWeight
+        return self:getContentsWeight() -- Correct B42 mock: returns current weight
+    end
+    function c:getCapacity()
+        return self.capacityWeight -- Returns max limit
+    end
+    function c:getInventory()
+        return self
+    end
+    function c:isExplored()
+        return true
+    end
+    function c:setExplored() end
+    function c:getEffectiveCapacity(chr)
+        return self:getCapacity() -- Mock doesn't handle traits yet, just returns max
     end
     function c:getContentsWeight()
         local w = 0.0
@@ -55,15 +77,31 @@ local function createMockItemContainer()
     function c:getType()
         return "container"
     end
-    function c:getItems()
+    function c:getItemsFromCategory(category)
         return {
             size = function()
-                return #self.items
+                return 0
             end,
             get = function(_, i)
-                return self.items[i + 1]
+                return nil
             end,
         }
+    end
+    function c:getItems()
+        local items = self.items
+        return {
+            size = function()
+                return #items
+            end,
+            get = function(_, i)
+                return items[i + 1]
+            end,
+        }
+    end
+    function c:getCountRecurse(predicate)
+        -- Simplified recursive mock: just returns top-level size for now
+        -- as the tests don't deeply nest containers.
+        return self:getItems():size()
     end
     function c:contains(item)
         for _, it in ipairs(self.items) do
@@ -77,6 +115,17 @@ local function createMockItemContainer()
 end
 
 -- Fallback for offline runner if it still expects MockPZ global
+_G.luautils = _G.luautils
+    or {
+        countItemsRecursive = function(containerList, currentCount)
+            local count = currentCount or 0
+            for _, container in ipairs(containerList) do
+                count = count + container:getItems():size()
+            end
+            return count
+        end,
+    }
+
 local MockPZ = {
     createInventoryItem = createMockInventoryItem,
     createItemContainer = createMockItemContainer,

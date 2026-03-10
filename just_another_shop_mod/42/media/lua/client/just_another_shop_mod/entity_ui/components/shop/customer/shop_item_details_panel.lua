@@ -302,8 +302,8 @@ function ShopItemDetailsPanel:updateTradeButton()
             ---@cast self.entity IsoObject
             local shopContainer = self.entity:getContainer()
             local currentWeight = shopContainer:getContentsWeight()
-            local currentItemCount = shopContainer:getItems():size()
-            local maxWeight = shopContainer:getCapacityWeight()
+            local currentItemCount = luautils.countItemsRecursive({ shopContainer })
+            local maxWeight = shopContainer:getEffectiveCapacity(self.player)
 
             -- Weight estimation using ScriptManager
             local itemScript = ScriptManager.instance:getItem(selectedTrade.requestItem)
@@ -319,15 +319,16 @@ function ShopItemDetailsPanel:updateTradeButton()
                 - (self.product.offerQty or 1)
                 + selectedTrade.requestQty
 
-            -- Keep in sync with JASM_AcceptTradeAction cap (500)
-            local ITEM_COUNT_CAP = 500
+            -- Follow vanilla MP ItemNumbersLimitPerContainer + mod safety cap
+            local vanillaCap = SandboxVars.ItemNumbersLimitPerContainer or 0
+            local ITEM_COUNT_CAP = (vanillaCap > 0) and vanillaCap or 500
 
             if finalWeight > maxWeight then
                 canTrade = false
-                errorTxt = "Shop storage is full (Weight)"
+                errorTxt = "Shop storage is full (Weight limit)"
             elseif finalCount > ITEM_COUNT_CAP then
                 canTrade = false
-                errorTxt = "Shop storage is full (Item Count)"
+                errorTxt = "Shop storage is full (Item Count limit)"
             else
                 canTrade = true
             end
