@@ -17,6 +17,7 @@ function MockPZ.createItemContainer()
         items = {},
         parent = nil,
         type = "container",
+        capacityWeight = 50.0,
 
         getParent = function(self)
             return self.parent
@@ -30,6 +31,43 @@ function MockPZ.createItemContainer()
             return self.type
         end,
 
+        getCapacityWeight = function(self)
+            return self.capacityWeight
+        end,
+
+        getContentsWeight = function(self)
+            local weight = 0.0
+            for _, list in pairs(self.items) do
+                for _, item in ipairs(list) do
+                    if item.getActualWeight then
+                        weight = weight + item:getActualWeight()
+                    elseif item.weight then
+                        weight = weight + item.weight
+                    else
+                        weight = weight + 0.1
+                    end
+                end
+            end
+            return weight
+        end,
+
+        getItems = function(self)
+            local flat = {}
+            for _, list in pairs(self.items) do
+                for _, item in ipairs(list) do
+                    table.insert(flat, item)
+                end
+            end
+            return {
+                size = function()
+                    return #flat
+                end,
+                get = function(_, i)
+                    return flat[i + 1]
+                end,
+            }
+        end,
+
         getItemCount = function(self, itemType)
             if not self.items[itemType] then
                 return 0
@@ -38,21 +76,57 @@ function MockPZ.createItemContainer()
         end,
 
         contains = function(self, item)
-            if not self.items[item] then
+            local itemType = type(item) == "table" and item:getFullType() or item
+            if not self.items[itemType] then
                 return false
             end
-            return #self.items[item] > 0
-        end,
-
-        addItem = function(self, itemType)
-            self.items[itemType] = self.items[itemType] or {}
-            table.insert(self.items[itemType], { type = itemType })
-        end,
-
-        removeItem = function(self, itemType)
-            if self.items[itemType] and #self.items[itemType] > 0 then
-                table.remove(self.items[itemType], 1)
+            if type(item) == "table" then
+                for _, it in ipairs(self.items[itemType]) do
+                    if it == item then
+                        return true
+                    end
+                end
+                return false
             end
+            return #self.items[itemType] > 0
+        end,
+
+        addItem = function(self, itemOrType)
+            local item
+            local itemType
+            if type(itemOrType) == "table" then
+                item = itemOrType
+                itemType = item:getFullType()
+            else
+                itemType = itemOrType
+                item = MockPZ.createInventoryItem(itemType)
+            end
+            self.items[itemType] = self.items[itemType] or {}
+            table.insert(self.items[itemType], item)
+        end,
+
+        AddItem = function(self, itemOrType)
+            return self:addItem(itemOrType)
+        end,
+
+        removeItem = function(self, itemOrType)
+            local itemType = type(itemOrType) == "table" and itemOrType:getFullType() or itemOrType
+            if self.items[itemType] and #self.items[itemType] > 0 then
+                if type(itemOrType) == "table" then
+                    for i, it in ipairs(self.items[itemType]) do
+                        if it == itemOrType then
+                            table.remove(self.items[itemType], i)
+                            return
+                        end
+                    end
+                else
+                    table.remove(self.items[itemType], 1)
+                end
+            end
+        end,
+
+        Remove = function(self, itemOrType)
+            return self:removeItem(itemOrType)
         end,
 
         getContainer = function(self)
@@ -171,9 +245,18 @@ function MockPZ.createInventoryItem(itemType, count)
     return {
         type = itemType or "Base.Item",
         count = count or 1,
+        weight = 0.1,
 
         getFullType = function(self)
             return self.type
+        end,
+
+        getActualWeight = function(self)
+            return self.weight
+        end,
+
+        setWeight = function(self, weight)
+            self.weight = weight
         end,
 
         getCount = function(self)
@@ -350,6 +433,21 @@ function MockPZ.setupGlobals()
                 return t[k]
             end,
         })
+    end
+
+    -- Mock ScriptManager
+    if not _G.ScriptManager then
+        _G.ScriptManager = {
+            instance = {
+                getItem = function(self, type)
+                    return {
+                        getActualWeight = function()
+                            return 0.1
+                        end,
+                    }
+                end,
+            },
+        }
     end
 
     -- Mock getCore

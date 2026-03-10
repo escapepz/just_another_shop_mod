@@ -2,62 +2,122 @@
 
 local JASM_TestRunner = require("jasm_test_shared")
 
+-- Local Mocks for in-game & offline standalone compatibility
+local function createMockInventoryItem(itemType)
+    return {
+        type = itemType or "Base.Item",
+        weight = 0.1,
+        getFullType = function(self)
+            return self.type
+        end,
+        getActualWeight = function(self)
+            return self.weight
+        end,
+        setWeight = function(self, w)
+            self.weight = w
+        end,
+    }
+end
+
+local function createMockItemContainer()
+    local c = {
+        items = {},
+        capacityWeight = 50.0,
+        parent = nil,
+    }
+    function c:getCapacityWeight()
+        return self.capacityWeight
+    end
+    function c:getContentsWeight()
+        local w = 0.0
+        for _, it in ipairs(self.items) do
+            w = w + (it.getActualWeight and it:getActualWeight() or 0.1)
+        end
+        return w
+    end
+    function c:addItem(itemOrType)
+        local item = type(itemOrType) == "string" and createMockInventoryItem(itemOrType)
+            or itemOrType
+        table.insert(self.items, item)
+    end
+    function c:getItemCount(type)
+        local count = 0
+        for _, it in ipairs(self.items) do
+            if it:getFullType() == type then
+                count = count + 1
+            end
+        end
+        return count
+    end
+    function c:getParent()
+        return self.parent
+    end
+    function c:getType()
+        return "container"
+    end
+    function c:getItems()
+        return {
+            size = function()
+                return #self.items
+            end,
+            get = function(_, i)
+                return self.items[i + 1]
+            end,
+        }
+    end
+    function c:contains(item)
+        for _, it in ipairs(self.items) do
+            if it == item then
+                return true
+            end
+        end
+        return false
+    end
+    return c
+end
+
+-- Fallback for offline runner if it still expects MockPZ global
+local MockPZ = {
+    createInventoryItem = createMockInventoryItem,
+    createItemContainer = createMockItemContainer,
+}
+
 ---Mock CAF context object
 ---@param options table?
 ---@return any
 local function createMockCAFContext(options)
     options = options or {}
-    local item = (
-        options.item
-        or {
-            getFullType = function()
-                return options.itemType or "Base.Item"
-            end,
-        }
-    )
+    local item = options.item
+    if not item then
+        item = MockPZ.createInventoryItem(options.itemType or "Base.Item")
+        item:setWeight(options.weight or 0.1)
+    end
+
+    local src = options.src
+    if not src then
+        src = MockPZ.createItemContainer()
+        src.capacityWeight = 50.0
+        src.parent = options.srcParent
+    end
+
+    local dest = options.dest
+    if not dest then
+        dest = MockPZ.createItemContainer()
+        dest.capacityWeight = 50.0
+        dest.parent = options.destParent
+    end
 
     local flagsInput = options.flags or {}
 
-    -- Provide a default square if not set
-    local squareX = options.squareX or 0
-    local squareY = options.squareY or 0
-    local squareZ = options.squareZ or 0
-
-    local defaultSquare = {
-        getX = function()
-            return squareX
-        end,
-        getY = function()
-            return squareY
-        end,
-        getZ = function()
-            return squareZ
-        end,
-    }
-
     local ctx = {
-        src = (options.src or {
-            getParent = function()
-                return options.srcParent
-            end,
-            getType = function()
-                return "container"
-            end,
-        }),
-        dest = (options.dest or {
-            getParent = function()
-                return options.destParent
-            end,
-            getType = function()
-                return "container"
-            end,
-        }),
+        src = src,
+        dest = dest,
         character = (options.character or {
             getUsername = function()
                 return options.username or "TestPlayer"
             end,
             getInventory = function()
-                return options.inventory or {}
+                return options.inventory or MockPZ.createItemContainer()
             end,
         }),
         item = item,
@@ -65,12 +125,10 @@ local function createMockCAFContext(options)
             rejected = flagsInput.rejected or false,
             reason = flagsInput.reason or "",
             adminOverride = flagsInput.adminOverride or false,
+            tradeAuthorized = flagsInput.tradeAuthorized or false,
         },
         result = (options.result or item),
     }
-
-    ---@diagnostic disable-next-line: inject-field
-    ctx.flags.tradeAuthorized = flagsInput.tradeAuthorized or false
 
     return ctx
 end
@@ -348,6 +406,12 @@ local function init()
         -- Setup shop with lock
         local srcParent = createMockParent(true, "ShopOwner", {})
         srcParent.modData.shopLock = "Buyer" -- Shop locked by someone else
+        srcParent.modData.shopLockSessionID = "test_session"
+
+        local currentSession = ModData.getOrCreate("JASM_ServerSession")
+        if currentSession then
+            currentSession.id = "test_session"
+        end
 
         local ctx = createMockCAFContext({
             srcParent = srcParent,
@@ -356,9 +420,14 @@ local function init()
 
         RuleShopProtection(ctx)
 
-        JASM_TestRunner.assert_false(
+        JASM_TestRunner.assert_true(
             ctx.flags.rejected,
-            "Owner should NOT be rejected when shop is locked (can still restock)"
+            "Owner should BE rejected when shop is locked (Stops owner from stealing while customer browsing)"
+        )
+        JASM_TestRunner.assert_equals(
+            "Shop is locked by Buyer.",
+            ctx.flags.reason,
+            "Should show lock reason"
         )
     end)
 
@@ -369,6 +438,12 @@ local function init()
         -- Setup shop with lock
         local destParent = createMockParent(true, "ShopOwner", {})
         destParent.modData.shopLock = "Buyer" -- Shop locked by someone else
+        destParent.modData.shopLockSessionID = "test_session"
+
+        local currentSession = ModData.getOrCreate("JASM_ServerSession")
+        if currentSession then
+            currentSession.id = "test_session"
+        end
 
         local ctx = createMockCAFContext({
             destParent = destParent,
@@ -390,6 +465,12 @@ local function init()
         -- Setup shop with lock
         local srcParent = createMockParent(true, "ShopOwner", {})
         srcParent.modData.shopLock = "CustomerA" -- Shop locked by another customer
+        srcParent.modData.shopLockSessionID = "test_session"
+
+        local currentSession = ModData.getOrCreate("JASM_ServerSession")
+        if currentSession then
+            currentSession.id = "test_session"
+        end
 
         local ctx = createMockCAFContext({
             srcParent = srcParent,
@@ -403,7 +484,7 @@ local function init()
             "Customer should be rejected from accessing locked shop"
         )
         JASM_TestRunner.assert_equals(
-            "This item must be purchased.",
+            "Shop is locked by CustomerA.",
             ctx.flags.reason,
             "Should show lock reason"
         )
@@ -517,7 +598,9 @@ local function init()
         end
 
         local currentSession = ModData.getOrCreate("JASM_ServerSession")
-        currentSession.id = "session_123"
+        if currentSession then
+            currentSession.id = "session_123"
+        end
 
         local srcParent = createMockParent(true, "ShopOwner", {})
         srcParent.modData.shopLock = "CustomerA"
@@ -547,7 +630,9 @@ local function init()
         end
 
         local currentSession = ModData.getOrCreate("JASM_ServerSession")
-        currentSession.id = "session_new"
+        if currentSession then
+            currentSession.id = "session_new"
+        end
 
         local srcParent = createMockParent(true, "ShopOwner", {})
         srcParent.modData.shopLock = "CustomerA"
