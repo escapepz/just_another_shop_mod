@@ -1,8 +1,5 @@
 local ZUL = require("zul")
 local logger = ZUL.new("just_another_shop_mod")
-local pz_utils = require("pz_utils_shared")
-local JASM_SandboxVars = require("just_another_shop_mod/jasm_sandbox_vars")
-local KUtilities = pz_utils.konijima.Utilities
 
 local RuleDestroyStuff = {}
 
@@ -17,17 +14,11 @@ function RuleDestroyStuff.validateDestroyStuff(context)
     if _object then
         local modData = _object:getModData()
         if modData.indestructible then
-            local player = ctx.character
-            local isAdmin = KUtilities.IsPlayerAdmin(player)
-            local adminBypass = JASM_SandboxVars.Get("AdminBypass")
-
-            if not (isAdmin and adminBypass) then
-                ctx.flags.rejected = true
-            end
+            ctx.flags.rejected = true
         end
     end
 
-    logger:info("[JASM:MAF:DestroyStuffExample] Validate phase executed")
+    logger:debug("[JASM:MAF:DestroyStuffExample] Validate phase executed")
 end
 
 ---Pre-action rule
@@ -41,17 +32,11 @@ function RuleDestroyStuff.preActionDestroyStuff(context)
     if _object then
         local modData = _object:getModData()
         if modData.indestructible then
-            local player = ctx.character
-            local isAdmin = KUtilities.IsPlayerAdmin(player)
-            local adminBypass = JASM_SandboxVars.Get("AdminBypass")
-
-            if not (isAdmin and adminBypass) then
-                ctx.flags.rejected = true
-            end
+            ctx.flags.rejected = true
         end
     end
 
-    logger:info("[JASM:MAF:DestroyStuffExample] PreAction phase executed")
+    logger:debug("[JASM:MAF:DestroyStuffExample] PreAction phase executed")
 end
 
 -- local MAF = require("manipulation_authority_framework")
