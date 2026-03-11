@@ -265,6 +265,17 @@ function CustomerViewWindow:calculateLayout(_preferredWidth, _preferredHeight)
     self.dirtyLayout = false
 end
 
+--- Override update to prevent sibling window from clearing our vanilla entity lock
+function CustomerViewWindow:update()
+    -- If the entity was released (e.g. by OwnerViewWindow closing) but we are still open,
+    -- quickly reclaim it before the vanilla `ISBaseEntityWindow:update()` panics and auto-closes us.
+    if self.entity and self.entity:getUsingPlayer() == nil then
+        self.entity:setUsingPlayer(self.player)
+    end
+
+    ISBaseEntityWindow.update(self)
+end
+
 function CustomerViewWindow:prerender()
     if self.dirtyLayout then
         local oldX = self:getX()
