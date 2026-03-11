@@ -116,6 +116,39 @@ local function init()
         )
     end)
 
+    -- Test: DestroyStuff rejects admin (NO BYPASS for MAF)
+    JASM_TestRunner.register("maf_destroy_stuff_admin_no_bypass", "server", function()
+        local RuleDestroyStuff = require("just_another_shop_mod/rules/maf/shop_destroy_stuff_rule")
+
+        local indestructibleObj = createMockObject(true, false)
+        local ctx = createMockContext("DestroyStuff", indestructibleObj)
+
+        -- Note: We don't even need to mock isAdmin/SandboxVars because the rule no longer checks them.
+        -- It should reject regardless of who the character is.
+        RuleDestroyStuff.validateDestroyStuff(ctx)
+
+        JASM_TestRunner.assert_true(
+            ctx.flags.rejected,
+            "Admin should be rejected for MAF (no bypass)"
+        )
+    end)
+
+    -- Test: Moveables rejects admin (NO BYPASS for MAF)
+    JASM_TestRunner.register("maf_moveables_admin_no_bypass", "server", function()
+        local RuleMoveables = require("just_another_shop_mod/rules/maf/shop_moveables_rule")
+
+        local immovableObj = createMockObject(false, true)
+        local ctx = createMockContext("Moveables", immovableObj)
+
+        -- Rule Moveables no longer checks for admin or sandbox vars
+        RuleMoveables.validateMoveables(ctx)
+
+        JASM_TestRunner.assert_true(
+            ctx.flags.rejected,
+            "Admin should be rejected for Moveables MAF (no bypass)"
+        )
+    end)
+
     print("[JASM_TEST] MAF Rules tests registered")
 end
 
