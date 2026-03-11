@@ -257,23 +257,28 @@ function ShopItemDetailsPanel:setProduct(product)
     local trades = {}
     for _, t in ipairs(rawPaths) do
         -- Strictly follow the canonical schema and ensure integer quantities
+        local normalizedType = t.requestItem
+        local scriptItem = ScriptManager.instance:getItem(t.requestItem)
+        if scriptItem then
+            normalizedType = scriptItem:getFullName()
+        end
+
         local trade = {
-            requestItem = t.requestItem,
+            requestItem = normalizedType,
             requestQty = math.floor(tonumber(t.requestQty) or 1),
             name = t.name or "",
             icon = t.icon,
         }
 
         local hasCount = 0.0
-        if pInvMap and pInvMap[trade.requestItem] then
-            hasCount = pInvMap[trade.requestItem].count
+        if pInvMap and pInvMap[normalizedType] then
+            hasCount = pInvMap[normalizedType].count
         end
 
         trade.hasCount = hasCount
         -- Resolve icon from player inventory map if not already set in modData
         if not trade.icon then
-            trade.icon = (pInvMap and pInvMap[trade.requestItem])
-                    and pInvMap[trade.requestItem].icon
+            trade.icon = (pInvMap and pInvMap[normalizedType]) and pInvMap[normalizedType].icon
                 or nil
         end
         table.insert(trades, trade)
