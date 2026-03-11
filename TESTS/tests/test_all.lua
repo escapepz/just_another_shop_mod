@@ -65,6 +65,10 @@ package.preload["just_another_shop_mod/entity_ui/components/shop/customer/shop_i
     nil
 package.loaded["just_another_shop_mod/entity_ui/owner_view_window"] = nil
 package.preload["just_another_shop_mod/entity_ui/owner_view_window"] = nil
+package.loaded["just_another_shop_mod/entity_ui/components/shop/customer/shop_item_requirements_panel"] =
+    nil
+package.preload["just_another_shop_mod/entity_ui/components/shop/customer/shop_item_requirements_panel"] =
+    nil
 package.loaded["just_another_shop_mod/timed_actions/jasm_accept_trade_action"] = nil
 package.preload["just_another_shop_mod/timed_actions/jasm_accept_trade_action"] = nil
 
@@ -80,6 +84,7 @@ require("jasm_test/test_player_actions")()
 require("jasm_test/test_context_menu_permissions")()
 require("jasm_test/test_ui_refresh")()
 require("jasm_test/test_issue14_ui_refresh_locked_shop")()
+require("jasm_test/test_item_display")()
 
 print("")
 print("=== All Test Modules Loaded ===")
