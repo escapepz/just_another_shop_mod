@@ -229,6 +229,20 @@ local function createMockSquare(x, y, z)
 end
 
 local function init()
+    -- Mock game runtime globals needed for CAF rules
+    _G.HaloTextHelper = _G.HaloTextHelper or {
+        addBadText = function() end,
+    }
+    _G.getSpecificPlayer = _G.getSpecificPlayer or function()
+        return {}
+    end
+    _G.ModData = _G.ModData
+        or {
+            getOrCreate = function(key)
+                return {}
+            end,
+        }
+
     -- Ensure JASM_ShopManager mock is at least present
     _G.JASM_ShopManager = _G.JASM_ShopManager
         or {
@@ -697,7 +711,78 @@ local function init()
         JASM_SandboxVars.Get = originalGet -- Restore
         JASM_TestRunner.assert_true(
             ctx.flags.rejected,
-            "Customer should not be rejected because lock session is stale"
+            "Customer should be rejected (as non-owner) even if lock session is stale"
+        )
+    end)
+
+    -- Test: CAF allows admin bypass when enabled
+    JASM_TestRunner.register("caf_protection_admin_bypass_allowed", "client", function()
+        local RuleShopProtection = require("just_another_shop_mod/rules/caf/shop_protection_rule")
+        local JASM_SandboxVars = require("just_another_shop_mod/jasm_sandbox_vars")
+        local pz_utils = require("pz_utils_shared")
+
+        local originalGet = JASM_SandboxVars.Get
+        local originalIsAdmin = pz_utils.konijima.Utilities.IsPlayerAdmin
+
+        JASM_SandboxVars.Get = function(k, d)
+            return k == "AdminBypass" and true or originalGet(k, d)
+        end
+        pz_utils.konijima.Utilities.IsPlayerAdmin = function(p)
+            return true
+        end
+
+        local srcParent = createMockParent(true, "ShopOwner", {})
+        local ctx = createMockCAFContext({
+            srcParent = srcParent,
+            username = "AdminPlayer",
+        })
+
+        RuleShopProtection(ctx)
+
+        -- Restore mocks
+        JASM_SandboxVars.Get = originalGet
+        pz_utils.konijima.Utilities.IsPlayerAdmin = originalIsAdmin
+
+        JASM_TestRunner.assert_false(
+            ctx.flags.rejected,
+            "Admin with bypass should be allowed in CAF"
+        )
+    end)
+
+    -- Test: CAF rejects admin bypass when disabled
+    JASM_TestRunner.register("caf_protection_admin_bypass_rejected", "client", function()
+        local RuleShopProtection = require("just_another_shop_mod/rules/caf/shop_protection_rule")
+        local JASM_SandboxVars = require("just_another_shop_mod/jasm_sandbox_vars")
+        local pz_utils = require("pz_utils_shared")
+
+        local originalGet = JASM_SandboxVars.Get
+        local originalIsAdmin = pz_utils.konijima.Utilities.IsPlayerAdmin
+
+        JASM_SandboxVars.Get = function(k, d)
+            if k == "AdminBypass" then
+                return false
+            end
+            return originalGet(k, d)
+        end
+        pz_utils.konijima.Utilities.IsPlayerAdmin = function(p)
+            return true
+        end
+
+        local srcParent = createMockParent(true, "ShopOwner", {})
+        local ctx = createMockCAFContext({
+            srcParent = srcParent,
+            username = "AdminPlayer",
+        })
+
+        RuleShopProtection(ctx)
+
+        -- Restore mocks
+        JASM_SandboxVars.Get = originalGet
+        pz_utils.konijima.Utilities.IsPlayerAdmin = originalIsAdmin
+
+        JASM_TestRunner.assert_true(
+            ctx.flags.rejected,
+            "Admin WITHOUT bypass should be rejected in CAF"
         )
     end)
 
