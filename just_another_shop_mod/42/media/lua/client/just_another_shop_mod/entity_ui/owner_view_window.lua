@@ -7,6 +7,7 @@ require("ISUI/ISScrollingListBox")
 require("TimedActions/ISBaseTimedAction")
 require("TimedActions/ISTimedActionQueue")
 
+local JASM_Constants = require("just_another_shop_mod/jasm_constants")
 local JASM_SandboxVars = require("just_another_shop_mod/jasm_sandbox_vars")
 
 local ShopDataManager = require("just_another_shop_mod/entity_ui/models/shop_data_manager")
@@ -967,7 +968,7 @@ function OwnerViewWindow:new(x, y, w, h, player, entity)
     setmetatable(o, self)
     self.__index = self
 
-    o.panelCloseDistance = 2
+    o.panelCloseDistance = JASM_Constants.SHOP_TRADE_RANGE
     o.player = player
     o.xuiSkin = xuiSkin
     o.title = "JASM - Just Another Shop Mod"

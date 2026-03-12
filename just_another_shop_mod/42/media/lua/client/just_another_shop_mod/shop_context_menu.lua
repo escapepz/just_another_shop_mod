@@ -4,6 +4,10 @@ local KUtilities = pz_utils.konijima.Utilities
 local JASM_ShopView_Customer = require("just_another_shop_mod/entity_ui/customer_view_window")
 local JASM_ShopView_Owner = require("just_another_shop_mod/entity_ui/owner_view_window")
 local JASM_SandboxVars = require("just_another_shop_mod/jasm_sandbox_vars")
+local JASM_Constants = require("just_another_shop_mod/jasm_constants")
+
+local math_floor = math.floor
+local math_abs = math.abs
 
 -- guard again non crate objects
 local allowedCrates = { ["Base.Wood_Crate"] = true, ["Base.Metal_Crate"] = true }
@@ -119,13 +123,44 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
         end
     end
 
+    local function isInLootPanelRange(player, sq)
+        local px = math_floor(player:getX())
+        local py = math_floor(player:getY())
+        local pz = math_floor(player:getZ())
+        if math_abs(px - sq:getX()) > 1 or math_abs(py - sq:getY()) > 1 or pz ~= sq:getZ() then
+            return false
+        end
+        local currentSq = player:getCurrentSquare()
+        if currentSq ~= sq and not currentSq:canReachTo(sq) then
+            return false
+        end
+        return true
+    end
+
+    local function refreshLootPanel()
+        -- Force loot panel to refresh so container appears
+        local pData = getPlayerData(playerIndex)
+        if pData then
+            pData.lootInventory:refreshBackpacks()
+        end
+    end
+
     local function openShop(window)
-        local adjacent = AdjacentFreeTileFinder.Find(containerObj:getSquare(), playerObj)
+        local sq = containerObj:getSquare()
+        if isInLootPanelRange(playerObj, sq) then
+            refreshLootPanel()
+            window.open(playerIndex, nil, containerObj)
+            return
+        end
+
+        local adjacent = AdjacentFreeTileFinder.Find(sq, playerObj)
         if adjacent then
             ISTimedActionQueue.clear(playerObj)
-            ---@type ISWalkToTimedAction
             local action = ISWalkToTimedAction:new(playerObj, adjacent)
-            action:setOnComplete(window.open, playerIndex, nil, containerObj)
+            action:setOnComplete(function()
+                refreshLootPanel()
+                window.open(playerIndex, nil, containerObj)
+            end)
             ISTimedActionQueue.add(action)
         end
     end
@@ -146,17 +181,13 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
 
         -- Open Customer View
         local shopOption = context:addOption("Open Shop UI", worldObjects, function()
-            if
-                AdjacentFreeTileFinder.isTileOrAdjacent(
-                    playerObj:getCurrentSquare(),
-                    containerObj:getSquare()
-                )
-            then
-                -- Already next to it
-                JASM_ShopView_Customer.open(playerIndex, nil, containerObj)
-            else
-                openShop(JASM_ShopView_Customer)
-            end
+            -- local sq = containerObj:getSquare()
+            -- if playerObj:DistTo(sq:getX(), sq:getY()) <= JASM_Constants.SHOP_TRADE_RANGE then
+            --     -- Already within range
+            --     JASM_ShopView_Customer.open(playerIndex, nil, containerObj)
+            -- else
+            openShop(JASM_ShopView_Customer)
+            -- end
         end)
 
         checkLock(shopOption, isLockedByOther, lockHolder)
@@ -175,13 +206,9 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
     -- 1. Shop Management
     if canManage then
         jMenu:addOption("Manage Shop", worldObjects, function()
-            if
-                AdjacentFreeTileFinder.isTileOrAdjacent(
-                    playerObj:getCurrentSquare(),
-                    containerObj:getSquare()
-                )
-            then
-                -- Already next to it
+            local sq = containerObj:getSquare()
+            if playerObj:DistTo(sq:getX(), sq:getY()) <= JASM_Constants.SHOP_TRADE_RANGE then
+                -- Already within range
                 JASM_ShopView_Owner.open(playerIndex, nil, containerObj)
             else
                 openShop(JASM_ShopView_Owner)

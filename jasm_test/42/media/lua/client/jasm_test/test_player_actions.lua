@@ -62,6 +62,9 @@ local function init()
                         end,
                     }
                 end,
+                DistTo = function(self, x, y)
+                    return 0 -- Already in range
+                end,
             }
             local original_getSpecificPlayer = _G.getSpecificPlayer
             ---@diagnostic disable-next-line: global-in-non-module

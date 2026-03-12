@@ -5,6 +5,7 @@ local logger = ZUL.new("just_another_shop_mod")
 
 local pz_utils = require("pz_utils_shared")
 local JASM_SandboxVars = require("just_another_shop_mod/jasm_sandbox_vars")
+local JASM_Constants = require("just_another_shop_mod/jasm_constants")
 
 local KUtilities = pz_utils.konijima.Utilities
 -- ============================================================
@@ -109,8 +110,7 @@ function JASM_AcceptTradeAction:isValid()
         return false
     end
 
-    ---@diagnostic disable-next-line: undefined-field
-    if self.character:DistTo(sq:getX(), sq:getY()) > 3.0 then
+    if self.character:DistTo(sq:getX(), sq:getY()) > JASM_Constants.SHOP_TRADE_RANGE then
         logger:debug("JASM_AcceptTradeAction:isValid() - distance check failed")
         return false
     end
@@ -312,10 +312,9 @@ function JASM_AcceptTradeAction:complete()
         local maxWeight = shopContainer:getCapacityWeight()
 
         -- Lag Prevention: Item Count Cap (prevent 10,000+ item exploit)
-        local ITEM_COUNT_CAP = 500
         local finalCount = currentItemCount - #productItems + #currencyItems
 
-        if finalWeight > maxWeight or finalCount > ITEM_COUNT_CAP then
+        if finalWeight > maxWeight or finalCount > JASM_Constants.ITEM_COUNT_CAP then
             local reason = (finalWeight > maxWeight) and "shop_full_weight" or "shop_full_count"
             logger:error("Trade rejected: shop container full (Server check)", {
                 player = self.character:getUsername(),
@@ -323,7 +322,7 @@ function JASM_AcceptTradeAction:complete()
                 finalWeight = finalWeight,
                 maxWeight = maxWeight,
                 finalCount = finalCount,
-                cap = ITEM_COUNT_CAP,
+                cap = JASM_Constants.ITEM_COUNT_CAP,
             })
             -- Send halotext command to player on client
             KUtilities.SendServerCommandTo(

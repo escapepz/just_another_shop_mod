@@ -4,6 +4,7 @@ local ZUL = require("zul")
 local logger = ZUL.new("just_another_shop_mod")
 local pz_utils = require("pz_utils_shared")
 local JASM_SandboxVars = require("just_another_shop_mod/jasm_sandbox_vars")
+local JASM_Constants = require("just_another_shop_mod/jasm_constants")
 
 -- ============================================================
 -- JASM_PublishTradeAction
@@ -99,7 +100,7 @@ function JASM_PublishTradeAction:isValid()
         return false
     end
 
-    if self.character:DistTo(sq:getX(), sq:getY()) > 3.0 then
+    if self.character:DistTo(sq:getX(), sq:getY()) > JASM_Constants.SHOP_TRADE_RANGE then
         logger:debug("JASM_PublishTradeAction:isValid() - distance check failed")
         return false
     end

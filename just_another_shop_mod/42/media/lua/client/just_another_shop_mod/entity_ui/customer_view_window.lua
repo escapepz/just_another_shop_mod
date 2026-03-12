@@ -3,6 +3,9 @@ require("Entity/ISUI/Controls/ISTableLayout")
 require("ISUI/ISLabel")
 require("ISUI/ISButton")
 
+local JASM_Constants = require("just_another_shop_mod/jasm_constants")
+local JASM_SandboxVars = require("just_another_shop_mod/jasm_sandbox_vars")
+
 local SearchFilterPanel =
     require("just_another_shop_mod/entity_ui/components/shop/shared/shop_search_filter_panel")
 local ProductListPanel =
@@ -11,7 +14,6 @@ local ItemDetailsPanel =
     require("just_another_shop_mod/entity_ui/components/shop/customer/shop_item_details_panel")
 local ShopDataManager = require("just_another_shop_mod/entity_ui/models/shop_data_manager")
 
-local JASM_SandboxVars = require("just_another_shop_mod/jasm_sandbox_vars")
 local KUtilities = require("pz_utils_shared").konijima.Utilities
 
 local ZUL = require("zul")
@@ -609,7 +611,7 @@ function CustomerViewWindow:new(x, y, w, h, player, entity)
     setmetatable(o, self)
     self.__index = self
 
-    o.panelCloseDistance = 2
+    o.panelCloseDistance = JASM_Constants.SHOP_TRADE_RANGE
     o.player = player
     o.xuiSkin = xuiSkin
     o.title = "JASM - Just Another Shop Mod"
