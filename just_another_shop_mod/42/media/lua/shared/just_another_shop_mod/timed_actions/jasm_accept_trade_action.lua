@@ -313,8 +313,9 @@ function JASM_AcceptTradeAction:complete()
 
         -- Follow vanilla MP ItemNumbersLimitPerContainer + mod safety cap
         local vanillaCap = SandboxVars.ItemNumbersLimitPerContainer or 0
-        local ITEM_COUNT_CAP = (vanillaCap > 0) and vanillaCap or 500
+        local ITEM_COUNT_CAP = (vanillaCap > 0) and vanillaCap or JASM_Constants.ITEM_COUNT_CAP
 
+        -- Lag Prevention: Item Count Cap (prevent 10,000+ item exploit)
         local finalCount = currentItemCount - #productItems + #currencyItems
 
         if finalWeight > maxWeight or finalCount > ITEM_COUNT_CAP then

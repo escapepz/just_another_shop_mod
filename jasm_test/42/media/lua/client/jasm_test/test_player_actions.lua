@@ -49,6 +49,15 @@ local function init()
                 getUsername = function()
                     return "testuser"
                 end,
+                getX = function()
+                    return 10
+                end,
+                getY = function()
+                    return 10
+                end,
+                getZ = function()
+                    return 0
+                end,
                 getCurrentSquare = function()
                     return {
                         getX = function()
@@ -59,6 +68,9 @@ local function init()
                         end,
                         getZ = function()
                             return 0
+                        end,
+                        canReachTo = function()
+                            return true
                         end,
                     }
                 end,
@@ -76,6 +88,16 @@ local function init()
             local original_IsPlayerAdmin = pz_utils.konijima.Utilities.IsPlayerAdmin
             pz_utils.konijima.Utilities.IsPlayerAdmin = function()
                 return false
+            end
+
+            -- Mock getPlayerData
+            local original_getPlayerData = _G.getPlayerData
+            _G.getPlayerData = function(playerIdx)
+                return {
+                    lootInventory = {
+                        refreshBackpacks = function() end,
+                    },
+                }
             end
 
             -- Mock JASM_ShopManager for lock check
@@ -241,6 +263,7 @@ local function init()
             AdjacentFreeTileFinder.Find = originalFind
             AdjacentFreeTileFinder.isTileOrAdjacent = originalIsTileOrAdjacent
             _G.getSpecificPlayer = original_getSpecificPlayer
+            _G.getPlayerData = original_getPlayerData
             pz_utils.konijima.Utilities.IsPlayerAdmin = original_IsPlayerAdmin
             _G.JASM_ShopManager = originalShopManager
             ---@diagnostic disable-next-line: duplicate-set-field
