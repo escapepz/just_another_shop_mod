@@ -2,13 +2,12 @@ author=escapepz
 
 id=just_another_shop_mod
 name=Just Another Shop Mod
-description=A lightweight shop system built on the CAF/MAF frameworks.
+description=Container-Based Shop, Item-to-Item Trade System, Barter Unit Shop System, Vehicle Trunk As A Shop, ... and more!
 
-poster=shop_customer_view_square_512.png
-poster2=shop_owner_view_square_512.png
+poster=preview.png
 icon=icon.png
 
-modversion=1.0.0
+modversion=1.0.1
 versionMin=42.13.1
 
 require=\zul,\pz_lua_commons,\container_authority_framework,\manipulation_authority_framework
