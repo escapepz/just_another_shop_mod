@@ -64,6 +64,13 @@ local function createMockShopCrate(isShop, shopType, ownerID, lockedBy)
         getZ = function()
             return 0
         end,
+        getSprite = function()
+            return {
+                getName = function()
+                    return "constructedobjects_01_44"
+                end,
+            }
+        end,
         getSquare = function()
             return {
                 getX = function()
@@ -84,6 +91,24 @@ end
 _G.JASM_ShopManager = {
     getShopLock = function()
         return nil
+    end,
+}
+
+-- Mock game runtime globals needed
+_G.HaloTextHelper = _G.HaloTextHelper or {
+    addBadText = function() end,
+}
+_G.getPlayerData = _G.getPlayerData
+    or function(playerIdx)
+        return {
+            lootInventory = {
+                refreshBackpacks = function() end,
+            },
+        }
+    end
+_G.ModData = _G.ModData or {
+    getOrCreate = function(key)
+        return {}
     end,
 }
 
