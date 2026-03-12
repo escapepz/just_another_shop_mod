@@ -9,8 +9,7 @@ local JASM_Constants = require("just_another_shop_mod/jasm_constants")
 local math_floor = math.floor
 local math_abs = math.abs
 
--- guard again non crate objects
-local allowedCrates = { ["Base.Wood_Crate"] = true, ["Base.Metal_Crate"] = true }
+-- guard again non crate objects (handled by sprite matching in DoShopContextMenu)
 
 ---@param worldObjects IsoObject[]
 ---@param _playerObj IsoPlayer
@@ -93,10 +92,19 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
         return
     end
 
-    -- 1. Try to capture everything before "_Lvl"
-    local baseName = string.match(entityFullTypeDebug, "(.-)_Lvl%d+") or entityFullTypeDebug
+    -- Sprite-based matching for allowed containers
+    local spriteName = containerObj:getSprite() and containerObj:getSprite():getName()
+    local isAllowed = false
+    if spriteName and JASM_Constants.ALLOWED_CRATE_SPRITES then
+        for _, pattern in ipairs(JASM_Constants.ALLOWED_CRATE_SPRITES) do
+            if string.find(spriteName, pattern) then
+                isAllowed = true
+                break
+            end
+        end
+    end
 
-    if not allowedCrates[baseName] then
+    if not isAllowed then
         return
     end
 
