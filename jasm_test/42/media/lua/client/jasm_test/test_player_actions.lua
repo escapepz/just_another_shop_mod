@@ -1,6 +1,19 @@
 ---@diagnostic disable: undefined-field, global-in-non-module
 local JASM_TestRunner = require("jasm_test_shared")
 
+-- Mock game runtime globals needed for CAF rules
+_G.HaloTextHelper = _G.HaloTextHelper or {
+    addBadText = function() end,
+}
+_G.getSpecificPlayer = _G.getSpecificPlayer or function()
+    return {}
+end
+_G.ModData = _G.ModData or {
+    getOrCreate = function(key)
+        return {}
+    end,
+}
+
 local function init()
     -- ============================================================
     -- TEST: Context Menu
@@ -49,6 +62,15 @@ local function init()
                 getUsername = function()
                     return "testuser"
                 end,
+                getX = function()
+                    return 10
+                end,
+                getY = function()
+                    return 10
+                end,
+                getZ = function()
+                    return 0
+                end,
                 getCurrentSquare = function()
                     return {
                         getX = function()
@@ -59,6 +81,9 @@ local function init()
                         end,
                         getZ = function()
                             return 0
+                        end,
+                        canReachTo = function()
+                            return true
                         end,
                     }
                 end,
@@ -76,6 +101,16 @@ local function init()
             local original_IsPlayerAdmin = pz_utils.konijima.Utilities.IsPlayerAdmin
             pz_utils.konijima.Utilities.IsPlayerAdmin = function()
                 return false
+            end
+
+            -- Mock getPlayerData
+            local original_getPlayerData = _G.getPlayerData
+            _G.getPlayerData = function(playerIdx)
+                return {
+                    lootInventory = {
+                        refreshBackpacks = function() end,
+                    },
+                }
             end
 
             -- Mock JASM_ShopManager for lock check
@@ -183,6 +218,13 @@ local function init()
                 getZ = function()
                     return 0
                 end,
+                getSprite = function()
+                    return {
+                        getName = function()
+                            return "constructedobjects_01_44"
+                        end,
+                    }
+                end,
                 getSquare = function()
                     return {
                         getX = function()
@@ -241,6 +283,7 @@ local function init()
             AdjacentFreeTileFinder.Find = originalFind
             AdjacentFreeTileFinder.isTileOrAdjacent = originalIsTileOrAdjacent
             _G.getSpecificPlayer = original_getSpecificPlayer
+            _G.getPlayerData = original_getPlayerData
             pz_utils.konijima.Utilities.IsPlayerAdmin = original_IsPlayerAdmin
             _G.JASM_ShopManager = originalShopManager
             ---@diagnostic disable-next-line: duplicate-set-field

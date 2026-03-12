@@ -1,7 +1,10 @@
 {
     "$schema": "https://raw.githubusercontent.com/escapepz/project-zomboid-studio/refs/heads/b42.13.1/pzstudio.schema.json",
     "title": "Just Another Shop Mod",
-    "authors": ["escapepz", "eScape"],
+    "authors": [
+        "escapepz",
+        "eScape"
+    ],
     "workshop": {
         "id": 3681786362,
         "visibility": "unlisted",
@@ -13,12 +16,14 @@
             "QoL",
             "WIP"
         ],
-        "excludes": ["jasm_test"]
+        "excludes": [
+            "jasm_test"
+        ]
     },
     "mods": {
         "just_another_shop_mod": {
             "name": "Just Another Shop Mod",
-            "description": "A lightweight shop system based on the Container Authority Framework.",
+            "description": "Container-Based Shop, Item-to-Item Trade System, Barter Unit Shop System, Vehicle Trunk As A Shop, ... and more!",
             "require": [
                 "\\zul",
                 "\\pz_lua_commons",
