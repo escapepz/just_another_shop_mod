@@ -35,7 +35,26 @@ local function init()
                 items = {},
                 capacityWeight = 50.0,
                 getCapacityWeight = function(self)
+                    return self:getContentsWeight()
+                end,
+                getItemsFromCategory = function(self, category)
+                    return {
+                        size = function()
+                            return 0
+                        end,
+                        get = function(_, i)
+                            return nil
+                        end,
+                    }
+                end,
+                getCapacity = function(self)
                     return self.capacityWeight
+                end,
+                getEffectiveCapacity = function(self, chr)
+                    return self:getCapacity()
+                end,
+                getCountRecurse = function(self, predicate)
+                    return self:getItems():size()
                 end,
                 getContentsWeight = function(self)
                     local weight = 0
@@ -48,6 +67,13 @@ local function init()
                     end
                     return weight
                 end,
+                getInventory = function(self)
+                    return self
+                end,
+                isExplored = function(self)
+                    return true
+                end,
+                setExplored = function(self, b) end,
                 getItemCount = function(self, type)
                     local count = 0
                     for _, it in ipairs(self.items) do
@@ -157,6 +183,15 @@ local function init()
                 end,
                 getActualWeight = function()
                     return weight or 0.1
+                end,
+                getCategory = function()
+                    return "Item"
+                end,
+                getInventory = function()
+                    return nil
+                end,
+                isContainer = function()
+                    return false
                 end,
             }
         end

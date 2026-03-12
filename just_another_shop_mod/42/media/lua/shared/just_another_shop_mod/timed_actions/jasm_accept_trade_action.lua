@@ -296,7 +296,7 @@ function JASM_AcceptTradeAction:complete()
     -- 1.5 CAPACITY VALIDATION (SERVER AUTHORITATIVE)
     if not self.isForceGive then
         local currentWeight = shopContainer:getContentsWeight()
-        local currentItemCount = shopContainer:getItems():size()
+        local currentItemCount = luautils.countItemsRecursive({ shopContainer })
 
         local weightToGain = 0
         for _, item in ipairs(currencyItems) do
@@ -309,13 +309,12 @@ function JASM_AcceptTradeAction:complete()
         end
 
         local finalWeight = currentWeight - weightToLose + weightToGain
-        local maxWeight = shopContainer:getCapacityWeight()
+        local maxWeight = shopContainer:getEffectiveCapacity(self.character)
 
         -- Follow vanilla MP ItemNumbersLimitPerContainer + mod safety cap
         local vanillaCap = SandboxVars.ItemNumbersLimitPerContainer or 0
-        local ITEM_COUNT_CAP = (vanillaCap > 0) and vanillaCap or JASM_Constants.ITEM_COUNT_CAP
+        local ITEM_COUNT_CAP = (vanillaCap > 0) and vanillaCap or 500
 
-        -- Lag Prevention: Item Count Cap (prevent 10,000+ item exploit)
         local finalCount = currentItemCount - #productItems + #currencyItems
 
         if finalWeight > maxWeight or finalCount > ITEM_COUNT_CAP then

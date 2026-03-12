@@ -42,6 +42,15 @@ local function init()
                 getActualWeight = function()
                     return weight or 0.1
                 end,
+                getCategory = function()
+                    return "Item"
+                end,
+                getInventory = function()
+                    return nil
+                end,
+                isContainer = function()
+                    return false
+                end,
             }
         end
 
@@ -51,7 +60,26 @@ local function init()
                 capacityWeight = 50.0,
             }
             inv.getCapacityWeight = function()
+                return inv:getContentsWeight()
+            end
+            inv.getItemsFromCategory = function()
+                return {
+                    size = function()
+                        return 0
+                    end,
+                    get = function(_, i)
+                        return nil
+                    end,
+                }
+            end
+            inv.getCapacity = function()
                 return inv.capacityWeight
+            end
+            inv.getEffectiveCapacity = function()
+                return inv:getCapacity()
+            end
+            inv.getCountRecurse = function()
+                return inv:getItems():size()
             end
             inv.getContentsWeight = function()
                 local weight = 0
@@ -60,6 +88,13 @@ local function init()
                 end
                 return weight
             end
+            inv.getInventory = function()
+                return inv
+            end
+            inv.isExplored = function()
+                return true
+            end
+            inv.setExplored = function() end
             inv.getItemCount = function(self, type)
                 local count = 0
                 for _, it in ipairs(inv.items) do

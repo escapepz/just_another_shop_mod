@@ -35,8 +35,8 @@ function ShopTrade.Validation(ctx)
     -- 1.5 CAPACITY VALIDATION
     local shopContainer = ctx.src
     local currentWeight = shopContainer:getContentsWeight()
-    local currentItemCount = shopContainer:getItems():size()
-    local maxWeight = shopContainer:getCapacityWeight()
+    local currentItemCount = luautils.countItemsRecursive({ shopContainer })
+    local maxWeight = shopContainer:getEffectiveCapacity(ctx.character)
 
     local currencyScript = ScriptManager.instance:getItem(priceConfig.type)
     local currencyWeight = currencyScript and currencyScript:getActualWeight() or 0.1
@@ -46,7 +46,11 @@ function ShopTrade.Validation(ctx)
     local finalWeight = currentWeight - productWeight + weightToGain
     local finalCount = currentItemCount - 1 + priceConfig.count
 
-    if finalWeight > maxWeight or finalCount > 500 then
+    -- Follow vanilla MP ItemNumbersLimitPerContainer + mod safety cap
+    local vanillaCap = SandboxVars.ItemNumbersLimitPerContainer or 0
+    local ITEM_COUNT_CAP = (vanillaCap > 0) and vanillaCap or 500
+
+    if finalWeight > maxWeight or finalCount > ITEM_COUNT_CAP then
         ctx.flags.rejected = true
         ctx.flags.reason = "Shop storage is full"
         return
