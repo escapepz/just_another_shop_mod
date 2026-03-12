@@ -311,10 +311,14 @@ function JASM_AcceptTradeAction:complete()
         local finalWeight = currentWeight - weightToLose + weightToGain
         local maxWeight = shopContainer:getCapacityWeight()
 
+        -- Follow vanilla MP ItemNumbersLimitPerContainer + mod safety cap
+        local vanillaCap = SandboxVars.ItemNumbersLimitPerContainer or 0
+        local ITEM_COUNT_CAP = (vanillaCap > 0) and vanillaCap or JASM_Constants.ITEM_COUNT_CAP
+
         -- Lag Prevention: Item Count Cap (prevent 10,000+ item exploit)
         local finalCount = currentItemCount - #productItems + #currencyItems
 
-        if finalWeight > maxWeight or finalCount > JASM_Constants.ITEM_COUNT_CAP then
+        if finalWeight > maxWeight or finalCount > ITEM_COUNT_CAP then
             local reason = (finalWeight > maxWeight) and "shop_full_weight" or "shop_full_count"
             logger:error("Trade rejected: shop container full (Server check)", {
                 player = self.character:getUsername(),
@@ -322,7 +326,7 @@ function JASM_AcceptTradeAction:complete()
                 finalWeight = finalWeight,
                 maxWeight = maxWeight,
                 finalCount = finalCount,
-                cap = JASM_Constants.ITEM_COUNT_CAP,
+                cap = ITEM_COUNT_CAP,
             })
             -- Send halotext command to player on client
             KUtilities.SendServerCommandTo(
