@@ -1,7 +1,30 @@
 
+_____
 v1.0.1
 
+Fixes:
+- unlimited_storage_exploit
+- Closing UI
+- Inventory Lookup Mismatch
+- Admin Bypass in MAF Rules
 
+Changes:
+- Add Support For 42.15.0
+- Display Full Item Types in Trade Paths
+- Container Range Check Optimization
+- Allow More Crate Types
+
+https://github.com/escapepz/just_another_shop_mod/releases/tag/v1.0.1
+
+_____
 v1.0.0
-First release
+first release
 - Player Shop only
+
+[b]Require[/b]
+- container_authority_framework v1.0.2
+- manipulation_authority_framework v1.0.1
+- pz_lua_commons v1.0.2
+- zul v1.2.0
+
+https://github.com/escapepz/just_another_shop_mod/releases/tag/v1.0.0

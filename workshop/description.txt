@@ -6,6 +6,9 @@
 [/code]
 
 [h1]Just Another Shop[/h1]
+
+Container-Based Shop, Item-to-Item Trade System, Barter Unit Shop System, Vehicle Trunk As A Shop, ... and more!
+
 [b]Just Another Shop Mod[/b] lets players and server admins turn ordinary storage crates into fully functional, interactive storefronts.
 [list]
 [*] [b]Create your own store:[/b] Easily register standard crates as shops for your base, town, or trading outposts.
@@ -21,6 +24,10 @@ This mod is best suited for multiplayer servers, economy-driven survival, and ro
 - To setup a store, simply place an allowed crate (e.g., standard Wood or Metal crates).
 - Right-click and navigate to the [b]JASM Shop[/b] menu to register the container.
 - After registration, owners can [b]Manage Shop[/b] to adjust stock and prices, and customers can use [b]Open Shop UI[/b] to browse and buy goods.
+
+[code][h3]Crates[/h3]
+[img]https://escapepz.github.io/just_another_shop_mod/assets/Carpentry_01_16.png[/img][img]https://escapepz.github.io/just_another_shop_mod/assets/Constructedobjects_01_47.png[/img][img]https://escapepz.github.io/just_another_shop_mod/assets/Military_crate.png[/img][img]https://escapepz.github.io/just_another_shop_mod/assets/Crafted_05_44.png[/img]
+    Wooden Crate          Metal Crate       Military Crate     Fancy Metal Crate[/code]
 
 [hr][/hr]
 [h2]New suggestion for the mod?[/h2]
