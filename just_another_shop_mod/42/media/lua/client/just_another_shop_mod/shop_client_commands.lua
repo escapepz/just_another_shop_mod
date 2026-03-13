@@ -11,6 +11,9 @@ local function OnServerCommand(module, command, args)
         local reason = args.reason or "unknown"
         local errorTexts = {
             already_registered = "Shop already registered! Unregister first.",
+            limit_reached = "Shop limit reached! You can only have "
+                .. tostring(args.limit or "?")
+                .. " shops.",
         }
         local text = errorTexts[reason] or "Registration denied."
         HaloTextHelper.addBadText(getSpecificPlayer(0), text)

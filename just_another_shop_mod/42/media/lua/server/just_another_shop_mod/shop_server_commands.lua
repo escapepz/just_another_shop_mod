@@ -102,6 +102,31 @@ end
 -- Action handlers (Single Responsibility)
 -- ---------------------------------------------------------------------------
 
+---Count player's active shops from global registry
+---@param ownerID string
+---@return number
+local function getPlayerShopCount(ownerID)
+    local registeredShops = ModData.getOrCreate("JASM_RegisteredShops")
+    local count = 0
+    for _, shop in pairs(registeredShops) do
+        if shop.ownerID == ownerID then
+            count = count + 1
+        end
+    end
+    return count
+end
+
+---Get effective limit for player
+---@param ownerID string
+---@return number
+local function getPlayerShopLimit(ownerID)
+    local limits = ModData.getOrCreate("JASM_PlayerShopLimits")
+    if limits[ownerID] ~= nil then
+        return limits[ownerID]
+    end
+    return JASM_SandboxVars.Get("MaxPlayerShopsPerPlayer", 5)
+end
+
 ---Handle REGISTER action
 ---@param player IsoPlayer
 ---@param args table
@@ -125,9 +150,27 @@ local function handleRegister(player, args, containerObj, thumpable, thumpableN)
         return
     end
 
+    local ownerID = player:getUsername()
+    local limit = getPlayerShopLimit(ownerID)
+    local count = getPlayerShopCount(ownerID)
+    if count >= limit then
+        logger:warn("Shop Register denied: limit reached", {
+            player = ownerID,
+            current = count,
+            limit = limit,
+        })
+        KUtilities.SendServerCommandTo(
+            player,
+            "JASM_ShopManager",
+            "RegisterDenied",
+            { reason = "limit_reached", limit = limit, current = count }
+        )
+        return
+    end
+
     modData.isShop = true
     modData.shopType = args.shopType
-    modData.shopOwnerID = player:getUsername()
+    modData.shopOwnerID = ownerID
 
     -- Prevent sledgehammer and dismantle
     modData.indestructible = true
@@ -136,6 +179,18 @@ local function handleRegister(player, args, containerObj, thumpable, thumpableN)
     setThumpable(thumpable, thumpableN, false)
 
     logger:info("Shop Registered", { type = args.shopType, owner = modData.shopOwnerID })
+
+    -- Save to global registry
+    local square = containerObj:getSquare()
+    if square then
+        local squareID = KUtilities.SquareToString(square)
+        local registeredShops = ModData.getOrCreate("JASM_RegisteredShops")
+        registeredShops[squareID] = {
+            ownerID = ownerID,
+            shopName = args.shopName or "A Shop",
+            registeredDate = pz_utils.escape.Utilities.GetIRLTimestamp(),
+        }
+    end
 
     -- Persist and Sync to all clients
     containerObj:transmitModData()
@@ -205,6 +260,14 @@ local function handleUnregister(player, args, containerObj, thumpable, thumpable
         by = player:getUsername(),
         isAdmin = isAdmin,
     })
+
+    -- Remove from global registry
+    local square = containerObj:getSquare()
+    if square then
+        local squareID = KUtilities.SquareToString(square)
+        local registeredShops = ModData.getOrCreate("JASM_RegisteredShops")
+        registeredShops[squareID] = nil
+    end
 
     -- Persist and Sync to all clients
     containerObj:transmitModData()

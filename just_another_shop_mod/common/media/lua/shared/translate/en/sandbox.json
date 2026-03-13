@@ -6,5 +6,7 @@
     "Sandbox_JASM_ShopLockMethod": "Shop Lock Method",
     "Sandbox_JASM_ShopLockMethod_tooltip": "Method used to lock shops.",
     "Sandbox_JASM_ShopLockMethod_Values_option1": "Dual",
-    "Sandbox_JASM_ShopLockMethod_Values_option2": "Vanilla"
+    "Sandbox_JASM_ShopLockMethod_Values_option2": "Vanilla",
+    "Sandbox_JASM_MaxPlayerShopsPerPlayer": "Max Player Shops Per Player",
+    "Sandbox_JASM_MaxPlayerShopsPerPlayer_tooltip": "Maximum number of player-owned shops a single player can register."
 }

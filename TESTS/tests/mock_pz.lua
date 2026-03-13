@@ -592,6 +592,11 @@ function MockPZ.setupGlobals()
                         end,
                     }
                 end)(),
+                Utilities = {
+                    GetIRLTimestamp = function()
+                        return os.time()
+                    end,
+                },
             },
         }
     end
