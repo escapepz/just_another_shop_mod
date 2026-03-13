@@ -19,3 +19,14 @@ option JASM.ShopLockMethod
     numValues = 2,
     default = 1,
 }
+
+option JASM.MaxPlayerShopsPerPlayer
+{
+    page = JASM,
+    translation = JASM_MaxPlayerShopsPerPlayer,
+    tooltip = JASM_MaxPlayerShopsPerPlayer_tooltip,
+    type = integer,
+    min = 0,
+    max = 999,
+    default = 5,
+}
