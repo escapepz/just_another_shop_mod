@@ -188,6 +188,22 @@ function JASM_AcceptTradeAction:setOnCancel(func, arg1, arg2, arg3, arg4, arg5, 
 end
 
 -- ============================================================
+-- SERVER - serverStop
+-- ============================================================
+-- Called on the server when the action is cancelled (player moved, etc).
+-- Allows server-side cleanup / rollback if needed.
+-- NOTE: This is server-side only. Client-side cleanup happens in stop().
+---@return void
+function JASM_AcceptTradeAction:serverStop()
+    logger:debug("JASM_AcceptTradeAction:serverStop() - server-side cancellation", {
+        player = self.character:getUsername(),
+    })
+    -- No explicit rollback needed here; items haven't been transferred yet
+    -- since complete() was never called. This hook exists for consistency
+    -- with vanilla TimedAction patterns and future-proofing.
+end
+
+-- ============================================================
 -- SERVER - getDuration
 -- ============================================================
 
@@ -386,11 +402,9 @@ function JASM_AcceptTradeAction:complete()
             or "FORCED",
     })
 
-    -- Trigger UI refresh callback (Issue 5)
-    if self.onCompleteFunc then
-        local args = self.onCompleteArgs or {}
-        self.onCompleteFunc(args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8])
-    end
+    -- NOTE: Callback moved to perform() (client-side only).
+    -- complete() must remain server-authoritative without client callbacks.
+    -- This prevents the race condition where client refreshes before server validation completes.
 
     return true
 end
