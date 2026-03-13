@@ -27,6 +27,10 @@ local DEFAULTS = {
     ---             Uses built-in ISEntityWindow/ISEntityUI conflict detection.
     ---@type number
     ShopLockMethod = 1,
+
+    --- Max player-owned shops per player
+    ---@type number
+    MaxPlayerShopsPerPlayer = 5,
 }
 
 local NAMESPACE = "JASM"

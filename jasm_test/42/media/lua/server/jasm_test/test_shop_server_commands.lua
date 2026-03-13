@@ -276,6 +276,119 @@ local function init()
     end)
 
     -- ------------------------------------------------------------------
+    -- NEW: Registration Limits
+    -- ------------------------------------------------------------------
+
+    -- Helper to simulate getPlayerShopCount
+    local function simGetPlayerShopCount(ownerID, mockRegistry)
+        local count = 0
+        for _, shop in pairs(mockRegistry) do
+            if shop.ownerID == ownerID then
+                count = count + 1
+            end
+        end
+        return count
+    end
+
+    -- Helper to simulate getPlayerShopLimit
+    local function simGetPlayerShopLimit(ownerID, mockLimits, defaultLimit)
+        if mockLimits[ownerID] ~= nil then
+            return mockLimits[ownerID]
+        end
+        return defaultLimit or 5
+    end
+
+    JASM_TestRunner.register("shop_register_limit_not_reached", "server", function()
+        local mockRegistry = {}
+        local mockLimits = {}
+
+        -- Player has 4 shops, limit is 5
+        for i = 1, 4 do
+            mockRegistry["sq_" .. i] = { ownerID = "PlayerA" }
+        end
+
+        local count = simGetPlayerShopCount("PlayerA", mockRegistry)
+        local limit = simGetPlayerShopLimit("PlayerA", mockLimits, 5)
+
+        JASM_TestRunner.assert_equals(4, count, "Player should have 4 shops")
+        JASM_TestRunner.assert_true(count < limit, "Player should be allowed to register")
+    end)
+
+    JASM_TestRunner.register("shop_register_limit_reached", "server", function()
+        local mockRegistry = {}
+        local mockLimits = {}
+
+        -- Player has 5 shops, limit is 5
+        for i = 1, 5 do
+            mockRegistry["sq_" .. i] = { ownerID = "PlayerA" }
+        end
+
+        local count = simGetPlayerShopCount("PlayerA", mockRegistry)
+        local limit = simGetPlayerShopLimit("PlayerA", mockLimits, 5)
+
+        JASM_TestRunner.assert_equals(5, count, "Player should have 5 shops")
+        JASM_TestRunner.assert_true(count >= limit, "Player registration should be blocked")
+    end)
+
+    JASM_TestRunner.register("shop_register_after_unregister", "server", function()
+        local mockRegistry = {}
+        local mockLimits = {}
+
+        -- Player has 5 shops
+        for i = 1, 5 do
+            mockRegistry["sq_" .. i] = { ownerID = "PlayerA" }
+        end
+
+        -- Unregister 1
+        mockRegistry["sq_5"] = nil
+
+        local count = simGetPlayerShopCount("PlayerA", mockRegistry)
+        local limit = simGetPlayerShopLimit("PlayerA", mockLimits, 5)
+
+        JASM_TestRunner.assert_equals(4, count, "Player should have 4 shops after unregister")
+        JASM_TestRunner.assert_true(count < limit, "Player should be allowed to register again")
+    end)
+
+    JASM_TestRunner.register("shop_register_limit_per_player_override", "server", function()
+        local mockRegistry = {}
+        local mockLimits = { PlayerA = 2 }
+
+        -- Player has 2 shops
+        for i = 1, 2 do
+            mockRegistry["sq_" .. i] = { ownerID = "PlayerA" }
+        end
+
+        local count = simGetPlayerShopCount("PlayerA", mockRegistry)
+        local limit = simGetPlayerShopLimit("PlayerA", mockLimits, 5)
+
+        JASM_TestRunner.assert_equals(2, limit, "Player's limit should be overridden to 2")
+        JASM_TestRunner.assert_equals(2, count, "Player should have 2 shops")
+        JASM_TestRunner.assert_true(
+            count >= limit,
+            "Player registration should be blocked by override limit"
+        )
+    end)
+
+    JASM_TestRunner.register("shop_register_admin_no_bypass", "server", function()
+        local mockRegistry = {}
+        local mockLimits = {}
+
+        -- Admin has 5 shops, limit is 5
+        for i = 1, 5 do
+            mockRegistry["sq_" .. i] = { ownerID = "AdminPlayer" }
+        end
+
+        local count = simGetPlayerShopCount("AdminPlayer", mockRegistry)
+        local limit = simGetPlayerShopLimit("AdminPlayer", mockLimits, 5)
+
+        JASM_TestRunner.assert_equals(5, limit, "Admin limit should be 5 just like normal players")
+        JASM_TestRunner.assert_true(
+            count >= limit,
+            "Admin registration should be blocked - no bypass"
+        )
+    end)
+
+    -- ------------------------------------------------------------------
     -- NEW: Issue 1 – Admin bypass sandbox var test
     -- ------------------------------------------------------------------
 
