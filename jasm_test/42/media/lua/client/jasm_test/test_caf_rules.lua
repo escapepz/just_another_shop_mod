@@ -739,9 +739,15 @@ local function init()
 
         RuleShopProtection(ctx)
 
-        -- Restore mocks
+        -- Restore mocks (use fresh reference to ensure availability)
         JASM_SandboxVars.Get = originalGet
-        pz_utils.konijima.Utilities.IsPlayerAdmin = originalIsAdmin
+        if originalIsAdmin then
+            pz_utils.konijima.Utilities.IsPlayerAdmin = originalIsAdmin
+        else
+            -- If original was nil, reload from fresh require
+            pz_utils.konijima.Utilities.IsPlayerAdmin =
+                require("pz_utils_shared").konijima.Utilities.IsPlayerAdmin
+        end
 
         JASM_TestRunner.assert_false(
             ctx.flags.rejected,
@@ -776,9 +782,15 @@ local function init()
 
         RuleShopProtection(ctx)
 
-        -- Restore mocks
+        -- Restore mocks (use fresh reference to ensure availability)
         JASM_SandboxVars.Get = originalGet
-        pz_utils.konijima.Utilities.IsPlayerAdmin = originalIsAdmin
+        if originalIsAdmin then
+            pz_utils.konijima.Utilities.IsPlayerAdmin = originalIsAdmin
+        else
+            -- If original was nil, reload from fresh require
+            pz_utils.konijima.Utilities.IsPlayerAdmin =
+                require("pz_utils_shared").konijima.Utilities.IsPlayerAdmin
+        end
 
         JASM_TestRunner.assert_true(
             ctx.flags.rejected,

@@ -284,7 +284,13 @@ local function init()
             AdjacentFreeTileFinder.isTileOrAdjacent = originalIsTileOrAdjacent
             _G.getSpecificPlayer = original_getSpecificPlayer
             _G.getPlayerData = original_getPlayerData
-            pz_utils.konijima.Utilities.IsPlayerAdmin = original_IsPlayerAdmin
+            if original_IsPlayerAdmin then
+                pz_utils.konijima.Utilities.IsPlayerAdmin = original_IsPlayerAdmin
+            else
+                -- If original was nil, reload from fresh require
+                pz_utils.konijima.Utilities.IsPlayerAdmin =
+                    require("pz_utils_shared").konijima.Utilities.IsPlayerAdmin
+            end
             _G.JASM_ShopManager = originalShopManager
             ---@diagnostic disable-next-line: duplicate-set-field
             JASM_ShopView_Customer.open = originalCustomerOpen

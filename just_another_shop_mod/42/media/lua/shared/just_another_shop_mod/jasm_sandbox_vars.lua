@@ -31,6 +31,10 @@ local DEFAULTS = {
     --- Max player-owned shops per player
     ---@type number
     MaxPlayerShopsPerPlayer = 5,
+
+    --- Whether to enforce player-built requirement for shop registration
+    ---@type boolean
+    OnlyPlayerBuilt = true,
 }
 
 local NAMESPACE = "JASM"

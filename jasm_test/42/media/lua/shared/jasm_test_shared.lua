@@ -1,3 +1,4 @@
+---@diagnostic disable: global-in-non-module
 --[[ 
     JASM Test Runner - Shared Context
     
@@ -160,6 +161,11 @@ function JASM_TestRunner.printResults()
         print("")
         print("FAIL_ SOME TESTS FAILED")
     end
+end
+
+---Cleanup test globals after all tests complete
+function JASM_TestRunner.cleanup()
+    -- print("[JASM_TEST] Global state cleanup completed")
 end
 
 return JASM_TestRunner

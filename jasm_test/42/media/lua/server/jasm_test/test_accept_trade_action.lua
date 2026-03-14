@@ -326,7 +326,13 @@ local function init()
         _G.sendRemoveItemFromContainer = originalSendRemove
         _G.sendAddItemToContainer = originalSendAdd
         _G.sendServerCommand = originalSendServerCommand
-        pz_utils.konijima.Utilities.IsPlayerAdmin = originalIsAdmin
+        if originalIsAdmin then
+            pz_utils.konijima.Utilities.IsPlayerAdmin = originalIsAdmin
+        else
+            -- If original was nil, reload from fresh require
+            pz_utils.konijima.Utilities.IsPlayerAdmin =
+                require("pz_utils_shared").konijima.Utilities.IsPlayerAdmin
+        end
     end)
 
     print("[JASM_TEST] AcceptTradeAction tests registered")

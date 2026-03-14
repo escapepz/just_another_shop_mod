@@ -5,6 +5,7 @@ local JASM_ShopView_Customer = require("just_another_shop_mod/entity_ui/customer
 local JASM_ShopView_Owner = require("just_another_shop_mod/entity_ui/owner_view_window")
 local JASM_SandboxVars = require("just_another_shop_mod/jasm_sandbox_vars")
 local JASM_Constants = require("just_another_shop_mod/jasm_constants")
+local JASM_Utils = require("just_another_shop_mod/jasm_utils")
 
 local math_floor = math.floor
 local math_abs = math.abs
@@ -231,7 +232,7 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
         jMenu:addSubMenu(pOption, pMenu)
 
         if not isShop then
-            pMenu:addOption(
+            local pRegOption = pMenu:addOption(
                 "Register Shop [" .. entityDisplayName .. "]",
                 worldObjects,
                 onShopAction,
@@ -239,6 +240,19 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
                 "REGISTER",
                 "PLAYER"
             )
+
+            local isPlayerBuilt = JASM_Utils.isPlayerBuiltContainer(containerObj)
+            local onlyPlayerBuilt = JASM_SandboxVars.Get("OnlyPlayerBuilt")
+            local isAuthorized = isPlayerBuilt or effectivelyAdmin
+
+            if onlyPlayerBuilt and not isAuthorized then
+                pRegOption.notAvailable = true
+                local tooltip = ISWorldObjectContextMenu.addToolTip()
+                tooltip:setName("Registration Denied")
+                tooltip.description =
+                    "Only containers you built personally can be registered as shops (Anti-Griefing)."
+                pRegOption.toolTip = tooltip
+            end
         else
             -- Must be owner or admin to unregister (guaranteed by canAccessPlayerMenu)
             pMenu:addOption(

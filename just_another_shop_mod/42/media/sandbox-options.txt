@@ -30,3 +30,12 @@ option JASM.MaxPlayerShopsPerPlayer
     max = 999,
     default = 5,
 }
+
+option JASM.OnlyPlayerBuilt
+{
+    page = JASM,
+    translation = JASM_OnlyPlayerBuilt,
+    tooltip = JASM_OnlyPlayerBuilt_tooltip,
+    type = boolean,
+    default = true,
+}

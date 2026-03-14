@@ -213,6 +213,8 @@ end
 -- are automatically deserialised from the client payload as flat primitives.
 -- ============================================================
 
+local JASM_Utils = require("just_another_shop_mod/jasm_utils")
+
 ---@return boolean
 function JASM_PublishTradeAction:complete()
     logger:info("JASM_PublishTradeAction:complete() - SERVER writing modData", {
@@ -248,13 +250,32 @@ function JASM_PublishTradeAction:complete()
     local isAdmin = pz_utils.konijima.Utilities.IsPlayerAdmin(self.character)
     local adminBypass = JASM_SandboxVars.Get("AdminBypass")
 
-    if not isOwner and not (isAdmin and adminBypass) then
+    local isAdminBypass = isAdmin and adminBypass
+    local isSystemShop = modData.shopType == "SYSTEM"
+    local isPlayerBuilt = JASM_Utils.isPlayerBuiltContainer(containerObj)
+
+    if not isOwner and not isAdminBypass then
         logger:error(
             "JASM_PublishTradeAction:complete() - ownership mismatch: "
                 .. tostring(self.character:getUsername())
                 .. " vs "
                 .. tostring(modData.shopOwnerID)
         )
+        return false
+    end
+
+    -- Guard: Only player-built containers can be registered/managed (Prevents public building takeover).
+    -- Admins modifying "SYSTEM" shops or using AdminBypass are exempt.
+    local onlyPlayerBuilt = JASM_SandboxVars.Get("OnlyPlayerBuilt")
+    local isAuthorized = isPlayerBuilt or (isAdmin and (adminBypass or isSystemShop))
+
+    if onlyPlayerBuilt and not isAuthorized then
+        logger:error("JASM_PublishTradeAction:complete() - not player built", {
+            player = self.character:getUsername(),
+            x = self.x,
+            y = self.y,
+            z = self.z,
+        })
         return false
     end
 
