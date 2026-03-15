@@ -5,6 +5,7 @@ require("ISUI/ISButton")
 
 local JASM_Constants = require("just_another_shop_mod/jasm_constants")
 local JASM_SandboxVars = require("just_another_shop_mod/jasm_sandbox_vars")
+local JASM_Utils = require("just_another_shop_mod/jasm_utils")
 
 local SearchFilterPanel =
     require("just_another_shop_mod/entity_ui/components/shop/shared/shop_search_filter_panel")
@@ -669,8 +670,7 @@ function CustomerViewWindow.open(playerIndex, _context, entity)
         -- Layer 1: Check JASM application-level lock via modData (synced from server)
         local modData = entity:getModData()
         if modData and modData.isShop then
-            local globalModData = ModData.getOrCreate("JASM_ServerSession")
-            local currentSession = globalModData and globalModData.id
+            local currentSession = JASM_Utils.GetSessionID()
 
             local lockSession = modData.shopLockSessionID
             local lockHolder = lockSession == currentSession and modData.shopLock or nil

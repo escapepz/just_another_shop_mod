@@ -176,8 +176,7 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
 
     local lockHolder = modData.shopLock
     local lockSession = modData.shopLockSessionID
-    local globalModData = ModData.getOrCreate("JASM_ServerSession")
-    local currentSession = globalModData and globalModData.id
+    local currentSession = JASM_Utils.GetSessionID()
 
     -- Invalidate lock if session ID differs
     if lockSession ~= currentSession then
