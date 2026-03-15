@@ -156,6 +156,12 @@ end
 
 function JASM_AcceptTradeAction:perform()
     logger:debug("JASM_AcceptTradeAction:perform() - client side complete")
+
+    if self.containerObj and self.containerObj:getContainer() then
+        self.containerObj:getContainer():setDrawDirty(true)
+    end
+    ISInventoryPage.renderDirty = true
+
     ISBaseTimedAction.perform(self)
     if self.onCompleteFunc then
         local args = self.onCompleteArgs or {}

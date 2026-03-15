@@ -1,7 +1,9 @@
 {
     "$schema": "https://raw.githubusercontent.com/EmmyLuaLs/emmylua-analyzer-rust/refs/heads/main/crates/emmylua_code_analysis/resources/schema.json",
     "diagnostics": {
-        "disable": ["unnecessary-if"]
+        "disable": [
+            "unnecessary-if"
+        ]
     },
     "workspace": {
         "ignoreDir": [
@@ -13,9 +15,14 @@
             ".docs",
             "docs",
             "Logs",
-            "tmp"
+            "tmp",
+            "jasm_test",
+            "TESTS"
         ],
-        "library": [".libraries", ".types"]
+        "library": [
+            ".libraries",
+            ".types"
+        ]
     },
     "runtime": {
         "version": "Lua5.1"
