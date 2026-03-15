@@ -409,6 +409,23 @@ local function handleUnlockShop(player, args)
     end
 end
 
+---@param player IsoPlayer
+---@param _ table (unused)
+local function handleRequestSessionId(player, _)
+    local sessionData = ModData.getOrCreate("JASM_ServerSession")
+    local sessionId = sessionData and sessionData.id
+    KUtilities.SendServerCommandTo(
+        player,
+        "JASM_ShopManager",
+        "JASM_ReceiveSessionId",
+        { sessionId = sessionId }
+    )
+    logger:debug(
+        "Sent SessionId to player",
+        { player = player:getUsername(), sessionId = sessionId }
+    )
+end
+
 ---Handle ManageShop command (REGISTER / UNREGISTER)
 ---@param player IsoPlayer
 ---@param args table
@@ -467,6 +484,8 @@ local function OnClientCommand(module, command, player, args)
         handleLockShop(player, args)
     elseif command == "UnlockShop" then
         handleUnlockShop(player, args)
+    elseif command == "JASM_RequestSessionId" then
+        handleRequestSessionId(player, args)
     end
 end
 

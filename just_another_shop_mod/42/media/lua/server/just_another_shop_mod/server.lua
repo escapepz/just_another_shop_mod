@@ -1,5 +1,8 @@
 local ZUL = require("zul")
 local MAF = require("manipulation_authority_framework")
+local pz_utils = require("pz_utils_shared")
+
+local KUtilities = pz_utils.konijima.Utilities
 
 -- Initialize Shop Manager
 local ShopManager = require("just_another_shop_mod/shop_manager")
@@ -47,15 +50,15 @@ local function InitSessionID()
     if lockMethod == 1 then
         local sessionData = ModData.getOrCreate("JASM_ServerSession")
         sessionData.id = tostring(getTimeInMillis()) .. "_" .. tostring(ZombRand(100000))
-        ModData.transmit("JASM_ServerSession")
+        -- ModData.transmit("JASM_ServerSession")
         logger:info("DUAL mode: generated new Shop Lock Session ID: " .. sessionData.id)
     end
 end
 
 -- Schedule InitSessionID for OnLoadedTileDefinitions (when sandbox vars are ready)
 -- might not compatible with SP
-if not _G.__JASM_SessionIDInitialized then
-    Events.OnLoadedTileDefinitions.Add(function()
+if not _G.__JASM_SessionIDInitialized and KUtilities.IsServerOrSinglePlayer() then
+    Events.OnInitGlobalModData.Add(function()
         if not _G.__JASM_SessionIDInitialized then
             InitSessionID()
             ---@diagnostic disable-next-line: global-in-non-module

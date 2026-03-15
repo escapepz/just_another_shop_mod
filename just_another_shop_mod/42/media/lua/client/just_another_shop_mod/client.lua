@@ -8,6 +8,8 @@ local RuleShopAudit = require("just_another_shop_mod/rules/caf/shop_audit_rule")
 local OnServerCommand = require("just_another_shop_mod/shop_client_commands")
 local ShopContextMenu = require("just_another_shop_mod/shop_context_menu")
 
+local JASM_Utils = require("just_another_shop_mod/jasm_utils")
+
 local function InitCAF()
     -- Register the Shop Rules with CAF
 
@@ -24,6 +26,9 @@ end
 
 local function Init()
     InitCAF()
+
+    -- Pre-fetch session ID so it's ready before any shop interaction
+    JASM_Utils.GetSessionID()
 
     Events.OnServerCommand.Add(OnServerCommand)
     Events.OnFillWorldObjectContextMenu.Add(ShopContextMenu)

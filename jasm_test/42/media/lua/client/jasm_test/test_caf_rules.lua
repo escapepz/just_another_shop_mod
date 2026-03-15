@@ -471,10 +471,8 @@ local function init()
         srcParent.modData.shopLock = "Buyer" -- Shop locked by someone else
         srcParent.modData.shopLockSessionID = "test_session"
 
-        local currentSession = ModData.getOrCreate("JASM_ServerSession")
-        if currentSession then
-            currentSession.id = "test_session"
-        end
+        local JASM_Utils = require("just_another_shop_mod/jasm_utils")
+        JASM_Utils.SessionId = "test_session"
 
         local ctx = createMockCAFContext({
             srcParent = srcParent,
@@ -503,10 +501,8 @@ local function init()
         destParent.modData.shopLock = "Buyer" -- Shop locked by someone else
         destParent.modData.shopLockSessionID = "test_session"
 
-        local currentSession = ModData.getOrCreate("JASM_ServerSession")
-        if currentSession then
-            currentSession.id = "test_session"
-        end
+        local JASM_Utils = require("just_another_shop_mod/jasm_utils")
+        JASM_Utils.SessionId = "test_session"
 
         local ctx = createMockCAFContext({
             destParent = destParent,
@@ -530,10 +526,8 @@ local function init()
         srcParent.modData.shopLock = "CustomerA" -- Shop locked by another customer
         srcParent.modData.shopLockSessionID = "test_session"
 
-        local currentSession = ModData.getOrCreate("JASM_ServerSession")
-        if currentSession then
-            currentSession.id = "test_session"
-        end
+        local JASM_Utils = require("just_another_shop_mod/jasm_utils")
+        JASM_Utils.SessionId = "test_session"
 
         local ctx = createMockCAFContext({
             srcParent = srcParent,
@@ -571,6 +565,31 @@ local function init()
         JASM_TestRunner.assert_false(
             ctx.flags.rejected,
             "Owner should be allowed to take items when shop is not locked"
+        )
+    end)
+
+    -- Test: Protection rule allows owner when locked by THEMSELVES (Issue 1)
+    JASM_TestRunner.register("caf_protection_owner_locked_self_take", "client", function()
+        local RuleShopProtection = require("just_another_shop_mod/rules/caf/shop_protection_rule")
+        local JASM_Utils = require("just_another_shop_mod/jasm_utils")
+
+        -- Setup shop with lock by owner
+        local srcParent = createMockParent(true, "ShopOwner", {})
+        srcParent.modData.shopLock = "ShopOwner"
+        srcParent.modData.shopLockSessionID = "session_123"
+
+        JASM_Utils.SessionId = "session_123"
+
+        local ctx = createMockCAFContext({
+            srcParent = srcParent,
+            username = "ShopOwner",
+        })
+
+        RuleShopProtection(ctx)
+
+        JASM_TestRunner.assert_false(
+            ctx.flags.rejected,
+            "Owner should NOT be rejected when they are the lock holder"
         )
     end)
 
@@ -660,10 +679,8 @@ local function init()
             return k == "ShopLockMethod" and 1 or originalGet(k, d)
         end
 
-        local currentSession = ModData.getOrCreate("JASM_ServerSession")
-        if currentSession then
-            currentSession.id = "session_123"
-        end
+        local JASM_Utils = require("just_another_shop_mod/jasm_utils")
+        JASM_Utils.SessionId = "session_123"
 
         local srcParent = createMockParent(true, "ShopOwner", {})
         srcParent.modData.shopLock = "CustomerA"
@@ -692,10 +709,8 @@ local function init()
             return k == "ShopLockMethod" and 1 or originalGet(k, d)
         end
 
-        local currentSession = ModData.getOrCreate("JASM_ServerSession")
-        if currentSession then
-            currentSession.id = "session_new"
-        end
+        local JASM_Utils = require("just_another_shop_mod/jasm_utils")
+        JASM_Utils.SessionId = "session_new"
 
         local srcParent = createMockParent(true, "ShopOwner", {})
         srcParent.modData.shopLock = "CustomerA"

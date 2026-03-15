@@ -1,3 +1,5 @@
+local JASM_Utils = require("just_another_shop_mod/jasm_utils")
+
 local function OnServerCommand(module, command, args)
     if module ~= "JASM_ShopManager" then
         return
@@ -37,6 +39,8 @@ local function OnServerCommand(module, command, args)
         }
         local text = errorTexts[reason] or "Trade denied."
         HaloTextHelper.addBadText(getSpecificPlayer(0), text)
+    elseif command == "JASM_ReceiveSessionId" then
+        JASM_Utils.SessionId = args.sessionId
     end
 end
 

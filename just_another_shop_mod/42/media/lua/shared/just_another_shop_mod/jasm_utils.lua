@@ -1,4 +1,23 @@
+local pz_utils = require("pz_utils_shared")
+local KUtilities = pz_utils.konijima.Utilities
+
 local JASM_Utils = {}
+
+---@type string|nil
+JASM_Utils.SessionId = nil
+
+---Get the current JASM server session ID (Client only)
+---@return string|nil
+function JASM_Utils.GetSessionID()
+    if JASM_Utils.SessionId ~= nil then
+        return JASM_Utils.SessionId
+    end
+
+    -- Request from server
+    KUtilities.SendClientCommand("JASM_ShopManager", "JASM_RequestSessionId", {})
+
+    return JASM_Utils.SessionId
+end
 
 ---Check if an object is a player-built container
 ---@param object IsoObject

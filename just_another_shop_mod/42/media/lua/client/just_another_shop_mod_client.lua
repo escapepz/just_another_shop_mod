@@ -7,8 +7,9 @@ local KUtilities = pz_utils.konijima.Utilities
 local logger = ZUL.new("just_another_shop_mod")
 
 if KUtilities.IsClientOrSinglePlayer() then
-    Events.OnGameBoot.Add(function()
-        logger:info("[CAF] Applying client-side rules (Client environment)...")
+    -- This Client only so why OnGameBoot?
+    Events.OnGameStart.Add(function()
+        logger:info("[JASM] Applying client-side rules (Client environment)...")
 
         initClient()
     end)

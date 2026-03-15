@@ -7,6 +7,11 @@ local pz_utils = require("pz_utils_shared")
 local KUtilities = pz_utils.konijima.Utilities
 
 local JASM_SandboxVars = require("just_another_shop_mod/jasm_sandbox_vars")
+local JASM_Utils = require("just_another_shop_mod/jasm_utils")
+
+local function getJASM_SessionId()
+    return JASM_Utils.GetSessionID()
+end
 
 ---@param ctx CAF.Context
 local RuleShopProtection = function(ctx)
@@ -30,10 +35,12 @@ local RuleShopProtection = function(ctx)
 
         if lockMethod == 1 then
             -- DUAL mode: JASM modData lock is authoritative
-            local globalModData = ModData.getOrCreate("JASM_ServerSession")
-            local currentSession = globalModData and globalModData.id
+            local currentSession = getJASM_SessionId()
 
-            if modData.shopLockSessionID and modData.shopLockSessionID == currentSession then
+            if
+                modData.shopLockSessionID
+                and (currentSession and modData.shopLockSessionID == currentSession)
+            then
                 lockHolder = modData.shopLock
             else
                 lockHolder = nil -- stale lock from previous server crash
@@ -67,8 +74,9 @@ local RuleShopProtection = function(ctx)
             return
         end
 
-        -- Rule: Owners can take anything (only if not locked)
-        if playerUsername == ownerID and not lockHolder then
+        -- Rule: Owners can take anything (only if not locked by someone else)
+        -- Note: lockHolder ~= playerUsername check is handled at line 50
+        if playerUsername == ownerID then
             logger:debug("Owner access granted (Source)", {
                 player = player:getUsername(),
                 shop = modData.shopName,
@@ -135,12 +143,11 @@ local RuleShopProtection = function(ctx)
 
         if lockMethod == 1 then
             -- DUAL mode: JASM modData lock is authoritative
-            local globalModData = ModData.getOrCreate("JASM_ServerSession")
-            local currentSession = globalModData and globalModData.id
+            local currentSession = getJASM_SessionId()
 
             if
                 destModData.shopLockSessionID
-                and destModData.shopLockSessionID == currentSession
+                and (currentSession and destModData.shopLockSessionID == currentSession)
             then
                 lockHolder = destModData.shopLock
             else
