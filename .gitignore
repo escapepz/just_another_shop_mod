@@ -9,6 +9,7 @@
 .logs
 .template-mod
 .template-language
+.design
 
 node_modules/
 
