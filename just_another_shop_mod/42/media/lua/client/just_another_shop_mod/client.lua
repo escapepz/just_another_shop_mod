@@ -1,3 +1,5 @@
+require("just_another_shop_mod/loot_panel_open_shop_handler")
+
 local CAF = require("container_authority_framework")
 
 -- JASM CAF Rules

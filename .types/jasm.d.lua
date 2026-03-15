@@ -1,0 +1,8 @@
+---@class JASM_LootPanelOpenShopHandler : ISLootWindowObjectControlHandler
+---@field object IsoObject?
+---@field container ItemContainer
+---@field playerObj IsoPlayer
+---@field playerNum int
+---@field lootWindow ISInventoryPage
+---@field control ISButton
+---@field altColor boolean

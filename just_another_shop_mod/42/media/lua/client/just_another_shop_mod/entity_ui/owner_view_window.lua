@@ -46,15 +46,6 @@ local KUtilities = require("pz_utils_shared").konijima.Utilities
 local LEFT_PANEL_WIDTH = 280 -- px (design5: aside width: 280px)
 local MAX_PATHS = 5 -- design5_rule §3: max 5 confirmed paths
 
--- ============================================================
--- TYPE ANNOTATIONS
--- ============================================================
-
----@class OwnerRequirementPath
----@field itemType    string   Full type (e.g. "Base.GoldBar")
----@field requestQty    integer
----@field name   string
-
 ---@class OwnerViewWindow : ISEntityWindow
 ---@field player            IsoPlayer
 ---@field titleBar          boolean

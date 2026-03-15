@@ -24,4 +24,18 @@ local JASM_Constants = {
     ALLOWED_CRATE_SPRITES = ALLOWED_CRATE_SPRITES,
 }
 
+---@param spriteName string|nil
+---@return boolean
+function JASM_Constants:isValidShopContainer(spriteName)
+    if not spriteName or not self.ALLOWED_CRATE_SPRITES then
+        return false
+    end
+    for _, pattern in ipairs(self.ALLOWED_CRATE_SPRITES) do
+        if string.find(spriteName, pattern) then
+            return true
+        end
+    end
+    return false
+end
+
 return JASM_Constants

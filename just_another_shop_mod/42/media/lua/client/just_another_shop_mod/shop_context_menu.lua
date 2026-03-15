@@ -95,17 +95,7 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
 
     -- Sprite-based matching for allowed containers
     local spriteName = containerObj:getSprite() and containerObj:getSprite():getName()
-    local isAllowed = false
-    if spriteName and JASM_Constants.ALLOWED_CRATE_SPRITES then
-        for _, pattern in ipairs(JASM_Constants.ALLOWED_CRATE_SPRITES) do
-            if string.find(spriteName, pattern) then
-                isAllowed = true
-                break
-            end
-        end
-    end
-
-    if not isAllowed then
+    if not JASM_Constants:isValidShopContainer(spriteName) then
         return
     end
 
@@ -189,13 +179,7 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
 
         -- Open Customer View
         local shopOption = context:addOption("Open Shop UI", worldObjects, function()
-            -- local sq = containerObj:getSquare()
-            -- if playerObj:DistTo(sq:getX(), sq:getY()) <= JASM_Constants.SHOP_TRADE_RANGE then
-            --     -- Already within range
-            --     JASM_ShopView_Customer.open(playerIndex, nil, containerObj)
-            -- else
             openShop(JASM_ShopView_Customer)
-            -- end
         end)
 
         checkLock(shopOption, isLockedByOther, lockHolder)
@@ -214,13 +198,7 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
     -- 1. Shop Management
     if canManage then
         jMenu:addOption("Manage Shop", worldObjects, function()
-            local sq = containerObj:getSquare()
-            if playerObj:DistTo(sq:getX(), sq:getY()) <= JASM_Constants.SHOP_TRADE_RANGE then
-                -- Already within range
-                JASM_ShopView_Owner.open(playerIndex, nil, containerObj)
-            else
-                openShop(JASM_ShopView_Owner)
-            end
+            openShop(JASM_ShopView_Owner)
         end)
     end
 
