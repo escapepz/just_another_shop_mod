@@ -14,6 +14,7 @@ local function OnServerCommand(module, command, args)
             limit_reached = "Shop limit reached! You can only have "
                 .. tostring(args.limit or "?")
                 .. " shops.",
+            not_player_built = "Only player-built containers (constructed ones) can be registered.",
         }
         local text = errorTexts[reason] or "Registration denied."
         HaloTextHelper.addBadText(getSpecificPlayer(0), text)

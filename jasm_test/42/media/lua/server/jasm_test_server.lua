@@ -12,6 +12,7 @@ local test_shop_server_commands = require("jasm_test/test_shop_server_commands")
 local test_maf_rules = require("jasm_test/test_maf_rules")
 local test_accept_trade_action = require("jasm_test/test_accept_trade_action")
 local test_capacity_limit = require("jasm_test/test_capacity_limit")
+local test_player_built_guard = require("jasm_test/test_player_built_guard")
 
 -- Expose the test runner globally for access from client/UI
 _G.JASM_TestRunner = JASM_TestRunner
@@ -22,11 +23,13 @@ Events.OnGameBoot.Add(function()
     test_maf_rules()
     test_accept_trade_action()
     test_capacity_limit()
+    test_player_built_guard()
     print("[JASM_TEST] Server test runner initialized")
 end)
 
 Events.OnClientCommand.Add(function(module, command, _player, _args)
     if module == "jasm_test_server" then
         JASM_TestRunner.runGroup("server")
+        JASM_TestRunner.cleanup()
     end
 end)

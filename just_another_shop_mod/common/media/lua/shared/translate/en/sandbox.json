@@ -8,5 +8,7 @@
     "Sandbox_JASM_ShopLockMethod_Values_option1": "Dual",
     "Sandbox_JASM_ShopLockMethod_Values_option2": "Vanilla",
     "Sandbox_JASM_MaxPlayerShopsPerPlayer": "Max Player Shops Per Player",
-    "Sandbox_JASM_MaxPlayerShopsPerPlayer_tooltip": "Maximum number of player-owned shops a single player can register."
+    "Sandbox_JASM_MaxPlayerShopsPerPlayer_tooltip": "Maximum number of player-owned shops a single player can register.",
+    "Sandbox_JASM_OnlyPlayerBuilt": "Enforce Player-Built Requirement",
+    "Sandbox_JASM_OnlyPlayerBuilt_tooltip": "When enabled, containers must be player-built (constructed) to register as shops to prevent public building takeover. When disabled, any container can be registered. Admins can always bypass if AdminBypass is enabled."
 }

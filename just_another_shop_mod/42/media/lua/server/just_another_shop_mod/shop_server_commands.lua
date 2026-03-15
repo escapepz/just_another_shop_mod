@@ -127,6 +127,8 @@ local function getPlayerShopLimit(ownerID)
     return JASM_SandboxVars.Get("MaxPlayerShopsPerPlayer", 5)
 end
 
+local JASM_Utils = require("just_another_shop_mod/jasm_utils")
+
 ---Handle REGISTER action
 ---@param player IsoPlayer
 ---@param args table
@@ -146,6 +148,35 @@ local function handleRegister(player, args, containerObj, thumpable, thumpableN)
             "JASM_ShopManager",
             "RegisterDenied",
             { reason = "already_registered" }
+        )
+        return
+    end
+
+    -- Guard: Only player-built containers can be registered (Prevents public building takeover).
+    -- Enabled by default via OnlyPlayerBuilt sandbox option.
+    -- Safety: KUtilities may be nil if tests corrupted the module
+    local isAdmin = false
+    if KUtilities and type(KUtilities.IsPlayerAdmin) == "function" then
+        isAdmin = KUtilities.IsPlayerAdmin(player)
+    end
+    local isAdminBypass = isAdminBypassEnabled()
+    local isSystemShop = args.shopType == "SYSTEM"
+    local isPlayerBuilt = JASM_Utils.isPlayerBuiltContainer(containerObj)
+    local onlyPlayerBuilt = JASM_SandboxVars.Get("OnlyPlayerBuilt")
+
+    local isAuthorized = isPlayerBuilt or (isAdmin and (isAdminBypass or isSystemShop))
+
+    if onlyPlayerBuilt and not isAuthorized then
+        logger:warn("Shop Register denied: not player built", {
+            player = player:getUsername(),
+            x = containerObj:getX(),
+            y = containerObj:getY(),
+        })
+        KUtilities.SendServerCommandTo(
+            player,
+            "JASM_ShopManager",
+            "RegisterDenied",
+            { reason = "not_player_built" }
         )
         return
     end
@@ -212,7 +243,11 @@ end
 local function handleUnregister(player, args, containerObj, thumpable, thumpableN)
     local modData = containerObj:getModData()
     local isOwner = modData.shopOwnerID == player:getUsername()
-    local isAdmin = KUtilities.IsPlayerAdmin(player)
+    -- Safety: KUtilities may be nil if tests corrupted the module
+    local isAdmin = false
+    if KUtilities and type(KUtilities.IsPlayerAdmin) == "function" then
+        isAdmin = KUtilities.IsPlayerAdmin(player)
+    end
     local adminBypass = isAdminBypassEnabled()
 
     -- Ownership check: owner always allowed; admins allowed only if sandbox permits
@@ -378,6 +413,11 @@ end
 ---@param player IsoPlayer
 ---@param args table
 local function handleManageShop(player, args)
+    -- Safety: player can be nil if client disconnects mid-command
+    if not player then
+        logger:warn("handleManageShop - aborting, player is nil", args)
+        return
+    end
     local square = getSquare(args.x, args.y, args.z)
     if not square then
         logger:debug("handleManageShop - aborting, square is nil", args)

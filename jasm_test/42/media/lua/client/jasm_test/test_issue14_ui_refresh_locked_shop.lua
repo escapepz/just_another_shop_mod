@@ -162,10 +162,16 @@ local function createMockWindowWithRefresh()
 end
 
 local function init()
+    -- Save original global state
+    local originalEvents = _G.Events
+
     -- ============================================================
     -- TEST 1: Basic container refresh on item add
     -- ============================================================
     JASM_TestRunner.register("issue14_ui_refresh_on_item_add", "client", function()
+        -- Restore Events before test
+        _G.Events = originalEvents
+
         local window = createMockWindowWithRefresh()
 
         -- Add item to container
@@ -197,6 +203,7 @@ local function init()
     -- TEST 2: Multiple items refresh
     -- ============================================================
     JASM_TestRunner.register("issue14_ui_refresh_multiple_items", "client", function()
+        _G.Events = originalEvents
         local window = createMockWindowWithRefresh()
 
         -- Add multiple items
@@ -218,6 +225,7 @@ local function init()
     -- TEST 3: Refresh on item removal
     -- ============================================================
     JASM_TestRunner.register("issue14_ui_refresh_on_item_remove", "client", function()
+        _G.Events = originalEvents
         local window = createMockWindowWithRefresh()
 
         -- Add items
@@ -242,6 +250,7 @@ local function init()
     -- TEST 4: Refresh count tracks multiple updates
     -- ============================================================
     JASM_TestRunner.register("issue14_ui_refresh_count", "client", function()
+        _G.Events = originalEvents
         local window = createMockWindowWithRefresh()
 
         -- Initial state
@@ -272,6 +281,7 @@ local function init()
     -- TEST 5: Locked shop UI refresh
     -- ============================================================
     JASM_TestRunner.register("issue14_locked_shop_ui_refresh", "client", function()
+        _G.Events = originalEvents
         local window = createMockWindowWithRefresh()
 
         -- Verify shop is locked
@@ -300,6 +310,7 @@ local function init()
     -- TEST 6: Container listener subscription
     -- ============================================================
     JASM_TestRunner.register("issue14_container_listener_subscription", "client", function()
+        _G.Events = originalEvents
         local window = createMockWindowWithRefresh()
 
         -- Subscribe to container updates
@@ -315,6 +326,7 @@ local function init()
     -- TEST 7: Graceful refresh if window invalid
     -- ============================================================
     JASM_TestRunner.register("issue14_ui_refresh_window_invalid", "client", function()
+        _G.Events = originalEvents
         local window = createMockWindowWithRefresh()
 
         -- Simulate container becoming invalid
@@ -336,6 +348,7 @@ local function init()
     -- TEST 8: Refresh preserves window state
     -- ============================================================
     JASM_TestRunner.register("issue14_ui_refresh_preserves_window_state", "client", function()
+        _G.Events = originalEvents
         local window = createMockWindowWithRefresh()
 
         -- Set initial state
@@ -363,6 +376,7 @@ local function init()
     -- TEST 9: Owner deposits while customer viewing
     -- ============================================================
     JASM_TestRunner.register("issue14_owner_deposits_customer_sees", "client", function()
+        _G.Events = originalEvents
         local ownerWindow = createMockWindowWithRefresh()
         ownerWindow.entity:getModData().shopLock = "Owner1"
 
@@ -389,6 +403,7 @@ local function init()
     -- TEST 10: No refresh overhead if no changes
     -- ============================================================
     JASM_TestRunner.register("issue14_no_refresh_if_no_changes", "client", function()
+        _G.Events = originalEvents
         local window = createMockWindowWithRefresh()
 
         -- Add item and refresh

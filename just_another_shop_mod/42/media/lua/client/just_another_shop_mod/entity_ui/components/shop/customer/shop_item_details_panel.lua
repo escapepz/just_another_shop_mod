@@ -185,11 +185,6 @@ function ShopItemDetailsPanel:onDebugForceGive()
         payload.isForceGive
     )
 
-    -- Add cancel callback to handle player cancellation (e.g. moving away)
-    action:setOnCancel(function()
-        logger:debug("ShopItemDetailsPanel - debug force give action cancelled by player")
-    end, nil)
-
     ISTimedActionQueue.add(action)
 end
 
@@ -410,20 +405,6 @@ function ShopItemDetailsPanel:onAcceptTrade()
         payload.offerQty,
         payload.isForceGive
     )
-
-    -- Add callback to refresh UI after trade completes (client-side only)
-    action:setOnComplete(function()
-        if self.target and self.target.refresh then
-            self.target:refresh()
-        end
-    end, nil)
-
-    -- Add cancel callback to handle player cancellation (e.g. moving away)
-    action:setOnCancel(function()
-        logger:debug("ShopItemDetailsPanel - accept trade action cancelled by player")
-        -- UI will auto-update on next frame due to container change detection
-        -- No explicit state reset needed
-    end, nil)
 
     ISTimedActionQueue.add(action)
 end
