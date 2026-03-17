@@ -1,5 +1,22 @@
 
 _____
+v1.0.2
+
+Fixes:
+- Inventory Loot Panel refresh after trade
+- Server Session data sync
+- Multi Shop lock
+
+Changes:
+- Improve TimedAction
+- Add MaxPlayerShopsPerPlayer
+- Add Shop registration Player-Built guard
+- Add Loot Panel Open Shop button
+- Add Shop UI refresh on crate selection
+
+https://github.com/escapepz/just_another_shop_mod/releases/tag/v1.0.2
+
+_____
 v1.0.1
 
 Fixes:
