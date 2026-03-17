@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JASM - Customer View Window</title>
+  <style>
+    /* ============================================================  
+     COLOR PALETTE (from owner_view_window.lua lines 33-41)  
+     #0f0f0f  -> Main bg / right panel  
+     #1a1a1a  -> Left panel / row bg  
+     #2a2416  -> Selected item bg  
+     #f39c12  -> Orange accent  
+     #333     -> Border / divider  
+     #ff4444  -> Error text  
+     #ccc     -> Secondary text  
+     #888     -> Muted text  
+     ============================================================ */
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Courier New", monospace;
+    }
+
+    body {
+      background: #222;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    /* ── WINDOW FRAME ─────────────────────────────────────────── */
+    .window {
+      width: 800px;
+      height: 600px;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid #333;
+      overflow: hidden;
+    }
+
+    /* ── TITLE BAR (ISCollapsableWindow) ──────────────────────── */
+    /* titleBarHeight = max(16, FONT_HGT_SMALL + 1) ≈ 17-19px    */
+    .title-bar {
+      height: 18px;
+      min-height: 16px;
+      background: #1a1a1a;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 4px;
+      border-bottom: 1px solid #333;
+      flex-shrink: 0;
+    }
+
+    .title-bar .title-text {
+      color: #ccc;
+      font-size: 11px;
+    }
+
+    .title-bar .window-controls {
+      display: flex;
+      gap: 2px;
+    }
+
+    .title-bar .window-controls button {
+      width: 14px;
+      height: 14px;
+      background: #333;
+      border: 1px solid #555;
+      color: #ccc;
+      font-size: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── ENTITY HEADER (ISWidgetEntityHeader) ─────────────────── */
+    /* height = icon(48) + padding(2+2) + margin(5+5) = 62px      */
+    .entity-header {
+      height: 62px;
+      background: #0f0f0f;
+      border-bottom: 2px solid #f39c12;
+      display: flex;
+      align-items: center;
+      padding: 2px 15px;
+      gap: 15px;
+      flex-shrink: 0;
+    }
+
+    .entity-header .icon-slot {
+      width: 48px;
+      height: 48px;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .entity-header .icon-slot .icon-placeholder {
+      font-size: 24px;
+      color: #888;
+    }
+
+    .entity-header .header-title {
+      color: #fff;
+      font-size: 16px;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    /* ── MASTER LAYOUT (mainContentLayout) ────────────────────── */
+    /* Horizontal split: left 480px fixed, right 320px fill        */
+    .master-layout {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ── LEFT PANEL (leftStackLayout) ─────────────────────────── */
+    .left-panel {
+      width: 480px;
+      min-width: 480px;
+      display: flex;
+      flex-direction: column;
+      background: #1a1a1a;
+    }
+
+    /* ── SEARCH FILTER PANEL (ShopSearchFilterPanel) ──────────── */
+    /* Row 0: minimumHeight=95, contains search + sort             */
+    .search-panel {
+      height: 95px;
+      min-height: 95px;
+      background: #1a1a1a;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex-shrink: 0;
+      border-bottom: 1px solid #333;
+    }
+
+    .search-panel .search-row {
+      display: flex;
+      gap: 4px;
+      height: 24px;
+    }
+
+    .search-panel .search-row input {
+      flex: 1;
+      height: 24px;
+      background: #0f0f0f;
+      border: 1px solid #333;
+      color: #ccc;
+      padding: 0 6px;
+      font-size: 12px;
+      font-family: inherit;
+    }
+
+    .search-panel .search-row input::placeholder {
+      color: #555;
+    }
+
+    .search-panel .search-row select.category-combo {
+      width: 140px;
+      height: 24px;
+      background: #0f0f0f;
+      border: 1px solid #333;
+      color: #ccc;
+      font-size: 11px;
+      font-family: inherit;
+    }
+
+    .search-panel .search-row .view-toggle {
+      width: 28px;
+      height: 24px;
+      background: #0f0f0f;
+      border: 1px solid #333;
+      color: #ccc;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .search-panel .sort-row {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+      height: 24px;
+    }
+
+    .search-panel .sort-row label {
+      color: #ccc;
+      font-size: 12px;
+    }
+
+    .search-panel .sort-row select {
+      width: 172px;
+      height: 24px;
+      background: #0f0f0f;
+      border: 1px solid #333;
+      color: #ccc;
+      font-size: 11px;
+      font-family: inherit;
+    }
+
+    /* ── PRODUCT LIST PANEL (ProductListPanel) ────────────────── */
+    /* Row 1: addRowFill() - fills remaining left panel height     */
+    .product-panel {
+      flex: 1;
+      background: #1a1a1a;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Grid pagination bar */
+    .product-panel .grid-pagination {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 26px;
+      padding: 2px 4px;
+      flex-shrink: 0;
+    }
+
+    .product-panel .grid-pagination button {
+      width: 22px;
+      height: 22px;
+      background: #0f0f0f;
+      border: 1px solid #333;
+      color: #ccc;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .product-panel .grid-pagination .page-label {
+      color: #ccc;
+      font-size: 12px;
+    }
+
+    /* Grid view (ISTiledIconListBox) */
+    .product-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, 64px);
+      grid-auto-rows: 64px;
+      gap: 4px;
+      padding: 4px;
+      overflow-y: auto;
+      align-content: start;
+    }
+
+    .product-grid .grid-tile {
+      width: 64px;
+      height: 64px;
+      background: #0f0f0f;
+      border: 1px solid #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .product-grid .grid-tile:hover {
+      border-color: #555;
+    }
+
+    .product-grid .grid-tile.selected {
+      background: #2a2416;
+      border-color: #f39c12;
+    }
+
+    .product-grid .grid-tile .tile-icon {
+      font-size: 24px;
+      color: #888;
+    }
+
+    .product-grid .grid-tile .slot-qty {
+      position: absolute;
+      bottom: 2px;
+      right: 4px;
+      font-size: 10px;
+      color: #888;
+      background: rgba(0, 0, 0, 0.75);
+      padding: 0 2px;
+    }
+
+    .product-grid .grid-tile .slot-qty.in-stock {
+      color: #7fd37f;
+    }
+
+    /* ── RIGHT PANEL (ShopItemDetailsPanel) ───────────────────── */
+    /* Column 1 fill (320px min), bg #0f0f0f                       */
+    .right-panel {
+      flex: 1;
+      min-width: 320px;
+      background: #0f0f0f;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── SECTION HEADER (ShopSectionHeader) ───────────────────── */
+    /* ISLabel h=28 (UIFont.Medium) + ISPanel h=2 (orange line)    */
+    /* marginTop/marginBottom are dead fields (not used by layout)  */
+    .section-header {
+      padding: 0;
+    }
+
+    .section-header h2 {
+      color: #f39c12;
+      font-size: 14px;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      height: 28px;
+      line-height: 28px;
+    }
+
+    .section-header .header-line {
+      height: 2px;
+      background: #f39c12;
+    }
+
+    /* ── HEADER PANEL (ShopItemHeader) ────────────────────────── */
+    /* Row 0: minimumHeight=76                                     */
+    /* Contains: SectionHeader + nameLabel + typeLabel + stockLabel */
+    .header-panel {
+      min-height: 76px;
+      padding: 0 12px;
+    }
+
+    .header-panel .info-stack {
+      padding: 4px 0;
+    }
+
+    .header-panel .item-name {
+      color: #fff;
+      font-size: 14px;
+      height: 24px;
+      line-height: 24px;
+    }
+
+    .header-panel .item-type {
+      color: #666;
+      font-size: 12px;
+      height: 20px;
+      line-height: 20px;
+    }
+
+    .header-panel .item-stock {
+      color: #888;
+      font-size: 12px;
+      height: 20px;
+      line-height: 20px;
+    }
+
+    /* ── GIVES PANEL (ShopItemGivesPanel) ─────────────────────── */
+    /* Row 1: minimumHeight=84, bg #1a1a1a, border #333            */
+    .gives-panel {
+      min-height: 84px;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      margin: 0 12px;
+    }
+
+    .gives-panel .gives-content {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 10px;
+    }
+
+    .gives-panel .gives-icon {
+      width: 40px;
+      height: 40px;
+      background: #0f0f0f;
+      border: 1px solid #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .gives-panel .gives-icon .icon-placeholder {
+      font-size: 20px;
+      color: #888;
+    }
+
+    .gives-panel .gives-meta .gives-name {
+      color: #fff;
+      font-size: 12px;
+      height: 20px;
+      line-height: 20px;
+    }
+
+    .gives-panel .gives-meta .gives-qty {
+      color: #888;
+      font-size: 12px;
+      height: 20px;
+      line-height: 20px;
+    }
+
+    /* ── REQUIREMENTS PANEL (ShopItemRequirementsPanel) ───────── */
+    /* Row 2: no minimumHeight, dynamic based on trade count       */
+    /* bg #1a1a1a, border #333                                     */
+    .requirements-panel {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      margin: 0 12px;
+    }
+
+    .requirements-panel .req-list {
+      max-height: 210px;
+      /* 5 * 42px = 210px max */
+      overflow-y: auto;
+    }
+
+    .requirements-panel .req-item {
+      height: 42px;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      gap: 10px;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+
+    .requirements-panel .req-item:hover {
+      background: rgba(26, 26, 26, 0.5);
+    }
+
+    .requirements-panel .req-item.selected {
+      background: rgba(243, 156, 18, 0.15);
+      border-color: rgba(243, 156, 18, 0.6);
+    }
+
+    .requirements-panel .req-item .req-icon {
+      width: 24px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .requirements-panel .req-item .req-icon .icon-placeholder {
+      font-size: 16px;
+      color: #888;
+    }
+
+    .requirements-panel .req-item .req-info {
+      flex: 1;
+    }
+
+    .requirements-panel .req-item .req-info .req-name {
+      color: #ccc;
+      font-size: 12px;
+      line-height: 16px;
+    }
+
+    .requirements-panel .req-item .req-info .req-status {
+      font-size: 11px;
+      line-height: 16px;
+    }
+
+    .requirements-panel .req-item .req-info .req-status.satisfied {
+      color: #7fd37f;
+    }
+
+    .requirements-panel .req-item .req-info .req-status.unsatisfied {
+      color: #ff6b6b;
+    }
+
+    /* ── SPACER (addRowFill) ──────────────────────────────────── */
+    /* Pushes footer to bottom of right panel                      */
+    .details-spacer {
+      flex: 1;
+    }
+
+    /* ── FOOTER PANEL (ShopItemActionFooter) ──────────────────── */
+    /* Row 4: minimumHeight=90, bg #0f0f0f, border-top #333        */
+    .footer-panel {
+      min-height: 90px;
+      background: #0f0f0f;
+      border-top: 1px solid #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 12px;
+      flex-shrink: 0;
+    }
+
+    .footer-panel .error-label {
+      color: #ff4444;
+      font-size: 12px;
+      text-align: center;
+      min-height: 20px;
+      line-height: 20px;
+    }
+
+    .footer-panel .accept-btn {
+      width: 200px;
+      height: 30px;
+      background: #333;
+      border: 1px solid #555;
+      color: #ccc;
+      font-size: 13px;
+      font-weight: bold;
+      font-family: inherit;
+      cursor: not-allowed;
+      letter-spacing: 0.5px;
+    }
+
+    .footer-panel .accept-btn.enabled {
+      background: #f39c12;
+      border-color: #f39c12;
+      color: #000;
+      cursor: pointer;
+    }
+
+    .footer-panel .accept-btn.enabled:hover {
+      background: #e08e0b;
+    }
+
+    .footer-panel .debug-btn {
+      width: 200px;
+      height: 26px;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      color: #888;
+      font-size: 11px;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    /* ── SCROLLBAR STYLING ────────────────────────────────────── */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #0f0f0f;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 2px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="window">
+
+    <!-- ═══ TITLE BAR ═══════════════════════════════════════════ -->
+    <div class="title-bar">
+      <span class="title-text">JASM - Just Another Shop Mod</span>
+      <div class="window-controls">
+        <button title="Pin">📌</button>
+        <button title="Collapse">—</button>
+        <button title="Close">✕</button>
+      </div>
+    </div>
+
+    <!-- ═══ ENTITY HEADER (ISWidgetEntityHeader) ════════════════ -->
+    <div class="entity-header">
+      <div class="icon-slot">
+        <span class="icon-placeholder">🏪</span>
+      </div>
+      <span class="header-title">SHOP INVENTORY</span>
+    </div>
+
+    <!-- ═══ MASTER LAYOUT (mainContentLayout) ═══════════════════ -->
+    <div class="master-layout">
+
+      <!-- ─── LEFT PANEL (leftStackLayout) ──────────────────── -->
+      <div class="left-panel">
+
+        <!-- Search Filter Panel (Row 0, minH=95) -->
+        <div class="search-panel">
+          <div class="search-row">
+            <input type="text" placeholder="Search items...">
+            <select class="category-combo">
+              <option>Shop Stock</option>
+              <option>Required Items</option>
+            </select>
+            <button class="view-toggle" title="Toggle Grid/List">≡</button>
+          </div>
+          <div class="sort-row">
+            <label>Sort by:</label>
+            <select>
+              <option>Alphabetical (A-Z)</option>
+              <option>High Stock</option>
+              <option>Low Stock</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Product List Panel (Row 1, addRowFill) -->
+        <div class="product-panel">
+          <div class="grid-pagination">
+            <button>◀</button>
+            <span class="page-label">1 / 1</span>
+            <button>▶</button>
+          </div>
+          <div class="product-grid">
+            <!-- Sample grid tiles -->
+            <div class="grid-tile selected">
+              <span class="tile-icon">🔫</span>
+              <span class="slot-qty in-stock">5</span>
+            </div>
+            <div class="grid-tile">
+              <span class="tile-icon">🪓</span>
+              <span class="slot-qty in-stock">12</span>
+            </div>
+            <div class="grid-tile">
+              <span class="tile-icon">🔨</span>
+              <span class="slot-qty in-stock">3</span>
+            </div>
+            <div class="grid-tile">
+              <span class="tile-icon">💊</span>
+              <span class="slot-qty in-stock">8</span>
+            </div>
+            <div class="grid-tile">
+              <span class="tile-icon">🥫</span>
+              <span class="slot-qty">0</span>
+            </div>
+            <div class="grid-tile">
+              <span class="tile-icon">🔋</span>
+              <span class="slot-qty in-stock">2</span>
+            </div>
+            <div class="grid-tile">
+              <span class="tile-icon">🗡️</span>
+              <span class="slot-qty in-stock">1</span>
+            </div>
+            <div class="grid-tile">
+              <span class="tile-icon">🎒</span>
+              <span class="slot-qty in-stock">4</span>
+            </div>
+            <div class="grid-tile">
+              <span class="tile-icon">🔑</span>
+              <span class="slot-qty in-stock">7</span>
+            </div>
+            <div class="grid-tile">
+              <span class="tile-icon">📻</span>
+              <span class="slot-qty in-stock">1</span>
+            </div>
+            <div class="grid-tile">
+              <span class="tile-icon">🪚</span>
+              <span class="slot-qty in-stock">6</span>
+            </div>
+            <div class="grid-tile">
+              <span class="tile-icon">⛏️</span>
+              <span class="slot-qty in-stock">2</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ─── RIGHT PANEL (ShopItemDetailsPanel) ────────────── -->
+      <div class="right-panel">
+
+        <!-- Row 0: Header Panel (minH=76) -->
+        <div class="header-panel">
+          <div class="section-header">
+            <h2>TRADE DETAILS</h2>
+            <div class="header-line"></div>
+          </div>
+          <div class="info-stack">
+            <div class="item-name">Pistol</div>
+            <div class="item-type">Base.Pistol</div>
+            <div class="item-stock">Stock: 5</div>
+          </div>
+        </div>
+
+        <!-- Row 1: Gives Panel (minH=84) -->
+        <div class="gives-panel">
+          <div class="section-header" style="padding: 0 10px;">
+            <h2>SHOP GIVES</h2>
+            <div class="header-line"></div>
+          </div>
+          <div class="gives-content">
+            <div class="gives-icon">
+              <span class="icon-placeholder">🔫</span>
+            </div>
+            <div class="gives-meta">
+              <div class="gives-name">Pistol</div>
+              <div class="gives-qty">Quantity: 1</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2: Requirements Panel (dynamic height) -->
+        <div class="requirements-panel">
+          <div class="section-header" style="padding: 0 10px;">
+            <h2>YOU NEED (CHOOSE ONE)</h2>
+            <div class="header-line"></div>
+          </div>
+          <div class="req-list">
+            <div class="req-item selected">
+              <div class="req-icon"><span class="icon-placeholder">💰</span></div>
+              <div class="req-info">
+                <div class="req-name">Base.Money</div>
+                <div class="req-status satisfied">15 / 10</div>
+              </div>
+            </div>
+            <div class="req-item">
+              <div class="req-icon"><span class="icon-placeholder">💎</span></div>
+              <div class="req-info">
+                <div class="req-name">Base.Diamond</div>
+                <div class="req-status unsatisfied">0 / 2</div>
+              </div>
+            </div>
+            <div class="req-item">
+              <div class="req-icon"><span class="icon-placeholder">🪙</span></div>
+              <div class="req-info">
+                <div class="req-name">Base.GoldBar</div>
+                <div class="req-status unsatisfied">1 / 3</div>
+              </div>
+            </div>
+            <div class="req-item">
+              <div class="req-icon"><span class="icon-placeholder">🪙</span></div>
+              <div class="req-info">
+                <div class="req-name">Base.GoldBar</div>
+                <div class="req-status unsatisfied">1 / 3</div>
+              </div>
+            </div>
+            <div class="req-item">
+              <div class="req-icon"><span class="icon-placeholder">🪙</span></div>
+              <div class="req-info">
+                <div class="req-name">Base.GoldBar</div>
+                <div class="req-status unsatisfied">1 / 3</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 3: addRowFill() spacer (~98px at 800x600) -->
+        <div class="details-spacer"></div>
+
+        <!-- Row 4: Footer Panel (minH=90) -->
+        <div class="footer-panel">
+          <div class="error-label"></div>
+          <button class="accept-btn enabled">ACCEPT TRADE</button>
+          <!-- Debug button only visible when isDebugEnabled() -->
+          <!-- <button class="debug-btn">DEBUG: Force Give</button> -->
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+
+</html>

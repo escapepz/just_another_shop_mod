@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JASM - Owner View Window</title>
+  <style>
+    /* ============================================================  
+     COLOR PALETTE (from owner_view_window.lua lines 33-41)  
+     #0f0f0f  -> Main bg / right panel  
+     #1a1a1a  -> Left panel / row bg  
+     #2a2416  -> Selected item bg  
+     #f39c12  -> Orange accent  
+     #333     -> Border / divider  
+     #ff4444  -> Error text  
+     #ccc     -> Secondary text  
+     #888     -> Muted text  
+     ============================================================ */
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Courier New", monospace;
+    }
+
+    body {
+      background: #222;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    /* ── WINDOW FRAME (800x600 fixed) ─────────────────────────── */
+    .window {
+      width: 800px;
+      height: 600px;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid #333;
+      overflow: hidden;
+    }
+
+    /* ── TITLE BAR (ISCollapsableWindow) ──────────────────────── */
+    /* titleBarHeight = max(16, FONT_HGT_SMALL + 1) ≈ 18px       */
+    .title-bar {
+      height: 18px;
+      min-height: 16px;
+      background: #1a1a1a;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 4px;
+      border-bottom: 1px solid #333;
+      flex-shrink: 0;
+    }
+
+    .title-bar .title-text {
+      color: #ccc;
+      font-size: 11px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .title-bar .window-controls {
+      display: flex;
+      gap: 2px;
+    }
+
+    .title-bar .window-controls button {
+      width: 14px;
+      height: 14px;
+      background: #333;
+      border: 1px solid #555;
+      color: #ccc;
+      font-size: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── ENTITY HEADER (ISWidgetEntityHeader) ─────────────────── */
+    /* height = icon(48) + padding(2+2) + margin(5+5) = 62px      */
+    .entity-header {
+      height: 62px;
+      background: #0f0f0f;
+      border-bottom: 2px solid #f39c12;
+      display: flex;
+      align-items: center;
+      padding: 2px 15px;
+      gap: 15px;
+      flex-shrink: 0;
+    }
+
+    .entity-header .icon-slot {
+      width: 48px;
+      height: 48px;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .entity-header .icon-slot .icon-placeholder {
+      font-size: 24px;
+      color: #888;
+    }
+
+    .entity-header .header-title {
+      color: #fff;
+      font-size: 16px;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    /* ── MASTER LAYOUT (2 columns: left 280px fixed, right fill) ─ */
+    .master-layout {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ── LEFT PANEL (leftStackLayout, 280px) ──────────────────── */
+    .left-panel {
+      width: 280px;
+      min-width: 280px;
+      max-width: 280px;
+      display: flex;
+      flex-direction: column;
+      background: #1a1a1a;
+    }
+
+    /* ── SEARCH FILTER PANEL (slim mode: search + sort only) ──── */
+    /* Row 0: minimumHeight=90, maximumHeight=90                   */
+    .search-panel {
+      height: 90px;
+      min-height: 90px;
+      max-height: 90px;
+      background: #1a1a1a;
+      padding: 8px 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex-shrink: 0;
+      border-bottom: 1px solid #333;
+    }
+
+    .search-panel .search-row {
+      display: flex;
+      height: 24px;
+    }
+
+    .search-panel .search-row input {
+      flex: 1;
+      height: 24px;
+      background: #0f0f0f;
+      border: 1px solid #333;
+      color: #ccc;
+      padding: 0 6px;
+      font-size: 12px;
+      font-family: inherit;
+    }
+
+    .search-panel .search-row input::placeholder {
+      color: #555;
+    }
+
+    .search-panel .sort-row {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+      height: 24px;
+    }
+
+    .search-panel .sort-row label {
+      color: #ccc;
+      font-size: 12px;
+    }
+
+    .search-panel .sort-row select {
+      width: 172px;
+      height: 24px;
+      background: #0f0f0f;
+      border: 1px solid #333;
+      color: #ccc;
+      font-size: 11px;
+      font-family: inherit;
+    }
+
+    /* ── PRODUCT LIST VIEW (list mode only, fills remaining) ──── */
+    .product-list {
+      flex: 1;
+      background: #1a1a1a;
+      overflow-y: auto;
+    }
+
+    .product-list .list-item {
+      height: 40px;
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      gap: 8px;
+      background: #0f0f0f;
+      border: 1px solid #333;
+      margin: 2px;
+      cursor: pointer;
+    }
+
+    .product-list .list-item:hover {
+      background: #1a1a1a;
+    }
+
+    .product-list .list-item.selected {
+      background: #2a2416;
+      border-color: #f39c12;
+    }
+
+    .product-list .list-item .item-icon {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      color: #888;
+      flex-shrink: 0;
+    }
+
+    .product-list .list-item .item-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .product-list .list-item .item-name {
+      color: #ccc;
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .product-list .list-item .item-type {
+      color: #666;
+      font-size: 11px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .product-list .list-item .item-stock {
+      font-size: 12px;
+      color: #888;
+      flex-shrink: 0;
+    }
+
+    .product-list .list-item .item-stock.in-stock {
+      color: #7fd37f;
+    }
+
+    /* ── RIGHT PANEL (ISTableLayout, bg #0f0f0f) ─────────────── */
+    .right-panel {
+      flex: 1;
+      background: #0f0f0f;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── SECTION HEADER (ShopSectionHeader) ───────────────────── */
+    /* ISLabel h=28 (UIFont.Medium) + ISPanel h=2 (orange line)    */
+    /* Natural height = 30px (marginTop/marginBottom are dead)     */
+    .section-header {
+      flex-shrink: 0;
+    }
+
+    .section-header h2 {
+      color: #f39c12;
+      font-size: 14px;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      height: 28px;
+      line-height: 28px;
+    }
+
+    .section-header .header-line {
+      height: 2px;
+      background: #f39c12;
+    }
+
+    /* ── OFFER PANEL (ShopTradeOfferPanel) ────────────────────── */
+    /* Row 0 in rightPanel. Natural height = 118px                 */
+    /* (header 40 + offerBox 58 + yieldLabel 20)                   */
+    .offer-panel {
+      flex-shrink: 0;
+    }
+
+    .offer-panel .offer-header-row {
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+    }
+
+    .offer-box {
+      display: flex;
+      align-items: center;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      padding: 8px;
+      gap: 8px;
+    }
+
+    .offer-box .offer-icon {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .offer-box .offer-icon .icon-placeholder {
+      font-size: 24px;
+      color: #888;
+    }
+
+    .offer-box .offer-meta {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .offer-box .offer-meta .offer-name {
+      color: #fff;
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .offer-box .offer-meta .offer-debug {
+      color: #888;
+      font-size: 11px;
+    }
+
+    .offer-box .offer-meta .offer-stock {
+      color: #888;
+      font-size: 11px;
+    }
+
+    .offer-box .offer-qty-input {
+      width: 60px;
+      height: 26px;
+      background: #000;
+      border: 1px solid #333;
+      color: #ccc;
+      text-align: center;
+      font-size: 12px;
+      font-family: inherit;
+      flex-shrink: 0;
+    }
+
+    .yield-info {
+      color: #888;
+      font-size: 11px;
+      height: 20px;
+      line-height: 20px;
+    }
+
+    /* ── REQUIREMENT PANEL (ShopRequirementPanel) ─────────────── */
+    /* Row 1 in rightPanel. Natural height = 240px                 */
+    /* (header 30 + pathsList 210)                                 */
+    .requirement-panel {
+      flex-shrink: 0;
+    }
+
+    .requirement-panel .paths-table {
+      min-height: 210px;
+    }
+
+    /* ── CUSTOMER OPTION ITEM (ShopCustomerOptionItem) ────────── */
+    .option-item {
+      height: 40px;
+      display: flex;
+      align-items: center;
+      background: #1a1a1a;
+      margin-bottom: 1px;
+      position: relative;
+    }
+
+    .option-item .accent-bar {
+      width: 3px;
+      height: 100%;
+      background: #f39c12;
+      flex-shrink: 0;
+    }
+
+    .option-item .opt-icon {
+      width: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .option-item .opt-icon .icon-placeholder {
+      font-size: 16px;
+    }
+
+    .option-item .opt-info {
+      flex: 1;
+      color: #ccc;
+      font-size: 12px;
+      padding: 0 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .option-item .opt-type {
+      color: #555;
+      font-size: 11px;
+      padding: 0 4px;
+      flex-shrink: 0;
+    }
+
+    .option-item .opt-remove {
+      width: 60px;
+      height: 24px;
+      background: transparent;
+      border: 1px solid #333;
+      color: #ff4444;
+      font-size: 11px;
+      cursor: pointer;
+      flex-shrink: 0;
+      font-family: inherit;
+    }
+
+    .option-item .opt-remove:hover {
+      background: #1a0000;
+      border-color: #ff4444;
+    }
+
+    /* ── ADD REQUIREMENT ROW (ShopAddRequirementRow) ──────────── */
+    .add-path-row {
+      height: 40px;
+      display: flex;
+      align-items: center;
+      background: #1e1e1e;
+      position: relative;
+    }
+
+    .add-path-row .accent-bar {
+      width: 3px;
+      height: 100%;
+      background: #459cff;
+      flex-shrink: 0;
+    }
+
+    .add-path-row .add-inputs {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 0 6px;
+    }
+
+    .add-path-row .qty-input {
+      width: 55px;
+      height: 22px;
+      background: #0f0f0f;
+      border: 1px solid #333;
+      color: #ccc;
+      text-align: center;
+      font-size: 11px;
+      font-family: inherit;
+      flex-shrink: 0;
+    }
+
+    .add-path-row .type-input {
+      flex: 1;
+      height: 22px;
+      background: #0f0f0f;
+      border: 1px solid #333;
+      color: #ccc;
+      padding: 0 6px;
+      font-size: 11px;
+      font-family: inherit;
+    }
+
+    .add-path-row .type-input::placeholder,
+    .add-path-row .qty-input::placeholder {
+      color: #555;
+    }
+
+    .add-path-row .add-btn {
+      width: 60px;
+      height: 22px;
+      background: transparent;
+      border: 1px solid #333;
+      color: #459cff;
+      font-size: 11px;
+      cursor: pointer;
+      flex-shrink: 0;
+      font-family: inherit;
+    }
+
+    .add-path-row .add-btn:hover {
+      background: #0a1a2a;
+      border-color: #459cff;
+    }
+
+    /* ── SPACER (addRowFill ~98px) ────────────────────────────── */
+    .right-spacer {
+      flex: 1;
+    }
+
+    /* ── FOOTER PANEL (ShopFooterPanel) ───────────────────────── */
+    /* Row 3 in rightPanel. minimumHeight=64                       */
+    .footer-panel {
+      min-height: 64px;
+      flex-shrink: 0;
+    }
+
+    .footer-panel .footer-separator {
+      height: 1px;
+      background: #333;
+    }
+
+    .footer-panel .footer-content {
+      padding: 6px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .footer-panel .error-label {
+      height: 20px;
+      line-height: 20px;
+      color: #ff4444;
+      font-size: 11px;
+      text-align: center;
+    }
+
+    .footer-panel .error-label.success {
+      color: #4de64d;
+    }
+
+    .footer-panel .btn-row {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .footer-panel .publish-btn {
+      width: 140px;
+      height: 34px;
+      background: #f39c12;
+      border: 1px solid #f39c12;
+      color: #000;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+      font-family: inherit;
+      letter-spacing: 0.5px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .footer-panel .publish-btn:hover {
+      background: #ffb347;
+    }
+
+    .footer-panel .publish-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .footer-panel .publish-btn .progress-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background: rgba(51, 153, 255, 0.4);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="window">
+
+    <!-- ═══ TITLE BAR ═══════════════════════════════════════════ -->
+    <div class="title-bar">
+      <span class="title-text">JASM - Just Another Shop Mod</span>
+      <div class="window-controls">
+        <button title="Pin">P</button>
+        <button title="Collapse">_</button>
+        <button title="Close">X</button>
+      </div>
+    </div>
+
+    <!-- ═══ ENTITY HEADER (62px) ════════════════════════════════ -->
+    <div class="entity-header">
+      <div class="icon-slot">
+        <span class="icon-placeholder">&#x1F3EA;</span>
+      </div>
+      <span class="header-title">SHOP OWNER CONFIG</span>
+    </div>
+
+    <!-- ═══ MASTER LAYOUT (left 280px | right fill) ═════════════ -->
+    <div class="master-layout">
+
+      <!-- ─── LEFT PANEL (280px fixed) ──────────────────────── -->
+      <div class="left-panel">
+
+        <!-- Search Filter Panel (slim mode, h=90) -->
+        <div class="search-panel">
+          <div class="search-row">
+            <input type="text" placeholder="Search items...">
+          </div>
+          <div class="sort-row">
+            <label>Sort by:</label>
+            <select>
+              <option>Alphabetical (A-Z)</option>
+              <option>High Stock</option>
+              <option>Low Stock</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Product List View (list mode only, fills remaining) -->
+        <div class="product-list">
+          <div class="list-item selected">
+            <div class="item-icon">&#x1F52B;</div>
+            <div class="item-info">
+              <div class="item-name">Pistol</div>
+              <div class="item-type">Base.Pistol</div>
+            </div>
+            <span class="item-stock in-stock">5</span>
+          </div>
+          <div class="list-item">
+            <div class="item-icon">&#x1FA93;</div>
+            <div class="item-info">
+              <div class="item-name">Axe</div>
+              <div class="item-type">Base.Axe</div>
+            </div>
+            <span class="item-stock in-stock">12</span>
+          </div>
+          <div class="list-item">
+            <div class="item-icon">&#x1F528;</div>
+            <div class="item-info">
+              <div class="item-name">Hammer</div>
+              <div class="item-type">Base.Hammer</div>
+            </div>
+            <span class="item-stock in-stock">3</span>
+          </div>
+          <div class="list-item">
+            <div class="item-icon">&#x1F48A;</div>
+            <div class="item-info">
+              <div class="item-name">Pills</div>
+              <div class="item-type">Base.Pills</div>
+            </div>
+            <span class="item-stock in-stock">8</span>
+          </div>
+          <div class="list-item">
+            <div class="item-icon">&#x1F96B;</div>
+            <div class="item-info">
+              <div class="item-name">Canned Food</div>
+              <div class="item-type">Base.CannedFood</div>
+            </div>
+            <span class="item-stock">0</span>
+          </div>
+          <div class="list-item">
+            <div class="item-icon">&#x1F50B;</div>
+            <div class="item-info">
+              <div class="item-name">Battery</div>
+              <div class="item-type">Base.Battery</div>
+            </div>
+            <span class="item-stock in-stock">2</span>
+          </div>
+          <div class="list-item">
+            <div class="item-icon">&#x1F5E1;</div>
+            <div class="item-info">
+              <div class="item-name">Hunting Knife</div>
+              <div class="item-type">Base.HuntingKnife</div>
+            </div>
+            <span class="item-stock in-stock">1</span>
+          </div>
+          <div class="list-item">
+            <div class="item-icon">&#x1F392;</div>
+            <div class="item-info">
+              <div class="item-name">Bag</div>
+              <div class="item-type">Base.Bag_BigHikingBag</div>
+            </div>
+            <span class="item-stock in-stock">4</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ─── RIGHT PANEL (fill, bg #0f0f0f) ────────────────── -->
+      <div class="right-panel">
+
+        <!-- Row 0: Offer Panel (natural h=118) -->
+        <div class="offer-panel">
+          <!-- Section Header: "ITEM TO GIVE (OFFER)" (minH=40) -->
+          <div class="offer-header-row">
+            <div class="section-header" style="width: 100%;">
+              <h2>ITEM TO GIVE (OFFER)</h2>
+              <div class="header-line"></div>
+            </div>
+          </div>
+
+          <!-- Offer Box (3 columns: icon 50px | info fill | qty 70px) -->
+          <div class="offer-box">
+            <div class="offer-icon">
+              <span class="icon-placeholder">&#x1F52B;</span>
+            </div>
+            <div class="offer-meta">
+              <span class="offer-name">Pistol</span>
+              <span class="offer-debug">Type: Base.Pistol</span>
+              <span class="offer-stock">Stock: 5 units</span>
+            </div>
+            <input type="text" class="offer-qty-input" value="1">
+          </div>
+
+          <!-- Yield Info Label -->
+          <div class="yield-info">This will create 5 total trades based on your current stock.</div>
+        </div>
+
+        <!-- Row 1: Requirement Panel (natural h=240) -->
+        <div class="requirement-panel">
+          <!-- Section Header: "CUSTOMER OPTIONS (REQUIRE ONE OF)" -->
+          <div class="section-header">
+            <h2>CUSTOMER OPTIONS (REQUIRE ONE OF)</h2>
+            <div class="header-line"></div>
+          </div>
+
+          <!-- Paths Table (minH=210) -->
+          <div class="paths-table">
+            <!-- Confirmed path 1 -->
+            <div class="option-item">
+              <div class="accent-bar"></div>
+              <div class="opt-icon"><span class="icon-placeholder">&#x1F4B0;</span></div>
+              <div class="opt-info">10x Money</div>
+              <div class="opt-type">Base.Money</div>
+              <button class="opt-remove">Remove</button>
+            </div>
+
+            <!-- Confirmed path 2 -->
+            <div class="option-item">
+              <div class="accent-bar"></div>
+              <div class="opt-icon"><span class="icon-placeholder">&#x1F48E;</span></div>
+              <div class="opt-info">2x Diamond</div>
+              <div class="opt-type">Base.Diamond</div>
+              <button class="opt-remove">Remove</button>
+            </div>
+
+            <!-- Confirmed path 3 -->
+            <div class="option-item">
+              <div class="accent-bar"></div>
+              <div class="opt-icon"><span class="icon-placeholder">&#x1FA99;</span></div>
+              <div class="opt-info">3x Gold Bar</div>
+              <div class="opt-type">Base.GoldBar</div>
+              <button class="opt-remove">Remove</button>
+            </div>
+
+            <!-- Confirmed path 4 -->
+            <div class="option-item">
+              <div class="accent-bar"></div>
+              <div class="opt-icon"><span class="icon-placeholder">&#x1FA99;</span></div>
+              <div class="opt-info">3x Gold Bar</div>
+              <div class="opt-type">Base.GoldBar</div>
+              <button class="opt-remove">Remove</button>
+            </div>
+
+            <!-- Add Requirement Row (blue accent) -->
+            <div class="add-path-row">
+              <div class="accent-bar"></div>
+              <div class="add-inputs">
+                <input type="text" class="qty-input" value="1" placeholder="Qty">
+                <input type="text" class="type-input" placeholder="Type e.g. Base.GoldBar">
+                <button class="add-btn">Add</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2: addRowFill() spacer (~98px at 800x600) -->
+        <div class="right-spacer"></div>
+
+        <!-- Row 3: Footer Panel (minH=64) -->
+        <div class="footer-panel">
+          <div class="footer-separator"></div>
+          <div class="footer-content">
+            <div class="error-label"></div>
+            <div class="btn-row">
+              <button class="publish-btn">
+                <span class="progress-overlay"></span>
+                PUBLISH TRADE
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</body>
+
+</html>
