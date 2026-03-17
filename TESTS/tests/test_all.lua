@@ -85,6 +85,7 @@ require("jasm_test/test_context_menu_permissions")()
 require("jasm_test/test_ui_refresh")()
 require("jasm_test/test_issue14_ui_refresh_locked_shop")()
 require("jasm_test/test_item_display")()
+require("jasm_test/test_loot_panel_sync")()
 require("jasm_test/test_player_built_guard")()
 
 print("")

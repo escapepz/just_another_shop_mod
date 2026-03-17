@@ -595,6 +595,72 @@ function CustomerViewWindow:onSelectProduct(product)
     end
 end
 
+--- Switch the active shop entity for this window instance.
+--- This provides a seamless transition without window flickering.
+---@param newEntity IsoObject
+function CustomerViewWindow:switchShop(newEntity)
+    if not newEntity or self.entity == newEntity then
+        return
+    end
+
+    logger:info("CustomerViewWindow:switchShop() - switching to new entity", {
+        x = newEntity:getX(),
+        y = newEntity:getY(),
+        z = newEntity:getZ(),
+    })
+
+    -- 1. Lock Check for the new entity
+    if not CustomerViewWindow.CheckLock(self.player, newEntity) then
+        logger:info("CustomerViewWindow:switchShop() - switch blocked by lock")
+        return
+    end
+
+    -- 2. Release Old Entity Locks
+    local lockMethod = JASM_SandboxVars.Get("ShopLockMethod", 1)
+    if lockMethod == 1 and self.entity then
+        local square = self.entity:getSquare()
+        if square then
+            KUtilities.SendClientCommand("JASM_ShopManager", "UnlockShop", {
+                x = square:getX(),
+                y = square:getY(),
+                z = square:getZ(),
+            })
+            logger:debug("CustomerViewWindow:switchShop() - unlock old sent")
+        end
+    end
+    if self.entity then
+        ---@diagnostic disable-next-line: param-type-mismatch
+        self.entity:setUsingPlayer(nil)
+    end
+
+    -- 3. Acquire New Entity Locks
+    self.entity = newEntity
+    if lockMethod == 1 then
+        local square = newEntity:getSquare()
+        if square then
+            KUtilities.SendClientCommand("JASM_ShopManager", "LockShop", {
+                x = square:getX(),
+                y = square:getY(),
+                z = square:getZ(),
+            })
+            logger:info("CustomerViewWindow:switchShop() - lock new sent")
+        end
+    end
+    newEntity:setUsingPlayer(self.player)
+
+    -- 4. Sync UI Components
+    self:so_override_the_entity_header()
+    if self.detailsPanel then
+        self.detailsPanel.entity = newEntity
+    end
+    if self.productPanel then
+        self.productPanel.container = newEntity:getContainer()
+    end
+
+    -- 5. Data Refresh
+    self:refresh(true, true)
+end
+
 --- Create a new instance of CustomerViewWindow.
 ---@param x number
 ---@param y number
@@ -652,20 +718,13 @@ local function _bringToTop(window)
     end
 end
 
----@param playerIndex integer
----@param _context any
+--- Check if a shop is locked by another player.
+---@param player IsoPlayer
 ---@param entity IsoObject
-function CustomerViewWindow.open(playerIndex, _context, entity)
-    logger:debug("CustomerViewWindow.open() - request for entity", {
-        x = entity:getX(),
-        y = entity:getY(),
-        z = entity:getZ(),
-    })
-
-    local player = getSpecificPlayer(playerIndex)
+---@return boolean True if the shop is available (not locked by others), false otherwise.
+function CustomerViewWindow.CheckLock(player, entity)
     local lockMethod = JASM_SandboxVars.Get("ShopLockMethod", 1)
 
-    -- ===== Lock check BEFORE instance/singleton check =====
     if lockMethod == 1 then
         -- Layer 1: Check JASM application-level lock via modData (synced from server)
         local modData = entity:getModData()
@@ -680,11 +739,7 @@ function CustomerViewWindow.open(playerIndex, _context, entity)
                     player,
                     "Shop is locked by " .. tostring(lockHolder) .. "."
                 )
-                logger:info("CustomerViewWindow.open() blocked - JASM lock", {
-                    player = player:getUsername(),
-                    lockedBy = lockHolder,
-                })
-                return nil
+                return false
             end
         end
 
@@ -693,11 +748,7 @@ function CustomerViewWindow.open(playerIndex, _context, entity)
         if entityUser and entityUser ~= player then
             local entityUserName = entityUser:getUsername()
             HaloTextHelper.addBadText(player, "Shop is in use by " .. entityUserName .. ".")
-            logger:warn("CustomerViewWindow.open() blocked - entity desync (JASM unaware)", {
-                player = player:getUsername(),
-                entityUser = entityUserName,
-            })
-            return nil
+            return false
         end
     elseif lockMethod == 2 then
         -- VANILLA mode: check only entity:getUsingPlayer()
@@ -707,12 +758,29 @@ function CustomerViewWindow.open(playerIndex, _context, entity)
                 player,
                 "Shop is in use by " .. entityUser:getUsername() .. "."
             )
-            logger:info("CustomerViewWindow.open() blocked - vanilla entity lock", {
-                player = player:getUsername(),
-                entityUser = entityUser:getUsername(),
-            })
-            return nil
+            return false
         end
+    end
+
+    return true
+end
+
+---@param playerIndex integer
+---@param _context any
+---@param entity IsoObject
+function CustomerViewWindow.open(playerIndex, _context, entity)
+    logger:debug("CustomerViewWindow.open() - request for entity", {
+        x = entity:getX(),
+        y = entity:getY(),
+        z = entity:getZ(),
+    })
+
+    local player = getSpecificPlayer(playerIndex)
+
+    -- ===== Lock check BEFORE instance/singleton check =====
+    if not CustomerViewWindow.CheckLock(player, entity) then
+        logger:info("CustomerViewWindow.open() blocked by lock check")
+        return nil
     end
 
     -- Vanilla pattern: Check if instance exists first
@@ -746,6 +814,7 @@ function CustomerViewWindow.open(playerIndex, _context, entity)
     window:addToUIManager()
 
     -- ===== Layer 1: Acquire JASM lock after window is successfully created =====
+    local lockMethod = JASM_SandboxVars.Get("ShopLockMethod", 1)
     if lockMethod == 1 then
         local square = entity:getSquare()
         if square then

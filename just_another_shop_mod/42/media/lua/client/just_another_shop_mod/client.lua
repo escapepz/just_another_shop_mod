@@ -1,4 +1,5 @@
 require("just_another_shop_mod/loot_panel_open_shop_handler")
+require("just_another_shop_mod/loot_panel_sync")
 
 local CAF = require("container_authority_framework")
 

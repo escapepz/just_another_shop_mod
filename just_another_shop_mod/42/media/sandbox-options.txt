@@ -17,7 +17,7 @@ option JASM.ShopLockMethod
     valueTranslation = JASM_ShopLockMethod_Values,
     type = enum,
     numValues = 2,
-    default = 1,
+    default = 2,
 }
 
 option JASM.MaxPlayerShopsPerPlayer

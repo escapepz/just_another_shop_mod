@@ -185,6 +185,12 @@ function ShopItemDetailsPanel:onDebugForceGive()
         payload.isForceGive
     )
 
+    action:setOnComplete(function()
+        if self.parent and self.parent.refresh then
+            self.parent:refresh(true, true)
+        end
+    end)
+
     ISTimedActionQueue.add(action)
 end
 
@@ -359,7 +365,7 @@ function ShopItemDetailsPanel:onAcceptTrade()
     end
 
     -- if selectedTrade.hasCount < selectedTrade.requestQty then
-    --     HaloTextHelper.addBadText(self.player, "You don't have enough funds for this trade.")
+    --     HaloTextHelper.addBadText(self.character or self.player, "You don't have enough funds for this trade.")
     --     return
     -- end
     -- print("ShopItemDetailsPanel:onAcceptTrade() - trade accepted")
@@ -405,6 +411,12 @@ function ShopItemDetailsPanel:onAcceptTrade()
         payload.offerQty,
         payload.isForceGive
     )
+
+    action:setOnComplete(function()
+        if self.parent and self.parent.refresh then
+            self.parent:refresh(true, true)
+        end
+    end)
 
     ISTimedActionQueue.add(action)
 end
