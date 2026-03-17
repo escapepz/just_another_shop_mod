@@ -775,6 +775,12 @@ function MockPZ.setupGlobals()
         return _G.ISTextEntryBox
     end
 
+    _G.ISInventoryPage = ISPanel:derive("ISInventoryPage")
+    _G.ISInventoryPage.setNewContainer = function(self, inventory) end
+    package.preload["ISUI/ISInventoryPage"] = function()
+        return _G.ISInventoryPage
+    end
+
     package.preload["TimedActions/ISTimedActionQueue"] = function()
         return _G.ISTimedActionQueue
     end

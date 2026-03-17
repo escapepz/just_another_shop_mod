@@ -8,7 +8,7 @@ LootPanelSync.lastSelectedContainer = {}
 
 ---@param player IsoPlayer
 ---@param inventory ItemContainer
-local function onLootContainerSelected(player, inventory)
+function LootPanelSync.onLootContainerSelected(player, inventory)
     if not player or not inventory then
         return
     end
@@ -43,7 +43,7 @@ end
 -- 1. Hook into Events.OnRefreshInventoryWindowContainers ("end" phase)
 ---@param inventoryPage ISInventoryPage
 ---@param state string
-local function onRefreshLootPanel(inventoryPage, state)
+function LootPanelSync.onRefreshLootPanel(inventoryPage, state)
     -- We only care about the "end" phase after refreshBackpacks() has finished
     if state ~= "end" then
         return
@@ -67,10 +67,10 @@ local function onRefreshLootPanel(inventoryPage, state)
 
     local inventory = inventoryPage.inventory
 
-    onLootContainerSelected(playerObj, inventory)
+    LootPanelSync.onLootContainerSelected(playerObj, inventory)
 end
 
-Events.OnRefreshInventoryWindowContainers.Add(onRefreshLootPanel)
+Events.OnRefreshInventoryWindowContainers.Add(LootPanelSync.onRefreshLootPanel)
 
 -- 2. Hook into ISInventoryPage:setNewContainer to capture direct world clicks
 local original_setNewContainer = ISInventoryPage.setNewContainer
@@ -83,7 +83,7 @@ function ISInventoryPage:setNewContainer(inventory)
     end
 
     local playerObj = getSpecificPlayer(self.player)
-    onLootContainerSelected(playerObj, inventory)
+    LootPanelSync.onLootContainerSelected(playerObj, inventory)
 end
 
 return LootPanelSync

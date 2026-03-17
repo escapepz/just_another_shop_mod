@@ -13,6 +13,7 @@ local test_context_menu_permissions = require("jasm_test/test_context_menu_permi
 local test_ui_refresh = require("jasm_test/test_ui_refresh")
 local test_issue14 = require("jasm_test/test_issue14_ui_refresh_locked_shop")
 local test_item_display = require("jasm_test/test_item_display")
+local test_loot_panel_sync = require("jasm_test/test_loot_panel_sync")
 
 local pz_utils = require("pz_utils_shared")
 local KUtilities = pz_utils.konijima.Utilities
@@ -50,6 +51,8 @@ Events.OnGameStart.Add(function()
     test_ui_refresh()
     test_issue14()
     test_item_display()
+    test_loot_panel_sync()
+
     print("[JASM_TEST] Client test runner initialized")
 end)
 
