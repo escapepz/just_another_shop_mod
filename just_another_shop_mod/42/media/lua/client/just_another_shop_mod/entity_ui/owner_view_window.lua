@@ -1046,20 +1046,13 @@ local function _bringToTop(window)
     end
 end
 
----@param playerIndex integer
----@param _context any
+--- Check if a shop is locked by another player.
+---@param player IsoPlayer
 ---@param entity IsoObject
-function OwnerViewWindow.open(playerIndex, _context, entity)
-    logger:debug("OwnerViewWindow.open() - request for entity", {
-        x = entity:getX(),
-        y = entity:getY(),
-        z = entity:getZ(),
-    })
-
-    local player = getSpecificPlayer(playerIndex)
+---@return boolean True if the shop is available (not locked by others), false otherwise.
+function OwnerViewWindow.CheckLock(player, entity)
     local lockMethod = JASM_SandboxVars.Get("ShopLockMethod", 1)
 
-    -- ===== Lock check BEFORE instance/singleton check =====
     if lockMethod == 1 then
         -- Layer 1: Check JASM application-level lock via modData (synced from server)
         local modData = entity:getModData()
@@ -1074,11 +1067,7 @@ function OwnerViewWindow.open(playerIndex, _context, entity)
                     player,
                     "Shop is locked by " .. tostring(lockHolder) .. "."
                 )
-                logger:info("OwnerViewWindow.open() blocked - JASM lock", {
-                    player = player:getUsername(),
-                    lockedBy = lockHolder,
-                })
-                return nil
+                return false
             end
         end
 
@@ -1087,11 +1076,7 @@ function OwnerViewWindow.open(playerIndex, _context, entity)
         if entityUser and entityUser ~= player then
             local entityUserName = entityUser:getUsername()
             HaloTextHelper.addBadText(player, "Shop is in use by " .. entityUserName .. ".")
-            logger:warn("OwnerViewWindow.open() blocked - entity desync (JASM unaware)", {
-                player = player:getUsername(),
-                entityUser = entityUserName,
-            })
-            return nil
+            return false
         end
     elseif lockMethod == 2 then
         -- VANILLA mode: check only entity:getUsingPlayer()
@@ -1101,12 +1086,26 @@ function OwnerViewWindow.open(playerIndex, _context, entity)
                 player,
                 "Shop is in use by " .. entityUser:getUsername() .. "."
             )
-            logger:info("OwnerViewWindow.open() blocked - vanilla entity lock", {
-                player = player:getUsername(),
-                entityUser = entityUser:getUsername(),
-            })
-            return nil
+            return false
         end
+    end
+
+    return true
+end
+
+function OwnerViewWindow.open(playerIndex, _context, entity)
+    logger:debug("OwnerViewWindow.open() - request for entity", {
+        x = entity:getX(),
+        y = entity:getY(),
+        z = entity:getZ(),
+    })
+
+    local player = getSpecificPlayer(playerIndex)
+
+    -- ===== Lock check BEFORE instance/singleton check =====
+    if not OwnerViewWindow.CheckLock(player, entity) then
+        logger:info("OwnerViewWindow.open() blocked by lock check")
+        return nil
     end
 
     -- Vanilla pattern: Check if instance exists first
@@ -1138,6 +1137,7 @@ function OwnerViewWindow.open(playerIndex, _context, entity)
     window:addToUIManager()
 
     -- ===== Layer 1: Acquire JASM lock after window is successfully created =====
+    local lockMethod = JASM_SandboxVars.Get("ShopLockMethod", 1)
     if lockMethod == 1 then
         local square = entity:getSquare()
         if square then

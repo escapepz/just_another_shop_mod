@@ -6,3 +6,18 @@
 ---@field lootWindow ISInventoryPage
 ---@field control ISButton
 ---@field altColor boolean
+
+---@class ISInventoryPage : ISPanel
+---@field player integer          -- 0-based player index
+---@field inventory ItemContainer  -- currently selected container
+---@field onCharacter boolean      -- true if this is the player inventory panel
+---@field backpacks table
+---@field inventoryPane ISInventoryPane
+---@field isCollapsed boolean
+---@field coloredInv ItemContainer
+---@field selectedButton table
+
+---@class ItemContainer
+---@field getParent fun(self: ItemContainer): IsoObject|nil
+---@field getContainingItem fun(self: ItemContainer): InventoryItem|nil
+---@field isExplored fun(self: ItemContainer): boolean

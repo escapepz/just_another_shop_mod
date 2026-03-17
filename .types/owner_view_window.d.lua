@@ -1,0 +1,4 @@
+---@class OwnerRequirementPath
+---@field itemType string Full type (e.g. "Base.GoldBar")
+---@field requestQty integer
+---@field name string
