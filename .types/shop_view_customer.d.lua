@@ -56,5 +56,3 @@ function JASM_ShopView_Customer:onBuy() end
 ---@param _preferredWidth number
 ---@param _preferredHeight number
 function JASM_ShopView_Customer:calculateLayout(_preferredWidth, _preferredHeight) end
-
-return JASM_ShopView_Customer

@@ -46,15 +46,6 @@ local KUtilities = require("pz_utils_shared").konijima.Utilities
 local LEFT_PANEL_WIDTH = 280 -- px (design5: aside width: 280px)
 local MAX_PATHS = 5 -- design5_rule §3: max 5 confirmed paths
 
--- ============================================================
--- TYPE ANNOTATIONS
--- ============================================================
-
----@class OwnerRequirementPath
----@field itemType    string   Full type (e.g. "Base.GoldBar")
----@field requestQty    integer
----@field name   string
-
 ---@class OwnerViewWindow : ISEntityWindow
 ---@field player            IsoPlayer
 ---@field titleBar          boolean
@@ -1119,9 +1110,13 @@ function OwnerViewWindow.open(playerIndex, _context, entity)
     end
 
     -- Vanilla pattern: Check if instance exists first
-    if OwnerViewWindow.instance then
+    local instance = OwnerViewWindow.instance
+    if instance and instance.entity == entity then
         _bringToTop(OwnerViewWindow)
-        return OwnerViewWindow.instance
+        return instance
+    elseif instance then
+        -- DIFFERENT shop requested: Close the old one (releases its lock)
+        instance:close()
     end
 
     local screenWidth = getCore():getScreenWidth()

@@ -716,9 +716,13 @@ function CustomerViewWindow.open(playerIndex, _context, entity)
     end
 
     -- Vanilla pattern: Check if instance exists first
-    if CustomerViewWindow.instance then
+    local instance = CustomerViewWindow.instance
+    if instance and instance.entity == entity then
         _bringToTop(CustomerViewWindow)
-        return CustomerViewWindow.instance
+        return instance
+    elseif instance then
+        -- DIFFERENT shop requested: Close the old one (releases its lock)
+        instance:close()
     end
 
     local screenWidth = getCore():getScreenWidth()

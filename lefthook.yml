@@ -7,4 +7,4 @@ pre-commit:
 
     - name: stylua
       glob: "*.lua"
-      run: pnpm exec stylua -c {staged_files}
+      run: pnpm exec stylua {staged_files}
