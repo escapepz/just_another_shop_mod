@@ -1110,9 +1110,13 @@ function OwnerViewWindow.open(playerIndex, _context, entity)
     end
 
     -- Vanilla pattern: Check if instance exists first
-    if OwnerViewWindow.instance then
+    local instance = OwnerViewWindow.instance
+    if instance and instance.entity == entity then
         _bringToTop(OwnerViewWindow)
-        return OwnerViewWindow.instance
+        return instance
+    elseif instance then
+        -- DIFFERENT shop requested: Close the old one (releases its lock)
+        instance:close()
     end
 
     local screenWidth = getCore():getScreenWidth()
