@@ -46,13 +46,10 @@ end
 
 -- Issue 16: Initialize session ID after sandbox vars are ready
 local function InitSessionID()
-    local lockMethod = JASM_SandboxVars.Get("ShopLockMethod", 1)
-    if lockMethod == 1 then
-        local sessionData = ModData.getOrCreate("JASM_ServerSession")
-        sessionData.id = tostring(getTimeInMillis()) .. "_" .. tostring(ZombRand(100000))
-        -- ModData.transmit("JASM_ServerSession")
-        logger:info("DUAL mode: generated new Shop Lock Session ID: " .. sessionData.id)
-    end
+    local sessionData = ModData.getOrCreate("JASM_ServerSession")
+    sessionData.id = tostring(getTimeInMillis()) .. "_" .. tostring(ZombRand(100000))
+    -- ModData.transmit("JASM_ServerSession")
+    logger:info("Generated new Shop Lock Session ID: " .. sessionData.id)
 end
 
 -- Schedule InitSessionID for OnLoadedTileDefinitions (when sandbox vars are ready)
