@@ -1,5 +1,13 @@
 
 _____
+v1.0.3
+
+Fixes:
+- Server Session data sync
+
+https://github.com/escapepz/just_another_shop_mod/releases/tag/v1.0.3
+
+_____
 v1.0.2
 
 Fixes:

@@ -418,7 +418,7 @@ local function handleRequestSessionId(player, _)
         player,
         "JASM_ShopManager",
         "JASM_ReceiveSessionId",
-        { sessionId = sessionId }
+        { sessionId = sessionId or "" }
     )
     logger:debug(
         "Sent SessionId to player",

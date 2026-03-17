@@ -6,12 +6,22 @@ local JASM_Utils = {}
 ---@type string|nil
 JASM_Utils.SessionId = nil
 
+---@type number
+JASM_Utils.LastRequestTime = 0
+
 ---Get the current JASM server session ID (Client only)
 ---@return string|nil
 function JASM_Utils.GetSessionID()
     if JASM_Utils.SessionId ~= nil then
         return JASM_Utils.SessionId
     end
+
+    -- Cooldown: Don't request more than once every 5 seconds
+    local now = pz_utils.escape.Utilities.GetIRLTimestamp()
+    if now - JASM_Utils.LastRequestTime < 5 then
+        return nil
+    end
+    JASM_Utils.LastRequestTime = now
 
     -- Request from server
     KUtilities.SendClientCommand("JASM_ShopManager", "JASM_RequestSessionId", {})
