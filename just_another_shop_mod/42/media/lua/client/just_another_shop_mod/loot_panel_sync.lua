@@ -29,7 +29,9 @@ function LootPanelSync.onLootContainerSelected(player, inventory)
     end
 
     local sprite = entity:getSprite()
-    if not sprite or not JASM_Constants:isValidShopContainer(sprite:getName()) then
+    local isShopContainer = JASM_Constants:isValidShopContainer(sprite:getName(), entity)
+
+    if not sprite or not isShopContainer then
         return
     end
 
