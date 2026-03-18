@@ -110,7 +110,9 @@ function Handler:shouldBeVisible()
         return false
     end
 
-    return JASM_Constants:isValidShopContainer(sprite:getName())
+    local isShopContainer = JASM_Constants:isValidShopContainer(sprite:getName(), self.object)
+
+    return isShopContainer
 end
 
 function Handler:getControl()

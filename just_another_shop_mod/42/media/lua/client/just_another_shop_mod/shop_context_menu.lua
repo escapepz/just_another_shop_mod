@@ -89,13 +89,15 @@ local function DoShopContextMenu(playerIndex, context, worldObjects, test)
     -- print(containerObj:getEntityFullTypeDebug())
 
     -- guard again non thumpable objects
-    if objName ~= "Thumpable" then
-        return
-    end
+    -- if objName ~= "Thumpable" then
+    --     return
+    -- end
 
     -- Sprite-based matching for allowed containers
     local spriteName = containerObj:getSprite() and containerObj:getSprite():getName()
-    if not JASM_Constants:isValidShopContainer(spriteName) then
+    local isShopContainer = JASM_Constants:isValidShopContainer(spriteName, containerObj)
+
+    if not spriteName or not isShopContainer then
         return
     end
 
