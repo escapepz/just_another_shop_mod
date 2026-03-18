@@ -25,9 +25,20 @@ This mod is best suited for multiplayer servers, economy-driven survival, and ro
 - Right-click and navigate to the [b]JASM Shop[/b] menu to register the container.
 - After registration, owners can [b]Manage Shop[/b] to adjust stock and prices, and customers can use [b]Open Shop UI[/b] to browse and buy goods.
 
-[code][h3]Crates[/h3]
-[img]https://escapepz.github.io/just_another_shop_mod/assets/Carpentry_01_16.png[/img][img]https://escapepz.github.io/just_another_shop_mod/assets/Constructedobjects_01_47.png[/img][img]https://escapepz.github.io/just_another_shop_mod/assets/Military_crate.png[/img][img]https://escapepz.github.io/just_another_shop_mod/assets/Crafted_05_44.png[/img]
-    Wooden Crate          Metal Crate        Military Crate       Fancy Metal Crate[/code]
+[code]
+[h3]Shelves[/h3]
+[img]https://escapepz.github.io/just_another_shop_mod/assets/128_225/bookshelf.gif[/img][img]https://escapepz.github.io/just_another_shop_mod/assets/128_225/bar_shelf.gif[/img]
+
+[h3]Crates[/h3]
+[img]https://escapepz.github.io/just_another_shop_mod/assets/144_144/Wooden Crate.png[/img][img]https://escapepz.github.io/just_another_shop_mod/assets/144_144/Metal Crate.png[/img][img]https://escapepz.github.io/just_another_shop_mod/assets/144_144/Military Crate.png[/img][img]https://escapepz.github.io/just_another_shop_mod/assets/144_144/Fancy Metal Crate.png[/img]
+
+[h3]Displays[/h3]
+[img]https://escapepz.github.io/just_another_shop_mod/assets/128_144/gun_display_case.gif[/img]	[img]https://escapepz.github.io/just_another_shop_mod/assets/144_144/grocery_display_counter.gif[/img]	[img]https://escapepz.github.io/just_another_shop_mod/assets/144_144/trapezoid_shop_shelves.gif[/img]
+
+[img]https://escapepz.github.io/just_another_shop_mod/assets/144_256/large_fridge.gif[/img]	[img]https://escapepz.github.io/just_another_shop_mod/assets/169_256/large_metal_shelves.gif[/img]
+
+And more! -> [url=https://steamcommunity.com/workshop/filedetails/discussion/3681786362/800090666243779812/]Supported Container Types[/url]
+[/code]
 
 [hr][/hr]
 [h2]New suggestion for the mod?[/h2]
