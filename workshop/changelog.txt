@@ -1,5 +1,13 @@
 
 _____
+v1.1.0
+
+Fixes:
+- Add [url=https://steamcommunity.com/workshop/filedetails/discussion/3681786362/800090666243779812/]Supported Container Types[/url]
+
+https://github.com/escapepz/just_another_shop_mod/releases/tag/v1.1.0
+
+_____
 v1.0.3
 
 Fixes:
