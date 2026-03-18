@@ -182,12 +182,34 @@ function MockPZ.createItemContainer()
     }
 end
 
----Mock IsoObject (furniture, appliances, etc.)
-function MockPZ.createIsoObject()
+---Mock IsoSprite
+---@param name string|nil
+function MockPZ.createIsoSprite(name)
     return {
+        name = name or "test_sprite",
+        getName = function(self)
+            return self.name
+        end,
+        getProperties = function(self)
+            return {
+                has = function(self, key)
+                    return false
+                end,
+                get = function(self, key)
+                    return nil
+                end,
+            }
+        end,
+    }
+end
+
+---Mock IsoObject (furniture, appliances, etc.)
+---@param spriteName string|nil
+function MockPZ.createIsoObject(spriteName)
+    local obj = {
         modData = {},
         square = nil,
-        sprite = "test_object",
+        sprite = MockPZ.createIsoSprite(spriteName or "constructedobjects_01_44"),
 
         getModData = function(self)
             return self.modData
@@ -209,6 +231,7 @@ function MockPZ.createIsoObject()
             return nil -- Not all objects have containers
         end,
     }
+    return obj
 end
 
 ---Mock IsoPlayer

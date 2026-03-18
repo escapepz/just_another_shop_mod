@@ -69,6 +69,16 @@ local function createMockShopCrate(isShop, shopType, ownerID, lockedBy)
                 getName = function()
                     return "constructedobjects_01_44"
                 end,
+                getProperties = function()
+                    return {
+                        has = function()
+                            return false
+                        end,
+                        get = function()
+                            return nil
+                        end,
+                    }
+                end,
             }
         end,
         getSquare = function()

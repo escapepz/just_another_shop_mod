@@ -16,7 +16,17 @@ local function init()
             getSprite = function(self)
                 return {
                     getName = function()
-                        return "carpentry_01_16"
+                        return "constructedobjects_01_44"
+                    end,
+                    getProperties = function()
+                        return {
+                            has = function()
+                                return false
+                            end,
+                            get = function()
+                                return nil
+                            end,
+                        }
                     end,
                 }
             end,
