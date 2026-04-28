@@ -1,10 +1,5 @@
 {
-    "$schema": "https://raw.githubusercontent.com/escapepz/project-zomboid-studio/refs/heads/b42.13.1/pzstudio.schema.json",
-    "title": "Just Another Shop Mod",
-    "authors": [
-        "escapepz",
-        "eScape"
-    ],
+    "$schema": "https://raw.githubusercontent.com/escapepz/project-zomboid-studio/refs/heads/42.17.0/pzstudio.schema.json",
     "workshop": {
         "id": 3681786362,
         "visibility": "public",
@@ -16,31 +11,44 @@
             "QoL",
             "WIP"
         ],
-        "excludes": [
-            "jasm_test"
-        ]
+        "title": "Just Another Shop Mod"
     },
     "mods": {
         "just_another_shop_mod": {
             "name": "Just Another Shop Mod",
             "description": "Container-Based Shop, Item-to-Item Trade System, Barter Unit Shop System, Vehicle Trunk As A Shop, ... and more!",
             "require": [
-                "\\zul",
-                "\\pz_lua_commons",
-                "\\container_authority_framework"
+                "zul",
+                "pz_lua_commons",
+                "container_authority_framework",
+                "manipulation_authority_framework"
             ],
-            "versionMin": "42.13.1",
             "build": {
-                "modInfo": "skip"
-            }
+                "modInfo": "auto-if-missing"
+            },
+            "loadModAfter": [
+                "zul",
+                "pz_lua_commons",
+                "container_authority_framework",
+                "manipulation_authority_framework"
+            ],
+            "author": "escapepz",
+            "modversion": "1.0.3",
+            "versionMin": "42.13.1"
         },
         "jasm_test": {
             "name": "jasm_test",
             "description": "",
-            "require": "\\just_another_shop_mod",
+            "require": "just_another_shop_mod",
             "build": {
-                "modInfo": "skip"
-            }
+                "modInfo": "auto-if-missing"
+            },
+            "poster": "poster.png",
+            "author": "escapepz",
+            "icon": "icon.png",
+            "modversion": "1.0.0",
+            "versionMin": "42.13.1"
         }
-    }
+    },
+    "excludes": ["jasm_test"]
 }
