@@ -276,7 +276,7 @@ function CustomerViewWindow:update()
         self.entity:setUsingPlayer(self.player)
     end
 
-    ISBaseEntityWindow.update(self)
+    return ISBaseEntityWindow.update(self)
 end
 
 function CustomerViewWindow:prerender()
